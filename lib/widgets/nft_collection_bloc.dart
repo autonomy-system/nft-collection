@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:collection/collection.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/nft_collection.dart';
@@ -6,6 +7,9 @@ import 'package:nft_collection/services/tokens_service.dart';
 import 'package:nft_collection/utils/constants.dart';
 
 class NftCollectionBlocState {
+
+  static const _tokensEquality = ListEquality<AssetToken>();
+
   final NftLoadingState state;
   final List<AssetToken> tokens;
 
@@ -19,6 +23,17 @@ class NftCollectionBlocState {
     return NftCollectionBlocState(
         state: state ?? this.state, tokens: tokens ?? this.tokens);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NftCollectionBlocState &&
+          runtimeType == other.runtimeType &&
+          state == other.state &&
+          _tokensEquality.equals(tokens, other.tokens);
+
+  @override
+  int get hashCode => state.hashCode ^ tokens.hashCode;
 }
 
 class NftCollectionBloc

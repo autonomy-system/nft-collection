@@ -8,7 +8,9 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
@@ -40,6 +42,7 @@ class TokensServiceImpl extends TokensService {
   final NftCollectionDatabase _database;
   final NftCollectionPrefs _configurationService;
 
+  static const _stringListEquality = ListEquality<String>();
   static const REFRESH_ALL_TOKENS = 'REFRESH_ALL_TOKENS';
   static const FETCH_TOKENS = 'FETCH_TOKENS';
   static const REINDEX_ADDRESSES = 'REINDEX_ADDRESSES';
@@ -144,6 +147,10 @@ class TokensServiceImpl extends TokensService {
   @override
   Future<List<Asset>> fetchLatestAssets(
       List<String> addresses, int size) async {
+    if (!_stringListEquality.equals(addresses, _currentAddresses)) {
+      disposeIsolate();
+    }
+
     var owners = addresses.join(',');
     final assets = await _indexer.getNftTokensByOwner(owners, 0, size);
     await insertAssetsWithProvenance(assets);
