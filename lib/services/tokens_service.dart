@@ -10,7 +10,6 @@ import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
@@ -151,8 +150,9 @@ class TokensServiceImpl extends TokensService {
       disposeIsolate();
     }
 
-    var owners = addresses.join(',');
-    final assets = await _indexer.getNftTokensByOwner(owners, 0, size);
+    final assetsLists = await Future.wait(addresses
+        .map((address) => _indexer.getNftTokensByOwner(address, 0, size)));
+    final assets = assetsLists.flattened.toList();
     await insertAssetsWithProvenance(assets);
     if (assets.length < size) {
       if (assets.isNotEmpty) {
@@ -198,7 +198,9 @@ class TokensServiceImpl extends TokensService {
   }
 
   Future<List<String>> getTokenIDs(List<String> addresses) async {
-    return _indexer.getNftIDsByOwner(addresses.join(","));
+    final idsLists =
+        await Future.wait(addresses.map((e) => _indexer.getNftIDsByOwner(e)));
+    return idsLists.flattened.toList();
   }
 
   @override
@@ -322,16 +324,17 @@ class TokensServiceImpl extends TokensService {
       ) async {
 
     try {
-      final owners = addresses.join(",");
 
       final isolateIndexerAPI = _isolateScopeInjector<IndexerApi>();
 
-      var offset = 0;
+      final Map<String, int> offsetMap = {};
       Set<String> tokenIDs = {};
 
       while (true) {
-        final assets = await isolateIndexerAPI.getNftTokensByOwner(
-            owners, offset, indexerTokensPageSize);
+        final assetsLists = await Future.wait(addresses.map((e) =>
+            isolateIndexerAPI.getNftTokensByOwner(
+                e, offsetMap[e] ?? 0, indexerTokensPageSize)));
+        final assets = assetsLists.flattened.toList();
         tokenIDs.addAll(assets.map((e) => e.id));
 
         if (assets.length < indexerTokensPageSize) {
@@ -349,7 +352,12 @@ class TokensServiceImpl extends TokensService {
         }
 
         _isolateSendPort?.send(FetchTokensSuccess(key, uuid, assets, false));
-        offset += indexerTokensPageSize;
+
+        for (int i = 0; i < addresses.length; i++) {
+          final address = addresses[i];
+          final newAssets = assetsLists[i].length;
+          offsetMap[address] = (offsetMap[address] ?? 0) + newAssets;
+        }
       }
     } catch (exception) {
       _isolateSendPort?.send(FetchTokenFailure(key, uuid, exception));
