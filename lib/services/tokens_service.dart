@@ -152,7 +152,8 @@ class TokensServiceImpl extends TokensService {
 
     final assetsLists = await Future.wait(addresses
         .map((address) => _indexer.getNftTokensByOwner(address, 0, size)));
-    final assets = assetsLists.flattened.toList();
+    final originalAssets = assetsLists.flattened.toList();
+    final assets = mapOwnerAddress(originalAssets, addresses.toSet());
     await insertAssetsWithProvenance(assets);
     if (assets.length < size) {
       if (assets.isNotEmpty) {
@@ -251,7 +252,8 @@ class TokensServiceImpl extends TokensService {
 
     final result = message;
     if (result is FetchTokensSuccess) {
-      await insertAssetsWithProvenance(result.assets);
+      final assets = mapOwnerAddress(result.assets, result.addresses.toSet());
+      await insertAssetsWithProvenance(assets);
       NftCollection.logger.info("[${result.key}] receive ${result.assets.length} tokens");
 
       if (result.key == REFRESH_ALL_TOKENS) {
@@ -338,7 +340,7 @@ class TokensServiceImpl extends TokensService {
         tokenIDs.addAll(assets.map((e) => e.id));
 
         if (assets.length < indexerTokensPageSize) {
-          _isolateSendPort?.send(FetchTokensSuccess(key, uuid, assets, true));
+          _isolateSendPort?.send(FetchTokensSuccess(key, uuid, addresses, assets, true));
           break;
         }
 
@@ -346,12 +348,12 @@ class TokensServiceImpl extends TokensService {
           expectedNewTokenIDs.difference(tokenIDs);
           if (assets.last.lastActivityTime.compareTo(latestRefreshToken) < 0 &&
               expectedNewTokenIDs.isEmpty) {
-            _isolateSendPort?.send(FetchTokensSuccess(key, uuid, assets, true));
+            _isolateSendPort?.send(FetchTokensSuccess(key, uuid, addresses, assets, true));
             break;
           }
         }
 
-        _isolateSendPort?.send(FetchTokensSuccess(key, uuid, assets, false));
+        _isolateSendPort?.send(FetchTokensSuccess(key, uuid, addresses, assets, false));
 
         for (int i = 0; i < addresses.length; i++) {
           final address = addresses[i];
@@ -379,15 +381,26 @@ class TokensServiceImpl extends TokensService {
   }
 }
 
+List<Asset> mapOwnerAddress(List<Asset> assets, Set<String> ownerAddresses) {
+  return assets.map((asset) {
+    asset.owner =
+        asset.owners.keys.toSet().intersection(ownerAddresses).firstOrNull ??
+            asset.owner;
+    return asset;
+  }).toList();
+}
+
 abstract class TokensServiceResult {}
 
 class FetchTokensSuccess extends TokensServiceResult {
   final String key;
   final String uuid;
+  final List<String> addresses;
   final List<Asset> assets;
   bool done;
 
-  FetchTokensSuccess(this.key, this.uuid, this.assets, this.done);
+  FetchTokensSuccess(
+      this.key, this.uuid, this.addresses, this.assets, this.done);
 }
 
 class FetchTokenFailure extends TokensServiceResult {
