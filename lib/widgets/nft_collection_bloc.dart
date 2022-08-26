@@ -7,7 +7,6 @@ import 'package:nft_collection/services/tokens_service.dart';
 import 'package:nft_collection/utils/constants.dart';
 
 class NftCollectionBlocState {
-
   static const _tokensEquality = ListEquality<AssetToken>();
 
   final NftLoadingState state;
@@ -60,7 +59,7 @@ class NftCollectionBloc
     });
 
     on<UpdateHiddenTokens>((event, emit) {
-      _hiddenAddresses = event.ownerAddresses;
+      _hiddenAddresses = _filterAddresses(event.ownerAddresses);
       add(_SubRefreshTokensEvent(state.state));
     });
 
@@ -76,11 +75,11 @@ class NftCollectionBloc
 
     on<RefreshTokenEvent>((event, emit) async {
       NftCollection.logger.info("[NftCollectionBloc] RefreshTokensEvent start");
-      _addresses = event.addresses;
+      _addresses = _filterAddresses(event.addresses);
       _indexerIds = event.debugTokens;
 
       try {
-        List<String> allAccountNumbers = event.addresses;
+        List<String> allAccountNumbers = _filterAddresses(event.addresses);
 
         await database.assetDao.deleteAssetsNotBelongs(allAccountNumbers);
 
@@ -119,13 +118,17 @@ class NftCollectionBloc
     });
 
     on<RequestIndexEvent>((event, emit) async {
-      tokensService.reindexAddresses(event.addresses);
+      tokensService.reindexAddresses(_filterAddresses(event.addresses));
     });
 
     on<PurgeCache>((event, emit) async {
       await tokensService.purgeCachedGallery();
       add(RefreshTokenEvent(addresses: _addresses, debugTokens: _indexerIds));
     });
+  }
+
+  List<String> _filterAddresses(List<String> addresses) {
+    return addresses.map((e) => e.trim()).whereNot((e) => e.isEmpty).toList();
   }
 }
 
