@@ -55,39 +55,44 @@ class NftCollectionBloc
       : super(NftCollectionBlocState(
             state: NftLoadingState.notRequested, tokens: [])) {
     on<RefreshNftCollection>((event, emit) {
+      NftCollection.logger.info("[NftCollectionBloc] RefreshNftCollection");
       add(_SubRefreshTokensEvent(state.state));
     });
 
     on<UpdateHiddenTokens>((event, emit) {
       _hiddenAddresses = _filterAddresses(event.ownerAddresses);
+      NftCollection.logger.info("[NftCollectionBloc] UpdateHiddenTokens. "
+          "Hidden Addresses: $_hiddenAddresses");
       add(_SubRefreshTokensEvent(state.state));
     });
 
     on<_SubRefreshTokensEvent>((event, emit) async {
       final assetTokens =
           await database.assetDao.findAllAssetTokensWhereNot(_hiddenAddresses);
+      NftCollection.logger.info(
+          "[NftCollectionBloc] _SubRefreshTokensEvent: ${assetTokens.length} tokens");
       emit(state.copyWith(tokens: assetTokens, state: event.state));
     });
 
     on<FetchTokenEvent>((event, emit) async {
+      NftCollection.logger
+          .info("[NftCollectionBloc] FetchTokenEvent ${event.addresses}");
       tokensService.fetchTokensForAddresses(event.addresses);
     });
 
     on<RefreshTokenEvent>((event, emit) async {
-      NftCollection.logger.info("[NftCollectionBloc] RefreshTokensEvent start");
       _addresses = _filterAddresses(event.addresses);
       _indexerIds = event.debugTokens;
+      NftCollection.logger.info("[NftCollectionBloc] RefreshTokensEvent start. "
+          "Addresses: $_addresses");
 
       try {
         List<String> allAccountNumbers = _filterAddresses(event.addresses);
-
         await database.assetDao.deleteAssetsNotBelongs(allAccountNumbers);
-
         add(_SubRefreshTokensEvent(NftLoadingState.notRequested));
 
         final latestAssets = await tokensService.fetchLatestAssets(
             allAccountNumbers, indexerTokensPageSize);
-
         NftCollection.logger.info(
             "[NftCollectionBloc] fetch ${latestAssets.length} latest NFTs");
 
@@ -97,9 +102,9 @@ class NftCollectionBloc
         } else {
           final debugTokenIDs = await fetchManuallyTokens(event.debugTokens);
           add(_SubRefreshTokensEvent(NftLoadingState.loading));
+
           NftCollection.logger.info(
               "[NftCollectionBloc][start] _tokensService.refreshTokensInIsolate");
-
           final stream = await tokensService.refreshTokensInIsolate(
               allAccountNumbers, debugTokenIDs);
           stream.listen((event) async {

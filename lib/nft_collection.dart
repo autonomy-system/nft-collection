@@ -13,11 +13,14 @@ export 'package:nft_collection/widgets/nft_collection_grid_widget.dart';
 
 class NftCollection {
   static Logger logger = Logger("nft_collection");
+  static Logger apiLog = Logger("nft_collection_api_log");
 
-  static Future<NftCollectionBloc> createBloc(
-      {required String indexerUrl,
-      String databaseFileName = "nft_collection.db",
-      Logger? logger}) async {
+  static Future<NftCollectionBloc> createBloc({
+    required String indexerUrl,
+    String databaseFileName = "nft_collection.db",
+    Logger? logger,
+    Logger? apiLogger,
+  }) async {
     if (logger != null) {
       NftCollection.logger = logger;
     }

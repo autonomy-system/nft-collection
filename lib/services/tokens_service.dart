@@ -10,6 +10,7 @@ import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
@@ -48,7 +49,10 @@ class TokensServiceImpl extends TokensService {
 
   TokensServiceImpl(
       this._indexerUrl, this._database, this._configurationService) {
-    _indexer = IndexerApi(Dio(), baseUrl: _indexerUrl);
+    _indexer = IndexerApi(
+      Dio()..interceptors.add(LoggingInterceptor()),
+      baseUrl: _indexerUrl,
+    );
   }
 
   SendPort? _sendPort;
@@ -128,6 +132,9 @@ class TokensServiceImpl extends TokensService {
     await _database.assetDao.deleteAssetsNotIn(tokenIDs + debugTokenIDs);
 
     final dbTokenIDs = (await _assetDao.findAllAssetTokenIDs()).toSet();
+    final expectedNewTokenIDs = tokenIDs.toSet().difference(dbTokenIDs);
+    NftCollection.logger.info(
+        "[TokensService] Expected ${expectedNewTokenIDs.length} new tokens");
 
     _refreshAllTokensWorker = StreamController<int>();
     _currentAddresses = addresses;
@@ -135,7 +142,7 @@ class TokensServiceImpl extends TokensService {
     _sendPort?.send([
       REFRESH_ALL_TOKENS,
       addresses,
-      tokenIDs.toSet().difference(dbTokenIDs),
+      expectedNewTokenIDs,
       await _configurationService.getLatestRefreshTokens(),
     ]);
     NftCollection.logger.info("[REFRESH_ALL_TOKENS][start]");
@@ -221,6 +228,9 @@ class TokensServiceImpl extends TokensService {
   @override
   Future fetchManualTokens(List<String> indexerIds) async {
     final manuallyAssets = (await _indexer.getNftTokens({"ids": indexerIds}));
+    NftCollection.logger.info("[TokensService] "
+        "fetched ${manuallyAssets.length} manual tokens. "
+        "IDs: $indexerIds");
     await insertAssetsWithProvenance(manuallyAssets);
   }
 
@@ -345,7 +355,7 @@ class TokensServiceImpl extends TokensService {
         }
 
         if (latestRefreshToken != null) {
-          expectedNewTokenIDs.difference(tokenIDs);
+          expectedNewTokenIDs = expectedNewTokenIDs.difference(tokenIDs);
           if (assets.last.lastActivityTime.compareTo(latestRefreshToken) < 0 &&
               expectedNewTokenIDs.isEmpty) {
             _isolateSendPort?.send(FetchTokensSuccess(key, uuid, addresses, assets, true));
