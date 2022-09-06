@@ -28,7 +28,7 @@ dependencies:
   nft_rendering:
     git:
       url: https://github.com/autonomy-system/nft-rendering.git
-      ref: v1.0.5
+      ref: v1.0.6
   uuid: ^3.0.6
   retrofit: ^3.0.1+1
   shared_preferences: ^2.0.15

@@ -316,8 +316,8 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: "v1.0.5"
-      resolved-ref: ecd5e9dfa188167f782f289793396b122a433a8d
+      ref: "v1.0.6"
+      resolved-ref: fd962c94cf49ec2b047b5ef7331e365778b9b6bb
       url: "https://github.com/autonomy-system/nft-rendering.git"
     source: git
     version: "0.0.1"
