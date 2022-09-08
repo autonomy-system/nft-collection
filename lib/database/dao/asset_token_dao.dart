@@ -28,8 +28,14 @@ abstract class AssetTokenDao {
   @Query('SELECT id FROM AssetToken')
   Future<List<String>> findAllAssetTokenIDs();
 
+  @Query('SELECT id FROM AssetToken WHERE ownerAddress=:owner')
+  Future<List<String>> findAllAssetTokenIDsByOwner(String owner);
+
   @Query('SELECT DISTINCT artistID FROM AssetToken')
   Future<List<String>> findAllAssetArtistIDs();
+
+  @Query('SELECT * FROM AssetToken WHERE pending = 1')
+  Future<List<AssetToken>> findAllPendingTokens();
 
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertAsset(AssetToken asset);
@@ -42,6 +48,9 @@ abstract class AssetTokenDao {
 
   @delete
   Future<void> deleteAsset(AssetToken asset);
+
+  @Query('DELETE FROM AssetToken WHERE id IN (:ids)')
+  Future<void> deleteAssets(List<String> ids);
 
   @Query('DELETE FROM AssetToken WHERE id NOT IN (:ids)')
   Future<void> deleteAssetsNotIn(List<String> ids);

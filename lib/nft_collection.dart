@@ -20,16 +20,22 @@ class NftCollection {
     String databaseFileName = "nft_collection.db",
     Logger? logger,
     Logger? apiLogger,
+    Duration? pendingTokenExpire,
   }) async {
     if (logger != null) {
       NftCollection.logger = logger;
     }
     final db = await $FloorNftCollectionDatabase
         .databaseBuilder(databaseFileName)
+        .addMigrations(migrations)
         .build();
     final prefs = NftCollectionPrefs(await SharedPreferences.getInstance());
     final tokenService = TokensServiceImpl(indexerUrl, db, prefs);
-    final bloc = NftCollectionBloc(tokenService, db);
+    final bloc = NftCollectionBloc(
+      tokenService,
+      db,
+      pendingTokenExpire: pendingTokenExpire ?? const Duration(hours: 4),
+    );
     return bloc;
   }
 }

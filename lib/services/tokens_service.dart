@@ -10,7 +10,6 @@ import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
@@ -27,10 +26,15 @@ import 'package:uuid/uuid.dart';
 abstract class TokensService {
   Future fetchTokensForAddresses(List<String> addresses);
   Future fetchManualTokens(List<String> indexerIds);
+  Future setCustomTokens(List<AssetToken> tokens);
   Future<Stream<int>> refreshTokensInIsolate(
-      List<String> addresses, List<String> debugTokenIDs);
+    List<String> addresses,
+    List<String> debugTokenIDs,
+    List<String> pendingTokens,
+  );
   Future reindexAddresses(List<String> addresses);
-  Future<List<Asset>> fetchLatestAssets(List<String> addresses, int size);
+  Future<List<Asset>> fetchLatestAssets(List<String> addresses, int size,
+      {List<String> pendingTokens,});
   Future purgeCachedGallery();
 }
 
@@ -111,7 +115,10 @@ class TokensServiceImpl extends TokensService {
 
   @override
   Future<Stream<int>> refreshTokensInIsolate(
-      List<String> addresses, List<String> debugTokenIDs) async {
+    List<String> addresses,
+    List<String> debugTokenIDs,
+    List<String> pendingTokens,
+  ) async {
     if (_currentAddresses != null) {
       if (_currentAddresses?.join(",") == addresses.join(",")) {
         if (_refreshAllTokensWorker != null &&
@@ -129,7 +136,7 @@ class TokensServiceImpl extends TokensService {
     await startIsolateOrWait();
 
     final tokenIDs = await getTokenIDs(addresses);
-    await _database.assetDao.deleteAssetsNotIn(tokenIDs + debugTokenIDs);
+    await _database.assetDao.deleteAssetsNotIn(tokenIDs + debugTokenIDs + pendingTokens);
 
     final dbTokenIDs = (await _assetDao.findAllAssetTokenIDs()).toSet();
     final expectedNewTokenIDs = tokenIDs.toSet().difference(dbTokenIDs);
@@ -152,21 +159,29 @@ class TokensServiceImpl extends TokensService {
 
   @override
   Future<List<Asset>> fetchLatestAssets(
-      List<String> addresses, int size) async {
+    List<String> addresses,
+    int size, {
+    List<String> pendingTokens = const [],
+  }) async {
     if (!_stringListEquality.equals(addresses, _currentAddresses)) {
       disposeIsolate();
     }
 
-    final assetsLists = await Future.wait(addresses
-        .map((address) => _indexer.getNftTokensByOwner(address, 0, size)));
-    final originalAssets = assetsLists.flattened.toList();
-    final assets = mapOwnerAddress(originalAssets, addresses.toSet());
+    final assetsLists = await Future.wait(
+      addresses.map(
+        (address) async {
+          final assets = await _indexer.getNftTokensByOwner(address, 0, size);
+          return mapOwnerAddress(assets, address);
+        },
+      ),
+    );
+    final assets = assetsLists.flattened.toList();
     await insertAssetsWithProvenance(assets);
     if (assets.length < size) {
       if (assets.isNotEmpty) {
         final tokenIDs = assets.map((e) => e.id).toList();
-        await _database.assetDao.deleteAssetsNotIn(tokenIDs);
-        await _database.provenanceDao.deleteProvenanceNotBelongs(tokenIDs);
+        await _database.assetDao.deleteAssetsNotIn(tokenIDs + pendingTokens);
+        await _database.provenanceDao.deleteProvenanceNotBelongs(tokenIDs + pendingTokens);
       } else {
         await _database.assetDao.removeAll();
         await _database.provenanceDao.removeAll();
@@ -234,6 +249,11 @@ class TokensServiceImpl extends TokensService {
     await insertAssetsWithProvenance(manuallyAssets);
   }
 
+  @override
+  Future setCustomTokens(List<AssetToken> tokens) async {
+    await _database.assetDao.insertAssets(tokens);
+  }
+
   static void _isolateEntry(List<dynamic> arguments) {
     SendPort sendPort = arguments[0];
 
@@ -262,8 +282,7 @@ class TokensServiceImpl extends TokensService {
 
     final result = message;
     if (result is FetchTokensSuccess) {
-      final assets = mapOwnerAddress(result.assets, result.addresses.toSet());
-      await insertAssetsWithProvenance(assets);
+      await insertAssetsWithProvenance(result.assets);
       NftCollection.logger.info("[${result.key}] receive ${result.assets.length} tokens");
 
       if (result.key == REFRESH_ALL_TOKENS) {
@@ -343,9 +362,13 @@ class TokensServiceImpl extends TokensService {
       Set<String> tokenIDs = {};
 
       while (true) {
-        final assetsLists = await Future.wait(addresses.map((e) =>
-            isolateIndexerAPI.getNftTokensByOwner(
-                e, offsetMap[e] ?? 0, indexerTokensPageSize)));
+        final assetsLists = await Future.wait(
+          addresses.map((address) async {
+            final assets = await isolateIndexerAPI.getNftTokensByOwner(
+                address, offsetMap[address] ?? 0, indexerTokensPageSize);
+            return mapOwnerAddress(assets, address);
+          }),
+        );
         final assets = assetsLists.flattened.toList();
         tokenIDs.addAll(assets.map((e) => e.id));
 
@@ -391,11 +414,9 @@ class TokensServiceImpl extends TokensService {
   }
 }
 
-List<Asset> mapOwnerAddress(List<Asset> assets, Set<String> ownerAddresses) {
+List<Asset> mapOwnerAddress(List<Asset> assets, String owner) {
   return assets.map((asset) {
-    asset.owner =
-        asset.owners.keys.toSet().intersection(ownerAddresses).firstOrNull ??
-            asset.owner;
+    asset.owner = owner;
     return asset;
   }).toList();
 }

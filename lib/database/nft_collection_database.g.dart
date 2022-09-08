@@ -68,7 +68,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
   Future<sqflite.Database> open(String path, List<Migration> migrations,
       [Callback? callback]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 1,
+      version: 2,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -84,7 +84,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT, `owners` TEXT NOT NULL, `lastActivityTime` INTEGER NOT NULL, PRIMARY KEY (`id`))');
+            'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT, `owners` TEXT NOT NULL, `lastActivityTime` INTEGER NOT NULL, `pending` INTEGER, PRIMARY KEY (`id`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Provenance` (`txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, FOREIGN KEY (`tokenID`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`txID`))');
         await database.execute(
@@ -146,7 +146,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                   'ownerAddress': item.ownerAddress,
                   'owners': _tokenOwnersConverter.encode(item.owners),
                   'lastActivityTime':
-                      _dateTimeConverter.encode(item.lastActivityTime)
+                      _dateTimeConverter.encode(item.lastActivityTime),
+                  'pending':
+                      item.pending == null ? null : (item.pending! ? 1 : 0)
                 }),
         _assetTokenUpdateAdapter = UpdateAdapter(
             database,
@@ -185,7 +187,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                   'ownerAddress': item.ownerAddress,
                   'owners': _tokenOwnersConverter.encode(item.owners),
                   'lastActivityTime':
-                      _dateTimeConverter.encode(item.lastActivityTime)
+                      _dateTimeConverter.encode(item.lastActivityTime),
+                  'pending':
+                      item.pending == null ? null : (item.pending! ? 1 : 0)
                 }),
         _assetTokenDeletionAdapter = DeletionAdapter(
             database,
@@ -224,7 +228,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                   'ownerAddress': item.ownerAddress,
                   'owners': _tokenOwnersConverter.encode(item.owners),
                   'lastActivityTime':
-                      _dateTimeConverter.encode(item.lastActivityTime)
+                      _dateTimeConverter.encode(item.lastActivityTime),
+                  'pending':
+                      item.pending == null ? null : (item.pending! ? 1 : 0)
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -276,7 +282,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             ownerAddress: row['ownerAddress'] as String?,
             owners: _tokenOwnersConverter.decode(row['owners'] as String),
             lastActivityTime:
-                _dateTimeConverter.decode(row['lastActivityTime'] as int)));
+                _dateTimeConverter.decode(row['lastActivityTime'] as int),
+            pending:
+                row['pending'] == null ? null : (row['pending'] as int) != 0));
   }
 
   @override
@@ -323,7 +331,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             ownerAddress: row['ownerAddress'] as String?,
             owners: _tokenOwnersConverter.decode(row['owners'] as String),
             lastActivityTime:
-                _dateTimeConverter.decode(row['lastActivityTime'] as int)),
+                _dateTimeConverter.decode(row['lastActivityTime'] as int),
+            pending:
+                row['pending'] == null ? null : (row['pending'] as int) != 0),
         arguments: [...owners]);
   }
 
@@ -365,7 +375,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             ownerAddress: row['ownerAddress'] as String?,
             owners: _tokenOwnersConverter.decode(row['owners'] as String),
             lastActivityTime:
-                _dateTimeConverter.decode(row['lastActivityTime'] as int)),
+                _dateTimeConverter.decode(row['lastActivityTime'] as int),
+            pending:
+                row['pending'] == null ? null : (row['pending'] as int) != 0),
         arguments: [blockchain]);
   }
 
@@ -405,7 +417,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             ownerAddress: row['ownerAddress'] as String?,
             owners: _tokenOwnersConverter.decode(row['owners'] as String),
             lastActivityTime:
-                _dateTimeConverter.decode(row['lastActivityTime'] as int)),
+                _dateTimeConverter.decode(row['lastActivityTime'] as int),
+            pending:
+                row['pending'] == null ? null : (row['pending'] as int) != 0),
         arguments: [id]);
   }
 
@@ -416,9 +430,70 @@ class _$AssetTokenDao extends AssetTokenDao {
   }
 
   @override
+  Future<List<String>> findAllAssetTokenIDsByOwner(String owner) async {
+    return await _queryAdapter.queryList(
+      'SELECT id FROM AssetToken WHERE ownerAddress=?1',
+      arguments: [owner],
+      mapper: (Map<String, Object?> row) => row["id"] as String,
+    );
+  }
+
+  @override
   Future<List<String>> findAllAssetArtistIDs() async {
     return _queryAdapter.queryList('SELECT DISTINCT artistID FROM AssetToken',
         mapper: (Map<String, Object?> row) => row["artistID"] as String);
+  }
+
+  @override
+  Future<List<AssetToken>> findAllPendingTokens() async {
+    return _queryAdapter.queryList('SELECT * FROM AssetToken WHERE pending = 1',
+        mapper: (Map<String, Object?> row) => AssetToken(
+            artistName: row['artistName'] as String?,
+            artistURL: row['artistURL'] as String?,
+            artistID: row['artistID'] as String?,
+            assetData: row['assetData'] as String?,
+            assetID: row['assetID'] as String?,
+            assetURL: row['assetURL'] as String?,
+            basePrice: row['basePrice'] as double?,
+            baseCurrency: row['baseCurrency'] as String?,
+            blockchain: row['blockchain'] as String,
+            blockchainUrl: row['blockchainUrl'] as String?,
+            fungible:
+                row['fungible'] == null ? null : (row['fungible'] as int) != 0,
+            contractType: row['contractType'] as String?,
+            tokenId: row['tokenId'] as String?,
+            contractAddress: row['contractAddress'] as String?,
+            desc: row['desc'] as String?,
+            edition: row['edition'] as int,
+            id: row['id'] as String,
+            maxEdition: row['maxEdition'] as int?,
+            medium: row['medium'] as String?,
+            mimeType: row['mimeType'] as String?,
+            mintedAt: row['mintedAt'] as String?,
+            previewURL: row['previewURL'] as String?,
+            source: row['source'] as String?,
+            sourceURL: row['sourceURL'] as String?,
+            thumbnailID: row['thumbnailID'] as String?,
+            thumbnailURL: row['thumbnailURL'] as String?,
+            galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
+            title: row['title'] as String,
+            ownerAddress: row['ownerAddress'] as String?,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            lastActivityTime:
+                _dateTimeConverter.decode(row['lastActivityTime'] as int),
+            pending:
+                row['pending'] == null ? null : (row['pending'] as int) != 0));
+  }
+
+  @override
+  Future<void> deleteAssets(List<String> ids) async {
+    const offset = 1;
+    final _sqliteVariablesForIds =
+        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
+            .join(',');
+    await _queryAdapter.queryNoReturn(
+        'DELETE FROM AssetToken WHERE id IN (' + _sqliteVariablesForIds + ')',
+        arguments: [...ids]);
   }
 
   @override

@@ -47,6 +47,7 @@ class AssetToken {
   DateTime lastActivityTime;
   @ignore
   List<Provenance>? provenances;
+  bool? pending;
 
   AssetToken({
     required this.artistName,
@@ -81,6 +82,7 @@ class AssetToken {
     required this.owners,
     required this.lastActivityTime,
     this.provenances,
+    this.pending = false,
   });
 
   factory AssetToken.fromAsset(Asset asset) => AssetToken(
@@ -116,12 +118,16 @@ class AssetToken {
         owners: asset.owners,
         lastActivityTime: asset.lastActivityTime,
         provenances: asset.provenance,
+        pending: false,
       );
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AssetToken && runtimeType == other.runtimeType && id == other.id;
+      other is AssetToken &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          pending == other.pending;
 
   @override
   int get hashCode => id.hashCode;

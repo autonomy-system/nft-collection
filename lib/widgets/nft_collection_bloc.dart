@@ -39,6 +39,7 @@ class NftCollectionBloc
     extends Bloc<NftCollectionBlocEvent, NftCollectionBlocState> {
   final TokensService tokensService;
   final NftCollectionDatabase database;
+  final Duration pendingTokenExpire;
 
   List<String> _addresses = [];
   List<String> _indexerIds = [];
@@ -51,7 +52,8 @@ class NftCollectionBloc
     return indexerIds;
   }
 
-  NftCollectionBloc(this.tokensService, this.database)
+  NftCollectionBloc(this.tokensService, this.database,
+      {required this.pendingTokenExpire})
       : super(NftCollectionBlocState(
             state: NftLoadingState.notRequested, tokens: [])) {
     on<RefreshNftCollection>((event, emit) {
@@ -89,10 +91,33 @@ class NftCollectionBloc
       try {
         List<String> allAccountNumbers = _filterAddresses(event.addresses);
         await database.assetDao.deleteAssetsNotBelongs(allAccountNumbers);
+        final pendingTokens = await database.assetDao.findAllPendingTokens();
+        NftCollection.logger
+            .info("[NftCollectionBloc] ${pendingTokens.length} pending tokens. "
+                "${pendingTokens.map((e) => e.id).toList()}");
+        final removePendingIds = pendingTokens
+            .where(
+              (e) => e.lastActivityTime
+                  .add(pendingTokenExpire)
+                  .isBefore(DateTime.now()),
+            )
+            .map((e) => e.id)
+            .toList();
+
+        if (removePendingIds.isNotEmpty) {
+          NftCollection.logger.info(
+              "[NftCollectionBloc] Delete old pending tokens $removePendingIds");
+          await database.assetDao.deleteAssets(removePendingIds);
+        }
+
         add(_SubRefreshTokensEvent(NftLoadingState.notRequested));
 
+        final pendingTokenIds = pendingTokens.map((e) => e.id).toList();
         final latestAssets = await tokensService.fetchLatestAssets(
-            allAccountNumbers, indexerTokensPageSize);
+          allAccountNumbers,
+          indexerTokensPageSize,
+          pendingTokens: pendingTokenIds,
+        );
         NftCollection.logger.info(
             "[NftCollectionBloc] fetch ${latestAssets.length} latest NFTs");
 
@@ -106,7 +131,10 @@ class NftCollectionBloc
           NftCollection.logger.info(
               "[NftCollectionBloc][start] _tokensService.refreshTokensInIsolate");
           final stream = await tokensService.refreshTokensInIsolate(
-              allAccountNumbers, debugTokenIDs);
+            allAccountNumbers,
+            debugTokenIDs,
+            pendingTokenIds,
+          );
           stream.listen((event) async {
             NftCollection.logger
                 .info("[Stream.refreshTokensInIsolate] getEvent");
