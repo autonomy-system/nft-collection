@@ -69,8 +69,14 @@ class NftCollectionBloc
     });
 
     on<_SubRefreshTokensEvent>((event, emit) async {
-      final assetTokens =
-          await database.assetDao.findAllAssetTokensWhereNot(_hiddenAddresses);
+      final assetTokens = await database.assetDao.findAllAssetTokensByOwners(
+        _addresses.toSet().difference(_hiddenAddresses.toSet()).toList(),
+      );
+      if (_indexerIds.isNotEmpty) {
+        final debugTokens =
+            await database.assetDao.findAllAssetTokensByIds(_indexerIds);
+        assetTokens.addAll(debugTokens);
+      }
       NftCollection.logger.info(
           "[NftCollectionBloc] _SubRefreshTokensEvent: ${assetTokens.length} tokens");
       emit(state.copyWith(tokens: assetTokens, state: event.state));

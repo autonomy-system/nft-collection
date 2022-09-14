@@ -63,12 +63,14 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
 
   AssetTokenDao? _assetDaoInstance;
 
+  TokenOwnerDao? _tokenOwnerDaoInstance;
+
   ProvenanceDao? _provenanceDaoInstance;
 
   Future<sqflite.Database> open(String path, List<Migration> migrations,
       [Callback? callback]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 2,
+      version: 3,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -86,6 +88,8 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT, `owners` TEXT NOT NULL, `lastActivityTime` INTEGER NOT NULL, `pending` INTEGER, PRIMARY KEY (`id`))');
         await database.execute(
+            'CREATE TABLE IF NOT EXISTS `TokenOwner` (`indexerId` TEXT NOT NULL, `owner` TEXT NOT NULL, `quantity` INTEGER NOT NULL, FOREIGN KEY (`indexerId`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`indexerId`, `owner`))');
+        await database.execute(
             'CREATE TABLE IF NOT EXISTS `Provenance` (`txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, FOREIGN KEY (`tokenID`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`txID`))');
         await database.execute(
             'CREATE INDEX `index_Provenance_tokenID` ON `Provenance` (`tokenID`)');
@@ -99,6 +103,11 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
   @override
   AssetTokenDao get assetDao {
     return _assetDaoInstance ??= _$AssetTokenDao(database, changeListener);
+  }
+
+  @override
+  TokenOwnerDao get tokenOwnerDao {
+    return _tokenOwnerDaoInstance ??= _$TokenOwnerDao(database, changeListener);
   }
 
   @override
@@ -288,52 +297,17 @@ class _$AssetTokenDao extends AssetTokenDao {
   }
 
   @override
-  Future<List<AssetToken>> findAllAssetTokensWhereNot(
+  Future<List<AssetToken>> findAllAssetTokensByOwners(
       List<String> owners) async {
     const offset = 1;
     final _sqliteVariablesForOwners =
         Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT * FROM AssetToken WHERE ownerAddress NOT IN (' +
+        'SELECT DISTINCT t.* FROM AssetToken t INNER JOIN TokenOwner o ON t.id = o.indexerId WHERE o.owner IN (' +
             _sqliteVariablesForOwners +
             ') ORDER BY lastActivityTime DESC, title, assetID',
-        mapper: (Map<String, Object?> row) => AssetToken(
-            artistName: row['artistName'] as String?,
-            artistURL: row['artistURL'] as String?,
-            artistID: row['artistID'] as String?,
-            assetData: row['assetData'] as String?,
-            assetID: row['assetID'] as String?,
-            assetURL: row['assetURL'] as String?,
-            basePrice: row['basePrice'] as double?,
-            baseCurrency: row['baseCurrency'] as String?,
-            blockchain: row['blockchain'] as String,
-            blockchainUrl: row['blockchainUrl'] as String?,
-            fungible:
-                row['fungible'] == null ? null : (row['fungible'] as int) != 0,
-            contractType: row['contractType'] as String?,
-            tokenId: row['tokenId'] as String?,
-            contractAddress: row['contractAddress'] as String?,
-            desc: row['desc'] as String?,
-            edition: row['edition'] as int,
-            id: row['id'] as String,
-            maxEdition: row['maxEdition'] as int?,
-            medium: row['medium'] as String?,
-            mimeType: row['mimeType'] as String?,
-            mintedAt: row['mintedAt'] as String?,
-            previewURL: row['previewURL'] as String?,
-            source: row['source'] as String?,
-            sourceURL: row['sourceURL'] as String?,
-            thumbnailID: row['thumbnailID'] as String?,
-            thumbnailURL: row['thumbnailURL'] as String?,
-            galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
-            title: row['title'] as String,
-            ownerAddress: row['ownerAddress'] as String?,
-            owners: _tokenOwnersConverter.decode(row['owners'] as String),
-            lastActivityTime:
-                _dateTimeConverter.decode(row['lastActivityTime'] as int),
-            pending:
-                row['pending'] == null ? null : (row['pending'] as int) != 0),
+        mapper: (Map<String, Object?> row) => AssetToken(artistName: row['artistName'] as String?, artistURL: row['artistURL'] as String?, artistID: row['artistID'] as String?, assetData: row['assetData'] as String?, assetID: row['assetID'] as String?, assetURL: row['assetURL'] as String?, basePrice: row['basePrice'] as double?, baseCurrency: row['baseCurrency'] as String?, blockchain: row['blockchain'] as String, blockchainUrl: row['blockchainUrl'] as String?, fungible: row['fungible'] == null ? null : (row['fungible'] as int) != 0, contractType: row['contractType'] as String?, tokenId: row['tokenId'] as String?, contractAddress: row['contractAddress'] as String?, desc: row['desc'] as String?, edition: row['edition'] as int, id: row['id'] as String, maxEdition: row['maxEdition'] as int?, medium: row['medium'] as String?, mimeType: row['mimeType'] as String?, mintedAt: row['mintedAt'] as String?, previewURL: row['previewURL'] as String?, source: row['source'] as String?, sourceURL: row['sourceURL'] as String?, thumbnailID: row['thumbnailID'] as String?, thumbnailURL: row['thumbnailURL'] as String?, galleryThumbnailURL: row['galleryThumbnailURL'] as String?, title: row['title'] as String, ownerAddress: row['ownerAddress'] as String?, owners: _tokenOwnersConverter.decode(row['owners'] as String), lastActivityTime: _dateTimeConverter.decode(row['lastActivityTime'] as int), pending: row['pending'] == null ? null : (row['pending'] as int) != 0),
         arguments: [...owners]);
   }
 
@@ -424,6 +398,53 @@ class _$AssetTokenDao extends AssetTokenDao {
   }
 
   @override
+  Future<List<AssetToken>> findAllAssetTokensByIds(List<String> ids) async {
+    const offset = 1;
+    final _sqliteVariablesForIds =
+        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT * FROM AssetToken WHERE id IN (' + _sqliteVariablesForIds + ')',
+        mapper: (Map<String, Object?> row) => AssetToken(
+            artistName: row['artistName'] as String?,
+            artistURL: row['artistURL'] as String?,
+            artistID: row['artistID'] as String?,
+            assetData: row['assetData'] as String?,
+            assetID: row['assetID'] as String?,
+            assetURL: row['assetURL'] as String?,
+            basePrice: row['basePrice'] as double?,
+            baseCurrency: row['baseCurrency'] as String?,
+            blockchain: row['blockchain'] as String,
+            blockchainUrl: row['blockchainUrl'] as String?,
+            fungible:
+                row['fungible'] == null ? null : (row['fungible'] as int) != 0,
+            contractType: row['contractType'] as String?,
+            tokenId: row['tokenId'] as String?,
+            contractAddress: row['contractAddress'] as String?,
+            desc: row['desc'] as String?,
+            edition: row['edition'] as int,
+            id: row['id'] as String,
+            maxEdition: row['maxEdition'] as int?,
+            medium: row['medium'] as String?,
+            mimeType: row['mimeType'] as String?,
+            mintedAt: row['mintedAt'] as String?,
+            previewURL: row['previewURL'] as String?,
+            source: row['source'] as String?,
+            sourceURL: row['sourceURL'] as String?,
+            thumbnailID: row['thumbnailID'] as String?,
+            thumbnailURL: row['thumbnailURL'] as String?,
+            galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
+            title: row['title'] as String,
+            ownerAddress: row['ownerAddress'] as String?,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            lastActivityTime:
+                _dateTimeConverter.decode(row['lastActivityTime'] as int),
+            pending:
+                row['pending'] == null ? null : (row['pending'] as int) != 0),
+        arguments: [...ids]);
+  }
+
+  @override
   Future<List<String>> findAllAssetTokenIDs() async {
     return _queryAdapter.queryList('SELECT id FROM AssetToken',
         mapper: (Map<String, Object?> row) => row["id"] as String);
@@ -432,7 +453,7 @@ class _$AssetTokenDao extends AssetTokenDao {
   @override
   Future<List<String>> findAllAssetTokenIDsByOwner(String owner) async {
     return await _queryAdapter.queryList(
-      'SELECT id FROM AssetToken WHERE ownerAddress=?1',
+      'SELECT t.id FROM AssetToken t INNER JOIN TokenOwner o ON t.id=o.indexerId WHERE o.owner=?1',
       arguments: [owner],
       mapper: (Map<String, Object?> row) => row["id"] as String,
     );
@@ -516,9 +537,9 @@ class _$AssetTokenDao extends AssetTokenDao {
         Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
             .join(',');
     await _queryAdapter.queryNoReturn(
-        'DELETE FROM AssetToken WHERE ownerAddress NOT IN (' +
+        'DELETE FROM AssetToken WHERE id NOT IN (SELECT DISTINCT t.id FROM AssetToken t INNER JOIN TokenOwner o ON t.id=o.indexerId WHERE o.owner IN (' +
             _sqliteVariablesForOwners +
-            ')',
+            '))',
         arguments: [...owners]);
   }
 
@@ -546,6 +567,30 @@ class _$AssetTokenDao extends AssetTokenDao {
   @override
   Future<void> deleteAsset(AssetToken asset) async {
     await _assetTokenDeletionAdapter.delete(asset);
+  }
+}
+
+class _$TokenOwnerDao extends TokenOwnerDao {
+  _$TokenOwnerDao(this.database, this.changeListener)
+      : _tokenOwnerInsertionAdapter = InsertionAdapter(
+            database,
+            'TokenOwner',
+            (TokenOwner item) => <String, Object?>{
+                  'indexerId': item.indexerId,
+                  'owner': item.owner,
+                  'quantity': item.quantity
+                });
+
+  final sqflite.DatabaseExecutor database;
+
+  final StreamController<String> changeListener;
+
+  final InsertionAdapter<TokenOwner> _tokenOwnerInsertionAdapter;
+
+  @override
+  Future<void> insertTokenOwners(List<TokenOwner> owners) async {
+    await _tokenOwnerInsertionAdapter.insertList(
+        owners, OnConflictStrategy.replace);
   }
 }
 

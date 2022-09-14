@@ -17,6 +17,7 @@ import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/models/provenance.dart';
+import 'package:nft_collection/models/token_owner.dart';
 import 'package:nft_collection/nft_collection.dart';
 import 'package:nft_collection/services/configuration_service.dart';
 import 'package:nft_collection/utils/constants.dart';
@@ -210,13 +211,18 @@ class TokensServiceImpl extends TokensService {
 
   Future insertAssetsWithProvenance(List<Asset> assets) async {
     List<AssetToken> tokens = [];
+    List<TokenOwner> owners = [];
     List<Provenance> provenance = [];
     for (var asset in assets) {
       var token = AssetToken.fromAsset(asset);
       tokens.add(token);
+      owners.addAll(token.owners.entries
+          .map((e) => TokenOwner(asset.id, e.key, e.value))
+          .toList());
       provenance.addAll(asset.provenance);
     }
     await _database.assetDao.insertAssets(tokens);
+    await _database.tokenOwnerDao.insertTokenOwners(owners);
     await _database.provenanceDao.insertProvenance(provenance);
   }
 
@@ -252,6 +258,12 @@ class TokensServiceImpl extends TokensService {
   @override
   Future setCustomTokens(List<AssetToken> tokens) async {
     await _database.assetDao.insertAssets(tokens);
+    final owners = tokens
+        .map((t) =>
+            t.owners.entries.map((e) => TokenOwner(t.id, e.key, e.value)))
+        .flattened
+        .toList();
+    await _database.tokenOwnerDao.insertTokenOwners(owners);
   }
 
   static void _isolateEntry(List<dynamic> arguments) {

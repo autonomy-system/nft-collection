@@ -10,8 +10,10 @@ import 'dart:async';
 import 'package:floor/floor.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/dao/provenance_dao.dart';
+import 'package:nft_collection/database/dao/token_owner_dao.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/models/provenance.dart';
+import 'package:nft_collection/models/token_owner.dart';
 import 'package:nft_collection/utils/date_time_converter.dart';
 
 // ignore: depend_on_referenced_packages
@@ -20,10 +22,10 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 part 'nft_collection_database.g.dart'; // the generated code will be there
 
 @TypeConverters([DateTimeConverter, TokenOwnersConverter])
-@Database(version: 2, entities: [AssetToken, Provenance])
+@Database(version: 3, entities: [AssetToken, TokenOwner, Provenance])
 abstract class NftCollectionDatabase extends FloorDatabase {
   AssetTokenDao get assetDao;
-
+  TokenOwnerDao get tokenOwnerDao;
   ProvenanceDao get provenanceDao;
 
   Future<dynamic> removeAll() async {
@@ -34,8 +36,14 @@ abstract class NftCollectionDatabase extends FloorDatabase {
 
 final migrations = [
   migrateV1ToV2,
+  migrateV2ToV3,
 ];
 
 final migrateV1ToV2 = Migration(1, 2, (database) async {
   await database.execute('ALTER TABLE `AssetToken` ADD `pending` INTEGER');
+});
+
+final migrateV2ToV3 = Migration(2, 3, (database) async {
+  await database.execute(
+      'CREATE TABLE IF NOT EXISTS `TokenOwner` (`indexerId` TEXT NOT NULL, `owner` TEXT NOT NULL, `quantity` INTEGER NOT NULL, FOREIGN KEY (`indexerId`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`indexerId`, `owner`))');
 });
