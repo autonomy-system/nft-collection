@@ -14,7 +14,7 @@ abstract class AssetTokenDao {
       'SELECT * FROM AssetToken ORDER BY lastActivityTime DESC, title, assetID')
   Future<List<AssetToken>> findAllAssetTokens();
 
-  @Query('SELECT DISTINCT t.* FROM AssetToken t INNER JOIN TokenOwner o'
+  @Query('SELECT DISTINCT t.*, o.updateTime AS updateTime FROM AssetToken t INNER JOIN TokenOwner o'
       ' ON t.id = o.indexerId'
       ' WHERE o.owner IN (:owners)'
       ' ORDER BY lastActivityTime DESC, title, assetID')

@@ -16,6 +16,12 @@ class TokenOwner {
   final String indexerId;
   final String owner;
   final int quantity;
+  final DateTime? updateTime;
 
-  TokenOwner(this.indexerId, this.owner, this.quantity);
+  TokenOwner(
+    this.indexerId,
+    this.owner,
+    this.quantity,
+    this.updateTime,
+  );
 }

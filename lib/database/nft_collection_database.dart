@@ -21,8 +21,12 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 
 part 'nft_collection_database.g.dart'; // the generated code will be there
 
-@TypeConverters([DateTimeConverter, TokenOwnersConverter])
-@Database(version: 3, entities: [AssetToken, TokenOwner, Provenance])
+@TypeConverters([
+  DateTimeConverter,
+  NullableDateTimeConverter,
+  TokenOwnersConverter,
+])
+@Database(version: 4, entities: [AssetToken, TokenOwner, Provenance])
 abstract class NftCollectionDatabase extends FloorDatabase {
   AssetTokenDao get assetDao;
   TokenOwnerDao get tokenOwnerDao;
@@ -37,6 +41,7 @@ abstract class NftCollectionDatabase extends FloorDatabase {
 final migrations = [
   migrateV1ToV2,
   migrateV2ToV3,
+  migrateV3ToV4,
 ];
 
 final migrateV1ToV2 = Migration(1, 2, (database) async {
@@ -46,4 +51,8 @@ final migrateV1ToV2 = Migration(1, 2, (database) async {
 final migrateV2ToV3 = Migration(2, 3, (database) async {
   await database.execute(
       'CREATE TABLE IF NOT EXISTS `TokenOwner` (`indexerId` TEXT NOT NULL, `owner` TEXT NOT NULL, `quantity` INTEGER NOT NULL, FOREIGN KEY (`indexerId`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`indexerId`, `owner`))');
+});
+
+final migrateV3ToV4 = Migration(3, 4, (database) async {
+  await database.execute('ALTER TABLE `TokenOwner` ADD `updateTime` INTEGER');
 });
