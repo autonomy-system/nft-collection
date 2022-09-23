@@ -47,6 +47,8 @@ class AssetToken {
   DateTime lastActivityTime;
   @ignore
   List<Provenance>? provenances;
+  @ignore
+  DateTime? updateTime;
   bool? pending;
 
   AssetToken({
@@ -82,6 +84,7 @@ class AssetToken {
     required this.owners,
     required this.lastActivityTime,
     this.provenances,
+    this.updateTime,
     this.pending = false,
   });
 
@@ -131,6 +134,8 @@ class AssetToken {
 
   @override
   int get hashCode => id.hashCode;
+
+  DateTime get lastUpdateTime => updateTime ?? lastActivityTime;
 }
 
 class TokenOwnersConverter extends TypeConverter<Map<String, int>, String> {

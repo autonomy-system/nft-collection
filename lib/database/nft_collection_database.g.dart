@@ -70,7 +70,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
   Future<sqflite.Database> open(String path, List<Migration> migrations,
       [Callback? callback]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 3,
+      version: 4,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -88,7 +88,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT, `owners` TEXT NOT NULL, `lastActivityTime` INTEGER NOT NULL, `pending` INTEGER, PRIMARY KEY (`id`))');
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `TokenOwner` (`indexerId` TEXT NOT NULL, `owner` TEXT NOT NULL, `quantity` INTEGER NOT NULL, FOREIGN KEY (`indexerId`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`indexerId`, `owner`))');
+            'CREATE TABLE IF NOT EXISTS `TokenOwner` (`indexerId` TEXT NOT NULL, `owner` TEXT NOT NULL, `quantity` INTEGER NOT NULL, `updateTime` INTEGER, FOREIGN KEY (`indexerId`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`indexerId`, `owner`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Provenance` (`txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, FOREIGN KEY (`tokenID`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`txID`))');
         await database.execute(
@@ -304,10 +304,10 @@ class _$AssetTokenDao extends AssetTokenDao {
         Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT DISTINCT t.* FROM AssetToken t INNER JOIN TokenOwner o ON t.id = o.indexerId WHERE o.owner IN (' +
+        'SELECT DISTINCT t.*, o.updateTime AS updateTime FROM AssetToken t INNER JOIN TokenOwner o ON t.id = o.indexerId WHERE o.owner IN (' +
             _sqliteVariablesForOwners +
             ') ORDER BY lastActivityTime DESC, title, assetID',
-        mapper: (Map<String, Object?> row) => AssetToken(artistName: row['artistName'] as String?, artistURL: row['artistURL'] as String?, artistID: row['artistID'] as String?, assetData: row['assetData'] as String?, assetID: row['assetID'] as String?, assetURL: row['assetURL'] as String?, basePrice: row['basePrice'] as double?, baseCurrency: row['baseCurrency'] as String?, blockchain: row['blockchain'] as String, blockchainUrl: row['blockchainUrl'] as String?, fungible: row['fungible'] == null ? null : (row['fungible'] as int) != 0, contractType: row['contractType'] as String?, tokenId: row['tokenId'] as String?, contractAddress: row['contractAddress'] as String?, desc: row['desc'] as String?, edition: row['edition'] as int, id: row['id'] as String, maxEdition: row['maxEdition'] as int?, medium: row['medium'] as String?, mimeType: row['mimeType'] as String?, mintedAt: row['mintedAt'] as String?, previewURL: row['previewURL'] as String?, source: row['source'] as String?, sourceURL: row['sourceURL'] as String?, thumbnailID: row['thumbnailID'] as String?, thumbnailURL: row['thumbnailURL'] as String?, galleryThumbnailURL: row['galleryThumbnailURL'] as String?, title: row['title'] as String, ownerAddress: row['ownerAddress'] as String?, owners: _tokenOwnersConverter.decode(row['owners'] as String), lastActivityTime: _dateTimeConverter.decode(row['lastActivityTime'] as int), pending: row['pending'] == null ? null : (row['pending'] as int) != 0),
+        mapper: (Map<String, Object?> row) => AssetToken(artistName: row['artistName'] as String?, artistURL: row['artistURL'] as String?, artistID: row['artistID'] as String?, assetData: row['assetData'] as String?, assetID: row['assetID'] as String?, assetURL: row['assetURL'] as String?, basePrice: row['basePrice'] as double?, baseCurrency: row['baseCurrency'] as String?, blockchain: row['blockchain'] as String, blockchainUrl: row['blockchainUrl'] as String?, fungible: row['fungible'] == null ? null : (row['fungible'] as int) != 0, contractType: row['contractType'] as String?, tokenId: row['tokenId'] as String?, contractAddress: row['contractAddress'] as String?, desc: row['desc'] as String?, edition: row['edition'] as int, id: row['id'] as String, maxEdition: row['maxEdition'] as int?, medium: row['medium'] as String?, mimeType: row['mimeType'] as String?, mintedAt: row['mintedAt'] as String?, previewURL: row['previewURL'] as String?, source: row['source'] as String?, sourceURL: row['sourceURL'] as String?, thumbnailID: row['thumbnailID'] as String?, thumbnailURL: row['thumbnailURL'] as String?, galleryThumbnailURL: row['galleryThumbnailURL'] as String?, title: row['title'] as String, ownerAddress: row['ownerAddress'] as String?, owners: _tokenOwnersConverter.decode(row['owners'] as String), lastActivityTime: _dateTimeConverter.decode(row['lastActivityTime'] as int), pending: row['pending'] == null ? null : (row['pending'] as int) != 0, updateTime: _nullableDateTimeConverter.decode(row["updateTime"] as int?)),
         arguments: [...owners]);
   }
 
@@ -578,7 +578,9 @@ class _$TokenOwnerDao extends TokenOwnerDao {
             (TokenOwner item) => <String, Object?>{
                   'indexerId': item.indexerId,
                   'owner': item.owner,
-                  'quantity': item.quantity
+                  'quantity': item.quantity,
+                  'updateTime':
+                      _nullableDateTimeConverter.encode(item.updateTime)
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -660,4 +662,5 @@ class _$ProvenanceDao extends ProvenanceDao {
 
 // ignore_for_file: unused_element
 final _dateTimeConverter = DateTimeConverter();
+final _nullableDateTimeConverter = NullableDateTimeConverter();
 final _tokenOwnersConverter = TokenOwnersConverter();

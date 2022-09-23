@@ -10,8 +10,10 @@ import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
+import 'package:nft_collection/data/api/tzkt_api.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/asset.dart';
@@ -44,8 +46,11 @@ final _isolateScopeInjector = GetIt.asNewInstance();
 class TokensServiceImpl extends TokensService {
   final String _indexerUrl;
   late IndexerApi _indexer;
+  late TZKTApi _tzkt;
   final NftCollectionDatabase _database;
   final NftCollectionPrefs _configurationService;
+
+  final Map<String, DateTime> _tokenUpdateTime = {};
 
   static const _stringListEquality = ListEquality<String>();
   static const REFRESH_ALL_TOKENS = 'REFRESH_ALL_TOKENS';
@@ -54,10 +59,12 @@ class TokensServiceImpl extends TokensService {
 
   TokensServiceImpl(
       this._indexerUrl, this._database, this._configurationService) {
+    final dio = Dio()..interceptors.add(LoggingInterceptor());
     _indexer = IndexerApi(
-      Dio()..interceptors.add(LoggingInterceptor()),
+      dio,
       baseUrl: _indexerUrl,
     );
+    _tzkt = TZKTApi(dio);
   }
 
   SendPort? _sendPort;
@@ -177,7 +184,7 @@ class TokensServiceImpl extends TokensService {
       ),
     );
     final assets = assetsLists.flattened.toList();
-    await insertAssetsWithProvenance(assets);
+    await insertAssetsWithProvenance(assets, retainOwners: addresses);
     if (assets.length < size) {
       if (assets.isNotEmpty) {
         final tokenIDs = assets.map((e) => e.id).toList();
@@ -209,15 +216,71 @@ class TokensServiceImpl extends TokensService {
     return completer.future;
   }
 
-  Future insertAssetsWithProvenance(List<Asset> assets) async {
+  Future<Map<String, DateTime>> _getTezosTokensUpdateTime(
+    List<Asset> tokens,
+    List<String>? owners,
+  ) async {
+    if (tokens.isEmpty) return {};
+    try {
+      final tokenIds = tokens
+          .map((e) => e.tokenId)
+          .where((e) => e != null)
+          .map((e) => e as String)
+          .toList();
+      final ownerAddresses = tokens
+          .map((e) => e.owners.keys)
+          .flattened
+          .where((owner) => owners?.contains(owner) ?? true)
+          .toList();
+      final transfers = await _tzkt.getTokenTransfer(
+        to: ownerAddresses.join(","),
+        tokenIds: tokenIds.join(","),
+        select: ["id", "level", "timestamp", "token"].join(","),
+      );
+      final Map<String, DateTime> result = {};
+      for (var tx in transfers) {
+        final token = tx.token;
+        if (token != null) {
+          final indexerId = "tez-${token.contract?.address}-${token.tokenId}";
+          result[indexerId] = tx.timestamp;
+        }
+      }
+      return result;
+    } catch (e) {
+      NftCollection.logger.info("[TokensService] Get token transfer failed $e");
+      return {};
+    }
+  }
+
+  Future insertAssetsWithProvenance(
+    List<Asset> assets, {
+    List<String>? retainOwners,
+  }) async {
     List<AssetToken> tokens = [];
     List<TokenOwner> owners = [];
     List<Provenance> provenance = [];
+
+    final fa2Tokens = assets
+        .where((token) => token.contractType == "fa2")
+        .where((token) => !_tokenUpdateTime.keys.contains(token.id))
+        .toList();
+    final updateTimes = await _getTezosTokensUpdateTime(
+      fa2Tokens,
+      retainOwners,
+    );
+    _tokenUpdateTime.addAll(updateTimes);
+
     for (var asset in assets) {
       var token = AssetToken.fromAsset(asset);
       tokens.add(token);
       owners.addAll(token.owners.entries
-          .map((e) => TokenOwner(asset.id, e.key, e.value))
+          .where((e) => retainOwners?.contains(e.key) ?? true)
+          .map((e) => TokenOwner(
+                asset.id,
+                e.key,
+                e.value,
+                _tokenUpdateTime[token.id] ?? token.lastActivityTime,
+              ))
           .toList());
       provenance.addAll(asset.provenance);
     }
@@ -259,8 +322,12 @@ class TokensServiceImpl extends TokensService {
   Future setCustomTokens(List<AssetToken> tokens) async {
     await _database.assetDao.insertAssets(tokens);
     final owners = tokens
-        .map((t) =>
-            t.owners.entries.map((e) => TokenOwner(t.id, e.key, e.value)))
+        .map((t) => t.owners.entries.map((e) => TokenOwner(
+              t.id,
+              e.key,
+              e.value,
+              t.lastActivityTime,
+            )))
         .flattened
         .toList();
     await _database.tokenOwnerDao.insertTokenOwners(owners);
@@ -282,6 +349,8 @@ class TokensServiceImpl extends TokensService {
     dio.interceptors.add(LoggingInterceptor());
     _isolateScopeInjector
         .registerLazySingleton(() => IndexerApi(dio, baseUrl: indexerUrl));
+    _isolateScopeInjector
+        .registerLazySingleton(() => TZKTApi(dio));
   }
 
   void _handleMessageInMain(dynamic message) async {
@@ -294,7 +363,10 @@ class TokensServiceImpl extends TokensService {
 
     final result = message;
     if (result is FetchTokensSuccess) {
-      await insertAssetsWithProvenance(result.assets);
+      await insertAssetsWithProvenance(
+        result.assets,
+        retainOwners: result.addresses,
+      );
       NftCollection.logger.info("[${result.key}] receive ${result.assets.length} tokens");
 
       if (result.key == REFRESH_ALL_TOKENS) {
