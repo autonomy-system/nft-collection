@@ -47,6 +47,8 @@ class TokensServiceImpl extends TokensService {
   final NftCollectionDatabase _database;
   final NftCollectionPrefs _configurationService;
 
+  final Set<String> _ownedTokenIds = {};
+
   static const _stringListEquality = ListEquality<String>();
   static const REFRESH_ALL_TOKENS = 'REFRESH_ALL_TOKENS';
   static const FETCH_TOKENS = 'FETCH_TOKENS';
@@ -137,7 +139,9 @@ class TokensServiceImpl extends TokensService {
     await startIsolateOrWait();
 
     final tokenIDs = await getTokenIDs(addresses);
-    await _database.assetDao.deleteAssetsNotIn(tokenIDs + debugTokenIDs + pendingTokens);
+    _ownedTokenIds.clear();
+    _ownedTokenIds.addAll(tokenIDs + debugTokenIDs + pendingTokens);
+    // await _database.assetDao.deleteAssetsNotIn(tokenIDs + debugTokenIDs + pendingTokens);
 
     final dbTokenIDs = (await _assetDao.findAllAssetTokenIDs()).toSet();
     final expectedNewTokenIDs = tokenIDs.toSet().difference(dbTokenIDs);
@@ -177,7 +181,7 @@ class TokensServiceImpl extends TokensService {
       ),
     );
     final assets = assetsLists.flattened.toList();
-    await insertAssetsWithProvenance(assets);
+    await insertAssetsWithProvenance(assets, retainOwners: addresses);
     if (assets.length < size) {
       if (assets.isNotEmpty) {
         final tokenIDs = assets.map((e) => e.id).toList();
@@ -209,7 +213,10 @@ class TokensServiceImpl extends TokensService {
     return completer.future;
   }
 
-  Future insertAssetsWithProvenance(List<Asset> assets) async {
+  Future insertAssetsWithProvenance(
+    List<Asset> assets, {
+    List<String>? retainOwners,
+  }) async {
     List<AssetToken> tokens = [];
     List<TokenOwner> owners = [];
     List<Provenance> provenance = [];
@@ -217,6 +224,7 @@ class TokensServiceImpl extends TokensService {
       var token = AssetToken.fromAsset(asset);
       tokens.add(token);
       owners.addAll(token.owners.entries
+          .where((e) => retainOwners?.contains(e.key) ?? true)
           .map((e) => TokenOwner(asset.id, e.key, e.value))
           .toList());
       provenance.addAll(asset.provenance);
@@ -294,7 +302,11 @@ class TokensServiceImpl extends TokensService {
 
     final result = message;
     if (result is FetchTokensSuccess) {
-      await insertAssetsWithProvenance(result.assets);
+      _ownedTokenIds.addAll(result.assets.map((e) => e.id));
+      await insertAssetsWithProvenance(
+        result.assets,
+        retainOwners: result.addresses,
+      );
       NftCollection.logger.info("[${result.key}] receive ${result.assets.length} tokens");
 
       if (result.key == REFRESH_ALL_TOKENS) {
@@ -311,6 +323,11 @@ class TokensServiceImpl extends TokensService {
           _fetchTokensCompleters.remove(result.uuid);
           NftCollection.logger.info("[FETCH_TOKENS][end]");
         }
+      }
+
+      if (result.done) {
+        _assetDao.deleteAssetsNotIn(_ownedTokenIds.toList());
+        _ownedTokenIds.clear();
       }
       //
     } else if (result is FetchTokenFailure) {
