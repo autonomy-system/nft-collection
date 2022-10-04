@@ -549,6 +549,11 @@ class _$AssetTokenDao extends AssetTokenDao {
   }
 
   @override
+  Future<void> removeAllExcludePending() async {
+    await _queryAdapter.queryNoReturn('DELETE FROM AssetToken WHERE pending=0');
+  }
+
+  @override
   Future<void> insertAsset(AssetToken asset) async {
     await _assetTokenInsertionAdapter.insert(asset, OnConflictStrategy.replace);
   }

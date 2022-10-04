@@ -69,6 +69,9 @@ abstract class AssetTokenDao {
 
   @Query('DELETE FROM AssetToken')
   Future<void> removeAll();
+
+  @Query('DELETE FROM AssetToken WHERE pending=0')
+  Future<void> removeAllExcludePending();
 }
 
 /** MARK: - Important!

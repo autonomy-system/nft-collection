@@ -118,7 +118,7 @@ class TokensServiceImpl extends TokensService {
   Future purgeCachedGallery() async {
     disposeIsolate();
     _configurationService.setLatestRefreshTokens(null);
-    await _assetDao.removeAll();
+    await _assetDao.removeAllExcludePending();
   }
 
   @override
@@ -191,7 +191,7 @@ class TokensServiceImpl extends TokensService {
         await _database.assetDao.deleteAssetsNotIn(tokenIDs + pendingTokens);
         await _database.provenanceDao.deleteProvenanceNotBelongs(tokenIDs + pendingTokens);
       } else {
-        await _database.assetDao.removeAll();
+        await _database.assetDao.removeAllExcludePending();
         await _database.provenanceDao.removeAll();
       }
     }
