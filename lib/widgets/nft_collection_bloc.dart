@@ -118,7 +118,9 @@ class NftCollectionBloc
 
         add(_SubRefreshTokensEvent(NftLoadingState.notRequested));
 
-        final pendingTokenIds = pendingTokens.map((e) => e.id).toList();
+        final pendingTokenIds = (await database.assetDao.findAllPendingTokens())
+            .map((e) => e.id)
+            .toList();
         final latestAssets = await tokensService.fetchLatestAssets(
           allAccountNumbers,
           indexerTokensPageSize,
