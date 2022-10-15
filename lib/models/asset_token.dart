@@ -50,6 +50,7 @@ class AssetToken {
   @ignore
   DateTime? updateTime;
   bool? pending;
+  String? initialSaleModel;
 
   AssetToken({
     required this.artistName,
@@ -80,6 +81,7 @@ class AssetToken {
     required this.thumbnailURL,
     required this.galleryThumbnailURL,
     required this.title,
+    required this.initialSaleModel,
     required this.ownerAddress,
     required this.owners,
     required this.lastActivityTime,
@@ -117,6 +119,7 @@ class AssetToken {
         thumbnailURL: asset.projectMetadata.latest.thumbnailUrl,
         galleryThumbnailURL: asset.projectMetadata.latest.galleryThumbnailUrl,
         title: asset.projectMetadata.latest.title,
+        initialSaleModel: asset.saleModel,
         ownerAddress: asset.owner,
         owners: asset.owners,
         lastActivityTime: asset.lastActivityTime,

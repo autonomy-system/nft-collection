@@ -68,6 +68,13 @@ class Asset {
           : [],
     );
   }
+
+  String? get saleModel {
+    String? latestSaleModel = projectMetadata.latest.initialSaleModel?.trim();
+    return latestSaleModel?.isNotEmpty == true
+        ? latestSaleModel
+        : projectMetadata.origin.initialSaleModel;
+  }
 }
 
 class ProjectMetadata {
@@ -112,6 +119,7 @@ class ProjectMetadataData {
     required this.assetUrl,
     required this.artistId,
     required this.originalFileUrl,
+    required this.initialSaleModel,
   });
 
   String? artistName;
@@ -133,6 +141,7 @@ class ProjectMetadataData {
   String? assetUrl;
   String? artistId;
   String? originalFileUrl;
+  String? initialSaleModel;
 
   factory ProjectMetadataData.fromJson(Map<String, dynamic> json) =>
       ProjectMetadataData(
@@ -155,6 +164,7 @@ class ProjectMetadataData {
         assetUrl: json["assetURL"],
         artistId: json["artistID"],
         originalFileUrl: json["originalFileURL"],
+        initialSaleModel: json["initialSaleModel"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -176,5 +186,6 @@ class ProjectMetadataData {
         "assetURL": assetUrl,
         "artistID": artistId,
         "originalFileURL": originalFileUrl,
+        "initialSaleModel": initialSaleModel,
       };
 }
