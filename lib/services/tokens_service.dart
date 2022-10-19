@@ -10,7 +10,6 @@ import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/data/api/tzkt_api.dart';
@@ -70,6 +69,9 @@ class TokensServiceImpl extends TokensService {
   setMocktestService(TZKTApi tzktApi, IndexerApi indexerApi) {
     _tzkt = tzktApi;
     _indexer = indexerApi;
+  }
+  setMockTestSendPort(SendPort sendPort){
+    _sendPort = sendPort;
   }
 
   SendPort? _sendPort;

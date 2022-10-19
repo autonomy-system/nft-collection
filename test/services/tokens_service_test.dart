@@ -32,8 +32,8 @@ main() async {
   late TokensServiceImpl tokenService;
   late SendPort sendPort;
   late NftCollectionDatabase database;
-  late NftCollectionPrefs collectionPrefs;
-  late IndexerApi indexerApi;
+  late MockNftCollectionPrefs collectionPrefs;
+  late MockIndexerApi indexerApi;
   late MockAssetTokenDao assetTokenDao;
   late TZKTApi tzktApi;
   late MockTokenOwnerDao tokenOwnerDao;
@@ -108,14 +108,10 @@ main() async {
             originalFileUrl: "originalFileUrl",
             initialSaleModel: 'initialSaleModel'),
       ),
-      provenance: [
-        provenance
-      ]);
+      provenance: [provenance]);
   AssetToken assetToken = AssetToken.fromAsset(asset);
   group('tokens service test', () {
     setup() async {
-
-
       collectionPrefs = MockNftCollectionPrefs();
       indexerApi = MockIndexerApi();
       tzktApi = MockTZKTApi();
@@ -135,23 +131,79 @@ main() async {
     test('fetch latest assets', () async {
       await setup();
 
-      when(indexerApi.getNftTokensByOwner(txAddress[0], 0, size)).thenAnswer((_) async => [asset]);
+      when(indexerApi.getNftTokensByOwner(txAddress[0], 0, size))
+          .thenAnswer((_) async => [asset]);
 
       final tokens = await tokenService.fetchLatestAssets(txAddress, size);
 
-      var a = verify(tokenOwnerDao.insertTokenOwners(captureAny)).captured.first as List<TokenOwner>;
-      expect(a.first.indexerId, tokenOwner.indexerId);
-      expect(a.first.owner, tokenOwner.owner);
-      expect(a.first.quantity, tokenOwner.quantity);
-      expect(a.first.updateTime, tokenOwner.updateTime);
+      var tokenOwnerParam = verify(tokenOwnerDao.insertTokenOwners(captureAny))
+          .captured
+          .first as List<TokenOwner>;
+      expect(tokenOwnerParam.first.indexerId, tokenOwner.indexerId);
+      expect(tokenOwnerParam.first.owner, tokenOwner.owner);
+      expect(tokenOwnerParam.first.quantity, tokenOwner.quantity);
+      expect(tokenOwnerParam.first.updateTime, tokenOwner.updateTime);
       verify(assetTokenDao.insertAssets([assetToken])).called(1);
       verify(provenanceDao.insertProvenance([provenance])).called(1);
 
       expect(tokens[0], asset);
+    });
+
+    test('Set custom tokens', () async {
+      await setup();
+
+      await tokenService.setCustomTokens([assetToken]);
+
+      var tokenOwnerParam = verify(tokenOwnerDao.insertTokenOwners(captureAny))
+          .captured
+          .first as List<TokenOwner>;
+      expect(tokenOwnerParam.first.indexerId, tokenOwner.indexerId);
+      expect(tokenOwnerParam.first.owner, tokenOwner.owner);
+      expect(tokenOwnerParam.first.quantity, tokenOwner.quantity);
+      expect(tokenOwnerParam.first.updateTime, tokenOwner.updateTime);
+
+      verify(assetTokenDao.insertAssets([assetToken])).called(1);
+    });
+
+    test('Fetch manual tokens', () async {
+      await setup();
+
+      when(indexerApi.getNftTokens({
+        "ids": ["id"]
+      })).thenAnswer((_) async => [asset]);
+
+      await tokenService.fetchManualTokens(["id"]);
+
+      var tokenOwnerParam = verify(tokenOwnerDao.insertTokenOwners(captureAny))
+          .captured
+          .first as List<TokenOwner>;
+      expect(tokenOwnerParam.first.indexerId, tokenOwner.indexerId);
+      expect(tokenOwnerParam.first.owner, tokenOwner.owner);
+      expect(tokenOwnerParam.first.quantity, tokenOwner.quantity);
+      expect(tokenOwnerParam.first.updateTime, tokenOwner.updateTime);
+      verify(assetTokenDao.insertAssets([assetToken])).called(1);
+      verify(provenanceDao.insertProvenance([provenance])).called(1);
+    });
+
+    test('Purge cached gallery', () async {
+      await setup();
+      when(collectionPrefs.setLatestRefreshTokens(any)).thenAnswer((_) async => true);
+      when(assetTokenDao.removeAllExcludePending()).thenAnswer((_) async => {Future<void>});
+      await tokenService.purgeCachedGallery();
+      verify(collectionPrefs.setLatestRefreshTokens(any)).called(1);
+      //verify(assetTokenDao.removeAllExcludePending()).called(1);
 
     });
 
-    
+    test('Fetch tokens for address', () async {
+      await setup();
+      when(indexerApi.getNftTokensByOwner(any, any, any))
+          .thenAnswer((_) async { print("12"); return [asset]; });
+      await tokenService.fetchTokensForAddresses(txAddress);
+      //verify(indexerApi.getNftTokensByOwner(any, any, any)).called(1);
+
+    });
+
+
   });
 }
-
