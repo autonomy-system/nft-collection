@@ -67,6 +67,11 @@ class TokensServiceImpl extends TokensService {
     _tzkt = TZKTApi(dio);
   }
 
+  setMocktestService(TZKTApi tzktApi, IndexerApi indexerApi) {
+    _tzkt = tzktApi;
+    _indexer = indexerApi;
+  }
+
   SendPort? _sendPort;
   ReceivePort? _receivePort;
   Isolate? _isolate;
