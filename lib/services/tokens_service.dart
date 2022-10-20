@@ -312,6 +312,12 @@ class TokensServiceImpl extends TokensService {
   @override
   Future fetchManualTokens(List<String> indexerIds) async {
     final manuallyAssets = (await _indexer.getNftTokens({"ids": indexerIds}));
+
+    //Tripe owner for manual asset
+    for (var i = 0; i < manuallyAssets.length; i++) {
+      manuallyAssets[i].owner = "";
+    }
+
     NftCollection.logger.info("[TokensService] "
         "fetched ${manuallyAssets.length} manual tokens. "
         "IDs: $indexerIds");

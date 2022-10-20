@@ -86,7 +86,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `pending` INTEGER, `initialSaleModel` TEXT, PRIMARY KEY (`id`))');
+            'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT NOT NULL, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `pending` INTEGER, `initialSaleModel` TEXT, PRIMARY KEY (`id`, `ownerAddress`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `TokenOwner` (`indexerId` TEXT NOT NULL, `owner` TEXT NOT NULL, `quantity` INTEGER NOT NULL, `updateTime` INTEGER, FOREIGN KEY (`indexerId`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`indexerId`, `owner`))');
         await database.execute(
@@ -164,7 +164,7 @@ class _$AssetTokenDao extends AssetTokenDao {
         _assetTokenUpdateAdapter = UpdateAdapter(
             database,
             'AssetToken',
-            ['id'],
+            ['id', 'ownerAddress'],
             (AssetToken item) => <String, Object?>{
                   'artistName': item.artistName,
                   'artistURL': item.artistURL,
@@ -207,7 +207,7 @@ class _$AssetTokenDao extends AssetTokenDao {
         _assetTokenDeletionAdapter = DeletionAdapter(
             database,
             'AssetToken',
-            ['id'],
+            ['id', 'ownerAddress'],
             (AssetToken item) => <String, Object?>{
                   'artistName': item.artistName,
                   'artistURL': item.artistURL,
@@ -295,7 +295,7 @@ class _$AssetTokenDao extends AssetTokenDao {
             galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
             title: row['title'] as String,
             initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String?,
+            ownerAddress: row['ownerAddress'] as String,
             owners: _tokenOwnersConverter.decode(row['owners'] as String),
             balance: row['balance'] as int?,
             lastActivityTime:
@@ -315,7 +315,7 @@ class _$AssetTokenDao extends AssetTokenDao {
         'SELECT DISTINCT t.*, o.updateTime AS updateTime FROM AssetToken t INNER JOIN TokenOwner o ON t.id = o.indexerId WHERE o.owner IN (' +
             _sqliteVariablesForOwners +
             ') ORDER BY lastActivityTime DESC, title, assetID',
-        mapper: (Map<String, Object?> row) => AssetToken(artistName: row['artistName'] as String?, artistURL: row['artistURL'] as String?, artistID: row['artistID'] as String?, assetData: row['assetData'] as String?, assetID: row['assetID'] as String?, assetURL: row['assetURL'] as String?, basePrice: row['basePrice'] as double?, baseCurrency: row['baseCurrency'] as String?, blockchain: row['blockchain'] as String, blockchainUrl: row['blockchainUrl'] as String?, fungible: row['fungible'] == null ? null : (row['fungible'] as int) != 0, contractType: row['contractType'] as String?, tokenId: row['tokenId'] as String?, contractAddress: row['contractAddress'] as String?, desc: row['desc'] as String?, edition: row['edition'] as int, id: row['id'] as String, maxEdition: row['maxEdition'] as int?, medium: row['medium'] as String?, mimeType: row['mimeType'] as String?, mintedAt: row['mintedAt'] as String?, previewURL: row['previewURL'] as String?, source: row['source'] as String?, sourceURL: row['sourceURL'] as String?, thumbnailID: row['thumbnailID'] as String?, thumbnailURL: row['thumbnailURL'] as String?, galleryThumbnailURL: row['galleryThumbnailURL'] as String?, title: row['title'] as String, initialSaleModel: row['initialSaleModel'] as String?, ownerAddress: row['ownerAddress'] as String?, owners: _tokenOwnersConverter.decode(row['owners'] as String), balance: row['balance'] as int?, lastActivityTime: _dateTimeConverter.decode(row['lastActivityTime'] as int), pending: row['pending'] == null ? null : (row['pending'] as int) != 0, updateTime: _nullableDateTimeConverter.decode(row["updateTime"] as int?)),
+        mapper: (Map<String, Object?> row) => AssetToken(artistName: row['artistName'] as String?, artistURL: row['artistURL'] as String?, artistID: row['artistID'] as String?, assetData: row['assetData'] as String?, assetID: row['assetID'] as String?, assetURL: row['assetURL'] as String?, basePrice: row['basePrice'] as double?, baseCurrency: row['baseCurrency'] as String?, blockchain: row['blockchain'] as String, blockchainUrl: row['blockchainUrl'] as String?, fungible: row['fungible'] == null ? null : (row['fungible'] as int) != 0, contractType: row['contractType'] as String?, tokenId: row['tokenId'] as String?, contractAddress: row['contractAddress'] as String?, desc: row['desc'] as String?, edition: row['edition'] as int, id: row['id'] as String, maxEdition: row['maxEdition'] as int?, medium: row['medium'] as String?, mimeType: row['mimeType'] as String?, mintedAt: row['mintedAt'] as String?, previewURL: row['previewURL'] as String?, source: row['source'] as String?, sourceURL: row['sourceURL'] as String?, thumbnailID: row['thumbnailID'] as String?, thumbnailURL: row['thumbnailURL'] as String?, galleryThumbnailURL: row['galleryThumbnailURL'] as String?, title: row['title'] as String, initialSaleModel: row['initialSaleModel'] as String?, ownerAddress: row['ownerAddress'] as String, owners: _tokenOwnersConverter.decode(row['owners'] as String), balance: row['balance'] as int?, lastActivityTime: _dateTimeConverter.decode(row['lastActivityTime'] as int), pending: row['pending'] == null ? null : (row['pending'] as int) != 0, updateTime: _nullableDateTimeConverter.decode(row["updateTime"] as int?)),
         arguments: [...owners]);
   }
 
@@ -355,7 +355,7 @@ class _$AssetTokenDao extends AssetTokenDao {
             galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
             title: row['title'] as String,
             initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String?,
+            ownerAddress: row['ownerAddress'] as String,
             owners: _tokenOwnersConverter.decode(row['owners'] as String),
             balance: row['balance'] as int?,
             lastActivityTime:
@@ -399,7 +399,7 @@ class _$AssetTokenDao extends AssetTokenDao {
             galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
             title: row['title'] as String,
             initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String?,
+            ownerAddress: row['ownerAddress'] as String,
             owners: _tokenOwnersConverter.decode(row['owners'] as String),
             balance: row['balance'] as int?,
             lastActivityTime:
@@ -448,7 +448,7 @@ class _$AssetTokenDao extends AssetTokenDao {
             galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
             title: row['title'] as String,
             initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String?,
+            ownerAddress: row['ownerAddress'] as String,
             owners: _tokenOwnersConverter.decode(row['owners'] as String),
             balance: row['balance'] as int?,
             lastActivityTime:
@@ -513,7 +513,7 @@ class _$AssetTokenDao extends AssetTokenDao {
             galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
             title: row['title'] as String,
             initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String?,
+            ownerAddress: row['ownerAddress'] as String,
             owners: _tokenOwnersConverter.decode(row['owners'] as String),
             balance: row['balance'] as int?,
             lastActivityTime:
