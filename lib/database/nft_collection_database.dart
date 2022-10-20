@@ -10,10 +10,8 @@ import 'dart:async';
 import 'package:floor/floor.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/dao/provenance_dao.dart';
-import 'package:nft_collection/database/dao/token_owner_dao.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/models/provenance.dart';
-import 'package:nft_collection/models/token_owner.dart';
 import 'package:nft_collection/utils/date_time_converter.dart';
 
 // ignore: depend_on_referenced_packages
@@ -26,10 +24,9 @@ part 'nft_collection_database.g.dart'; // the generated code will be there
   NullableDateTimeConverter,
   TokenOwnersConverter,
 ])
-@Database(version: 6, entities: [AssetToken, TokenOwner, Provenance])
+@Database(version: 6, entities: [AssetToken, Provenance])
 abstract class NftCollectionDatabase extends FloorDatabase {
   AssetTokenDao get assetDao;
-  TokenOwnerDao get tokenOwnerDao;
   ProvenanceDao get provenanceDao;
 
   Future<dynamic> removeAll() async {
@@ -64,5 +61,10 @@ final migrateV4ToV5 = Migration(4, 5, (database) async {
 });
 
 final migrateV5ToV6 = Migration(5, 6, (database) async {
-  await database.execute('ALTER TABLE `AssetToken` ADD `balance` INTEGER');
+  await database.execute('DROP TABLE `Provenance`');
+  await database.execute('DROP TABLE `TokenOwner`');
+  await database.execute('DROP TABLE `AssetToken`');
+  await database.execute('CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT NOT NULL, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `updateTime` INTEGER, `pending` INTEGER, `initialSaleModel` TEXT, PRIMARY KEY (`id`, `ownerAddress`))');
+  await database.execute('CREATE TABLE IF NOT EXISTS `Provenance` (`txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`txID`))');
+  await database.execute('CREATE INDEX `index_Provenance_tokenID` ON `Provenance` (`tokenID`)');
 });

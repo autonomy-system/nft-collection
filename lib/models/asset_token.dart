@@ -11,7 +11,10 @@ import 'package:floor_annotation/floor_annotation.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/provenance.dart';
 
-@entity
+@Entity(primaryKeys: [
+  "id",
+  "ownerAddress"
+])
 class AssetToken {
   String? artistName;
   String? artistURL;
@@ -29,7 +32,6 @@ class AssetToken {
   String? contractAddress;
   String? desc;
   int edition;
-  @primaryKey
   String id;
   int? maxEdition;
   String? medium;
@@ -42,13 +44,12 @@ class AssetToken {
   String? thumbnailURL;
   String? galleryThumbnailURL;
   String title;
-  String? ownerAddress;
+  String ownerAddress;
   Map<String, int> owners;
   int? balance;
   DateTime lastActivityTime;
   @ignore
   List<Provenance>? provenances;
-  @ignore
   DateTime? updateTime;
   bool? pending;
   String? initialSaleModel;
