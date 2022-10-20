@@ -411,8 +411,12 @@ class _$AssetTokenDao extends AssetTokenDao {
   }
 
   @override
-  Future<AssetToken?> findAssetTokenById(String id) async {
-    return _queryAdapter.query('SELECT * FROM AssetToken WHERE id = ?1',
+  Future<AssetToken?> findAssetTokenByIdAndOwner(
+    String id,
+    String owner,
+  ) async {
+    return _queryAdapter.query(
+        'SELECT * FROM AssetToken WHERE id = ?1 AND ownerAddress = ?2',
         mapper: (Map<String, Object?> row) => AssetToken(
             artistName: row['artistName'] as String?,
             artistURL: row['artistURL'] as String?,
@@ -453,7 +457,7 @@ class _$AssetTokenDao extends AssetTokenDao {
                 _nullableDateTimeConverter.decode(row['updateTime'] as int?),
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0),
-        arguments: [id]);
+        arguments: [id, owner]);
   }
 
   @override

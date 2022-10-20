@@ -23,8 +23,8 @@ abstract class AssetTokenDao {
       'SELECT * FROM AssetToken WHERE blockchain = :blockchain')
   Future<List<AssetToken>> findAssetTokensByBlockchain(String blockchain);
 
-  @Query('SELECT * FROM AssetToken WHERE id = :id')
-  Future<AssetToken?> findAssetTokenById(String id);
+  @Query('SELECT * FROM AssetToken WHERE id = :id AND ownerAddress = :owner')
+  Future<AssetToken?> findAssetTokenByIdAndOwner(String id, String owner);
 
   @Query('SELECT * FROM AssetToken WHERE id IN (:ids)')
   Future<List<AssetToken>> findAllAssetTokensByIds(List<String> ids);
