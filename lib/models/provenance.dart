@@ -6,16 +6,8 @@
 //
 
 import 'package:floor/floor.dart';
-import 'package:nft_collection/models/asset_token.dart';
 
-@Entity(tableName: 'Provenance', foreignKeys: [
-  ForeignKey(
-    childColumns: ['tokenID'],
-    parentColumns: ['id'],
-    entity: AssetToken,
-    onDelete: ForeignKeyAction.cascade,
-  )
-], indices: [
+@Entity(tableName: 'Provenance', indices: [
   Index(value: ['tokenID'])
 ])
 class Provenance {

@@ -50,7 +50,6 @@ class AssetToken {
   DateTime lastActivityTime;
   @ignore
   List<Provenance>? provenances;
-  @ignore
   DateTime? updateTime;
   bool? pending;
   String? initialSaleModel;

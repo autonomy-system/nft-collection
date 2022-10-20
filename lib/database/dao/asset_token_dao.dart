@@ -14,9 +14,8 @@ abstract class AssetTokenDao {
       'SELECT * FROM AssetToken ORDER BY lastActivityTime DESC, title, assetID')
   Future<List<AssetToken>> findAllAssetTokens();
 
-  @Query('SELECT DISTINCT t.*, o.updateTime AS updateTime FROM AssetToken t INNER JOIN TokenOwner o'
-      ' ON t.id = o.indexerId'
-      ' WHERE o.owner IN (:owners)'
+  @Query('SELECT DISTINCT * FROM AssetToken'
+      ' WHERE ownerAddress IN (:owners)'
       ' ORDER BY lastActivityTime DESC, title, assetID')
   Future<List<AssetToken>> findAllAssetTokensByOwners(List<String> owners);
 
@@ -33,8 +32,7 @@ abstract class AssetTokenDao {
   @Query('SELECT id FROM AssetToken')
   Future<List<String>> findAllAssetTokenIDs();
 
-  @Query('SELECT t.id FROM AssetToken t INNER JOIN TokenOwner o'
-      ' ON t.id=o.indexerId WHERE o.owner=:owner')
+  @Query('SELECT id FROM AssetToken WHERE ownerAddress=:owner')
   Future<List<String>> findAllAssetTokenIDsByOwner(String owner);
 
   @Query('SELECT DISTINCT artistID FROM AssetToken')
@@ -61,10 +59,7 @@ abstract class AssetTokenDao {
   @Query('DELETE FROM AssetToken WHERE id NOT IN (:ids)')
   Future<void> deleteAssetsNotIn(List<String> ids);
 
-  @Query('DELETE FROM AssetToken'
-      ' WHERE id NOT IN'
-      ' (SELECT DISTINCT t.id FROM AssetToken t INNER JOIN TokenOwner o'
-      ' ON t.id=o.indexerId WHERE o.owner IN (:owners))')
+  @Query('DELETE FROM AssetToken WHERE ownerAddress NOT IN (:owners)')
   Future<void> deleteAssetsNotBelongs(List<String> owners);
 
   @Query('DELETE FROM AssetToken')

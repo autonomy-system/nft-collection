@@ -10,7 +10,6 @@ import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/data/api/tzkt_api.dart';
@@ -19,7 +18,6 @@ import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/models/provenance.dart';
-import 'package:nft_collection/models/token_owner.dart';
 import 'package:nft_collection/nft_collection.dart';
 import 'package:nft_collection/services/configuration_service.dart';
 import 'package:nft_collection/utils/constants.dart';
@@ -257,7 +255,6 @@ class TokensServiceImpl extends TokensService {
     List<String>? retainOwners,
   }) async {
     List<AssetToken> tokens = [];
-    List<TokenOwner> owners = [];
     List<Provenance> provenance = [];
 
     final fa2Tokens = assets
@@ -272,20 +269,11 @@ class TokensServiceImpl extends TokensService {
 
     for (var asset in assets) {
       var token = AssetToken.fromAsset(asset);
+      token.updateTime = _tokenUpdateTime[token.id] ?? token.lastActivityTime;
       tokens.add(token);
-      owners.addAll(token.owners.entries
-          .where((e) => retainOwners?.contains(e.key) ?? true)
-          .map((e) => TokenOwner(
-                asset.id,
-                e.key,
-                e.value,
-                _tokenUpdateTime[token.id] ?? token.lastActivityTime,
-              ))
-          .toList());
       provenance.addAll(asset.provenance);
     }
     await _database.assetDao.insertAssets(tokens);
-    await _database.tokenOwnerDao.insertTokenOwners(owners);
     await _database.provenanceDao.insertProvenance(provenance);
   }
 
@@ -313,7 +301,7 @@ class TokensServiceImpl extends TokensService {
   Future fetchManualTokens(List<String> indexerIds) async {
     final manuallyAssets = (await _indexer.getNftTokens({"ids": indexerIds}));
 
-    //Tripe owner for manual asset
+    //stripe owner for manual asset
     for (var i = 0; i < manuallyAssets.length; i++) {
       manuallyAssets[i].owner = "";
     }
@@ -327,16 +315,6 @@ class TokensServiceImpl extends TokensService {
   @override
   Future setCustomTokens(List<AssetToken> tokens) async {
     await _database.assetDao.insertAssets(tokens);
-    final owners = tokens
-        .map((t) => t.owners.entries.map((e) => TokenOwner(
-              t.id,
-              e.key,
-              e.value,
-              t.lastActivityTime,
-            )))
-        .flattened
-        .toList();
-    await _database.tokenOwnerDao.insertTokenOwners(owners);
   }
 
   static void _isolateEntry(List<dynamic> arguments) {
@@ -507,6 +485,10 @@ class TokensServiceImpl extends TokensService {
 List<Asset> mapOwnerAddress(List<Asset> assets, String owner) {
   return assets.map((asset) {
     asset.owner = owner;
+    // map balance for missing balance (ETH supported later)
+    if (asset.balance == null || asset.balance == 0) {
+      asset.balance = asset.owners[owner] ?? 0;
+    }
     return asset;
   }).toList();
 }
