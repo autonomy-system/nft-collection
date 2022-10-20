@@ -44,6 +44,7 @@ class AssetToken {
   String title;
   String? ownerAddress;
   Map<String, int> owners;
+  int? balance;
   DateTime lastActivityTime;
   @ignore
   List<Provenance>? provenances;
@@ -84,6 +85,7 @@ class AssetToken {
     required this.initialSaleModel,
     required this.ownerAddress,
     required this.owners,
+    required this.balance,
     required this.lastActivityTime,
     this.provenances,
     this.updateTime,
@@ -122,6 +124,7 @@ class AssetToken {
         initialSaleModel: asset.saleModel,
         ownerAddress: asset.owner,
         owners: asset.owners,
+        balance: asset.balance,
         lastActivityTime: asset.lastActivityTime,
         provenances: asset.provenance,
         pending: false,

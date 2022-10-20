@@ -18,6 +18,7 @@ class Asset {
     required this.tokenId,
     required this.contractAddress,
     required this.blockchainURL,
+    required this.balance,
     required this.owner,
     required this.owners,
     required this.thumbnailID,
@@ -35,6 +36,7 @@ class Asset {
   String? tokenId;
   String? contractAddress;
   String? blockchainURL;
+  int? balance;
   String owner;
   Map<String, int> owners; // Map from owner's address to number of owned tokens.
   String thumbnailID;
@@ -57,6 +59,7 @@ class Asset {
       tokenId: json["id"],
       contractAddress: json["contractAddress"],
       blockchainURL: json["blockchainURL"],
+      balance: json["balance"],
       owner: json["owner"],
       owners: owners,
       thumbnailID: json["thumbnailID"],

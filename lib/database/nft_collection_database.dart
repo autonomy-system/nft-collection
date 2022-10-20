@@ -26,7 +26,7 @@ part 'nft_collection_database.g.dart'; // the generated code will be there
   NullableDateTimeConverter,
   TokenOwnersConverter,
 ])
-@Database(version: 5, entities: [AssetToken, TokenOwner, Provenance])
+@Database(version: 6, entities: [AssetToken, TokenOwner, Provenance])
 abstract class NftCollectionDatabase extends FloorDatabase {
   AssetTokenDao get assetDao;
   TokenOwnerDao get tokenOwnerDao;
@@ -43,6 +43,7 @@ final migrations = [
   migrateV2ToV3,
   migrateV3ToV4,
   migrateV4ToV5,
+  migrateV5ToV6
 ];
 
 final migrateV1ToV2 = Migration(1, 2, (database) async {
@@ -60,4 +61,8 @@ final migrateV3ToV4 = Migration(3, 4, (database) async {
 
 final migrateV4ToV5 = Migration(4, 5, (database) async {
   await database.execute('ALTER TABLE `AssetToken` ADD `initialSaleModel` TEXT');
+});
+
+final migrateV5ToV6 = Migration(5, 6, (database) async {
+  await database.execute('ALTER TABLE `AssetToken` ADD `balance` INTEGER');
 });

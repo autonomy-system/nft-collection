@@ -25,7 +25,7 @@ abstract class IndexerApi {
     @Query("offset") int offset,
   );
 
-  @GET("/nft")
+  @GET("/v1/nft")
   Future<List<Asset>> getNftTokensByOwner(
     @Query("owner") String owner,
     @Query("offset") int offset,
