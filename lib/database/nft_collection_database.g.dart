@@ -160,6 +160,28 @@ class _$AssetTokenDao extends AssetTokenDao {
                       item.pending == null ? null : (item.pending! ? 1 : 0),
                   'initialSaleModel': item.initialSaleModel
                 }),
+        _tokenOwnerInsertionAdapter = InsertionAdapter(
+            database,
+            'TokenOwner',
+            (TokenOwner item) => <String, Object?>{
+                  'indexerId': item.indexerId,
+                  'owner': item.owner,
+                  'quantity': item.quantity,
+                  'updateTime':
+                      _nullableDateTimeConverter.encode(item.updateTime)
+                }),
+        _provenanceInsertionAdapter = InsertionAdapter(
+            database,
+            'Provenance',
+            (Provenance item) => <String, Object?>{
+                  'txID': item.txID,
+                  'type': item.type,
+                  'blockchain': item.blockchain,
+                  'owner': item.owner,
+                  'timestamp': _dateTimeConverter.encode(item.timestamp),
+                  'txURL': item.txURL,
+                  'tokenID': item.tokenID
+                }),
         _assetTokenUpdateAdapter = UpdateAdapter(
             database,
             'AssetToken',
@@ -252,6 +274,10 @@ class _$AssetTokenDao extends AssetTokenDao {
   final QueryAdapter _queryAdapter;
 
   final InsertionAdapter<AssetToken> _assetTokenInsertionAdapter;
+
+  final InsertionAdapter<TokenOwner> _tokenOwnerInsertionAdapter;
+
+  final InsertionAdapter<Provenance> _provenanceInsertionAdapter;
 
   final UpdateAdapter<AssetToken> _assetTokenUpdateAdapter;
 
@@ -573,6 +599,18 @@ class _$AssetTokenDao extends AssetTokenDao {
   }
 
   @override
+  Future<void> insertTokenOwners(List<TokenOwner> owners) async {
+    await _tokenOwnerInsertionAdapter.insertList(
+        owners, OnConflictStrategy.replace);
+  }
+
+  @override
+  Future<void> insertProvenance(List<Provenance> provenance) async {
+    await _provenanceInsertionAdapter.insertList(
+        provenance, OnConflictStrategy.replace);
+  }
+
+  @override
   Future<void> updateAsset(AssetToken asset) async {
     await _assetTokenUpdateAdapter.update(asset, OnConflictStrategy.abort);
   }
@@ -580,6 +618,22 @@ class _$AssetTokenDao extends AssetTokenDao {
   @override
   Future<void> deleteAsset(AssetToken asset) async {
     await _assetTokenDeletionAdapter.delete(asset);
+  }
+
+  @override
+  Future<dynamic> insertAssetTokens(List<AssetToken> assets,
+      List<TokenOwner> owners, List<Provenance> provenances) async {
+    if (database is sqflite.Transaction) {
+      return super.insertAssetTokens(assets, owners, provenances);
+    } else {
+      return (database as sqflite.Database)
+          .transaction<dynamic>((transaction) async {
+        final transactionDatabase = _$NftCollectionDatabase(changeListener)
+          ..database = transaction;
+        return transactionDatabase.assetDao
+            .insertAssetTokens(assets, owners, provenances);
+      });
+    }
   }
 }
 

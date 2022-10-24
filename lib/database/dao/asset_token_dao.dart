@@ -7,6 +7,8 @@
 
 import 'package:floor/floor.dart';
 import 'package:nft_collection/models/asset_token.dart';
+import 'package:nft_collection/models/provenance.dart';
+import 'package:nft_collection/models/token_owner.dart';
 
 @dao
 abstract class AssetTokenDao {
@@ -72,6 +74,23 @@ abstract class AssetTokenDao {
 
   @Query('DELETE FROM AssetToken WHERE pending=0')
   Future<void> removeAllExcludePending();
+
+  @Insert(onConflict: OnConflictStrategy.replace)
+  Future<void> insertTokenOwners(List<TokenOwner> owners);
+
+  @Insert(onConflict: OnConflictStrategy.replace)
+  Future<void> insertProvenance(List<Provenance> provenance);
+
+  @transaction
+  Future insertAssetTokens(
+    List<AssetToken> assets,
+    List<TokenOwner> owners,
+    List<Provenance> provenances,
+  ) async {
+    await insertAssets(assets);
+    await insertTokenOwners(owners);
+    await insertProvenance(provenances);
+  }
 }
 
 /** MARK: - Important!

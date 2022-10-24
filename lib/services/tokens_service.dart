@@ -284,9 +284,7 @@ class TokensServiceImpl extends TokensService {
           .toList());
       provenance.addAll(asset.provenance);
     }
-    await _database.assetDao.insertAssets(tokens);
-    await _database.tokenOwnerDao.insertTokenOwners(owners);
-    await _database.provenanceDao.insertProvenance(provenance);
+    await _database.assetDao.insertAssetTokens(tokens, owners, provenance);
   }
 
   Future<List<String>> getTokenIDs(List<String> addresses) async {
@@ -320,7 +318,6 @@ class TokensServiceImpl extends TokensService {
 
   @override
   Future setCustomTokens(List<AssetToken> tokens) async {
-    await _database.assetDao.insertAssets(tokens);
     final owners = tokens
         .map((t) => t.owners.entries.map((e) => TokenOwner(
               t.id,
@@ -330,7 +327,7 @@ class TokensServiceImpl extends TokensService {
             )))
         .flattened
         .toList();
-    await _database.tokenOwnerDao.insertTokenOwners(owners);
+    await _database.assetDao.insertAssetTokens(tokens, owners, []);
   }
 
   static void _isolateEntry(List<dynamic> arguments) {
