@@ -8,10 +8,11 @@
 import 'package:floor/floor.dart';
 
 @Entity(tableName: 'Provenance', indices: [
-  Index(value: ['tokenID'])
+  Index(value: ['id'])
 ])
 class Provenance {
   @primaryKey
+  String id;
   String txID;
   String type;
   String blockchain;
@@ -21,6 +22,7 @@ class Provenance {
   String tokenID;
 
   Provenance({
+    required this.id,
     required this.type,
     required this.blockchain,
     required this.txID,
@@ -30,8 +32,10 @@ class Provenance {
     required this.tokenID,
   });
 
-  factory Provenance.fromJson(Map<String, dynamic> json, String tokenID) =>
+  factory Provenance.fromJson(
+          Map<String, dynamic> json, String tokenID, int index) =>
       Provenance(
+        id: '$tokenID-$index',
         type: json['type'] as String,
         blockchain: json['blockchain'] as String,
         txID: json['txid'] as String,
