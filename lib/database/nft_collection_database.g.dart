@@ -71,7 +71,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
     Callback? callback,
   ]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 6,
+      version: 7,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -89,9 +89,9 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT NOT NULL, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `updateTime` INTEGER, `pending` INTEGER, `initialSaleModel` TEXT, PRIMARY KEY (`id`, `ownerAddress`))');
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Provenance` (`txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`txID`))');
+            'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`id`))');
         await database.execute(
-            'CREATE INDEX `index_Provenance_tokenID` ON `Provenance` (`tokenID`)');
+            'CREATE INDEX `index_Provenance_id` ON `Provenance` (`id`)');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -655,6 +655,7 @@ class _$ProvenanceDao extends ProvenanceDao {
             database,
             'Provenance',
             (Provenance item) => <String, Object?>{
+                  'id': item.id,
                   'txID': item.txID,
                   'type': item.type,
                   'blockchain': item.blockchain,
@@ -677,6 +678,7 @@ class _$ProvenanceDao extends ProvenanceDao {
     return _queryAdapter.queryList(
         'SELECT * FROM Provenance WHERE tokenID = ?1',
         mapper: (Map<String, Object?> row) => Provenance(
+            id: row['id'] as String,
             type: row['type'] as String,
             blockchain: row['blockchain'] as String,
             txID: row['txID'] as String,

@@ -38,7 +38,8 @@ class Asset {
   String? blockchainURL;
   int? balance;
   String owner;
-  Map<String, int> owners; // Map from owner's address to number of owned tokens.
+  Map<String, int>
+      owners; // Map from owner's address to number of owned tokens.
   String thumbnailID;
   ProjectMetadata projectMetadata;
   DateTime lastActivityTime;
@@ -66,8 +67,12 @@ class Asset {
       projectMetadata: ProjectMetadata.fromJson(json["projectMetadata"]),
       lastActivityTime: DateTime.parse(json['lastActivityTime']),
       provenance: json["provenance"] != null
-          ? List<Provenance>.from(json["provenance"]
-              .map((x) => Provenance.fromJson(x, json["indexID"])))
+          ? (json["provenance"] as List<dynamic>)
+              .asMap()
+              .map<int, Provenance>((key, value) => MapEntry(
+                  key, Provenance.fromJson(value, json['indexID'], key)))
+              .values
+              .toList()
           : [],
     );
   }
