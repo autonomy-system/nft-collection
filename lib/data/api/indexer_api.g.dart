@@ -24,7 +24,7 @@ class _IndexerApi implements IndexerApi {
     _data.addAll(ids);
     final _result = await _dio.fetch<List<dynamic>>(_setStreamType<List<Asset>>(
         Options(method: 'POST', headers: _headers, extra: _extra)
-            .compose(_dio.options, '/nft/query',
+            .compose(_dio.options, '/v1/nft/query',
                 queryParameters: queryParameters, data: _data)
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     var value = _result.data!
@@ -41,7 +41,7 @@ class _IndexerApi implements IndexerApi {
     final _data = <String, dynamic>{};
     final _result = await _dio.fetch<List<dynamic>>(_setStreamType<List<Asset>>(
         Options(method: 'POST', headers: _headers, extra: _extra)
-            .compose(_dio.options, '/nft/query',
+            .compose(_dio.options, '/v1/nft/query',
                 queryParameters: queryParameters, data: _data)
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     var value = _result.data!

@@ -17,10 +17,10 @@ part 'indexer_api.g.dart';
 abstract class IndexerApi {
   factory IndexerApi(Dio dio, {String baseUrl}) = _IndexerApi;
 
-  @POST("/nft/query")
+  @POST("/v1/nft/query")
   Future<List<Asset>> getNftTokens(@Body() Map<String, List<String>> ids);
 
-  @POST("/nft/query")
+  @POST("/v1/nft/query")
   Future<List<Asset>> getNFTTokens(
     @Query("offset") int offset,
   );
