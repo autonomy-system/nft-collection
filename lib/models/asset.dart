@@ -11,6 +11,7 @@ class Asset {
   Asset({
     required this.id,
     required this.edition,
+    required this.editionName,
     required this.blockchain,
     required this.fungible,
     required this.mintedAt,
@@ -29,6 +30,7 @@ class Asset {
 
   String id;
   int edition;
+  String? editionName;
   String blockchain;
   bool fungible;
   DateTime mintedAt;
@@ -53,6 +55,7 @@ class Asset {
     return Asset(
       id: json["indexID"],
       edition: json["edition"],
+      editionName: json["editionName"],
       blockchain: json["blockchain"],
       fungible: json["fungible"] == true,
       mintedAt: DateTime.parse(json["mintedAt"]),

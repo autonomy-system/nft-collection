@@ -32,6 +32,7 @@ class AssetToken {
   String? contractAddress;
   String? desc;
   int edition;
+  String? editionName;
   String id;
   int? maxEdition;
   String? medium;
@@ -71,6 +72,7 @@ class AssetToken {
     required this.contractAddress,
     required this.desc,
     required this.edition,
+    required this.editionName,
     required this.id,
     required this.maxEdition,
     required this.medium,
@@ -110,6 +112,7 @@ class AssetToken {
         contractAddress: asset.contractAddress,
         desc: asset.projectMetadata.latest.description,
         edition: asset.edition,
+        editionName: asset.editionName,
         id: asset.id,
         maxEdition: asset.projectMetadata.latest.maxEdition,
         medium: asset.projectMetadata.latest.medium,
