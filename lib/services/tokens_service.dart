@@ -17,6 +17,7 @@ import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/asset_token.dart';
+import 'package:nft_collection/models/pending_tx_params.dart';
 import 'package:nft_collection/models/provenance.dart';
 import 'package:nft_collection/nft_collection.dart';
 import 'package:nft_collection/services/configuration_service.dart';
@@ -37,6 +38,7 @@ abstract class TokensService {
   Future<List<Asset>> fetchLatestAssets(List<String> addresses, int size,
       {List<String> pendingTokens,});
   Future purgeCachedGallery();
+  Future postPendingToken(PendingTxParams params);
 }
 
 final _isolateScopeInjector = GetIt.asNewInstance();
@@ -315,6 +317,11 @@ class TokensServiceImpl extends TokensService {
   @override
   Future setCustomTokens(List<AssetToken> tokens) async {
     await _database.assetDao.insertAssets(tokens);
+  }
+
+  @override
+  Future postPendingToken(PendingTxParams params) async {
+    await _indexer.postNftPendingToken(params.toJson());
   }
 
   static void _isolateEntry(List<dynamic> arguments) {

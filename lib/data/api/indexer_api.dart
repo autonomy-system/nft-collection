@@ -5,7 +5,6 @@
 //  that can be found in the LICENSE file.
 //
 
-
 import 'package:dio/dio.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/identity.dart';
@@ -46,5 +45,10 @@ abstract class IndexerApi {
   @GET("/nft/owned")
   Future<List<String>> getNftIDsByOwner(
     @Query("owner") String owner,
+  );
+
+  @POST("/nft/pending")
+  Future postNftPendingToken(
+      @Body() Map<String, dynamic> payload,
   );
 }
