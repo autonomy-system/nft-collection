@@ -32,11 +32,9 @@ abstract class TokensService {
   Future<Stream<int>> refreshTokensInIsolate(
     List<String> addresses,
     List<String> debugTokenIDs,
-    List<String> pendingTokens,
   );
   Future reindexAddresses(List<String> addresses);
-  Future<List<Asset>> fetchLatestAssets(List<String> addresses, int size,
-      {List<String> pendingTokens,});
+  Future<List<Asset>> fetchLatestAssets(List<String> addresses, int size);
   Future purgeCachedGallery();
   Future postPendingToken(PendingTxParams params);
 }
@@ -121,11 +119,16 @@ class TokensServiceImpl extends TokensService {
     await _assetDao.removeAllExcludePending();
   }
 
+  Future<List<String>> _getPendingTokenIds() async {
+    return (await _database.assetDao.findAllPendingTokens())
+        .map((e) => e.id)
+        .toList();
+  }
+
   @override
   Future<Stream<int>> refreshTokensInIsolate(
     List<String> addresses,
     List<String> debugTokenIDs,
-    List<String> pendingTokens,
   ) async {
     if (_currentAddresses != null) {
       if (_currentAddresses?.join(",") == addresses.join(",")) {
@@ -144,6 +147,9 @@ class TokensServiceImpl extends TokensService {
     await startIsolateOrWait();
 
     final tokenIDs = await getTokenIDs(addresses);
+    final pendingTokens = await _getPendingTokenIds();
+    NftCollection.logger.info("[refreshTokensInIsolate] Pending tokens: "
+        "$pendingTokens");
     await _database.assetDao.deleteAssetsNotIn(tokenIDs + debugTokenIDs + pendingTokens);
 
     final dbTokenIDs = (await _assetDao.findAllAssetTokenIDs()).toSet();
@@ -168,9 +174,8 @@ class TokensServiceImpl extends TokensService {
   @override
   Future<List<Asset>> fetchLatestAssets(
     List<String> addresses,
-    int size, {
-    List<String> pendingTokens = const [],
-  }) async {
+    int size,
+  ) async {
     if (!_stringListEquality.equals(addresses, _currentAddresses)) {
       disposeIsolate();
     }
@@ -188,6 +193,9 @@ class TokensServiceImpl extends TokensService {
     if (assets.length < size) {
       if (assets.isNotEmpty) {
         final tokenIDs = assets.map((e) => e.id).toList();
+        final pendingTokens = await _getPendingTokenIds();
+        NftCollection.logger
+            .info("[fetchLatestAssets] Pending tokens: $pendingTokens");
         await _database.assetDao.deleteAssetsNotIn(tokenIDs + pendingTokens);
         await _database.provenanceDao.deleteProvenanceNotBelongs(tokenIDs + pendingTokens);
       } else {
