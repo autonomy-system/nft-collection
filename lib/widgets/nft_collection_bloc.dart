@@ -118,13 +118,9 @@ class NftCollectionBloc
 
         add(_SubRefreshTokensEvent(NftLoadingState.notRequested));
 
-        final pendingTokenIds = (await database.assetDao.findAllPendingTokens())
-            .map((e) => e.id)
-            .toList();
         final latestAssets = await tokensService.fetchLatestAssets(
           allAccountNumbers,
           indexerTokensPageSize,
-          pendingTokens: pendingTokenIds,
         );
         NftCollection.logger.info(
             "[NftCollectionBloc] fetch ${latestAssets.length} latest NFTs");
@@ -140,8 +136,7 @@ class NftCollectionBloc
               "[NftCollectionBloc][start] _tokensService.refreshTokensInIsolate");
           final stream = await tokensService.refreshTokensInIsolate(
             allAccountNumbers,
-            debugTokenIDs,
-            pendingTokenIds,
+            debugTokenIDs
           );
           stream.listen((event) async {
             NftCollection.logger
