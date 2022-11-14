@@ -611,6 +611,22 @@ class _$AssetTokenDao extends AssetTokenDao {
   }
 
   @override
+  Future<void> deleteAssetsNotInByOwner(
+    List<String> ids,
+    String owner,
+  ) async {
+    const offset = 2;
+    final _sqliteVariablesForIds =
+        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
+            .join(',');
+    await _queryAdapter.queryNoReturn(
+        'DELETE FROM AssetToken WHERE id NOT IN (' +
+            _sqliteVariablesForIds +
+            ') AND ownerAddress=?1',
+        arguments: [owner, ...ids]);
+  }
+
+  @override
   Future<void> deleteAssetsNotBelongs(List<String> owners) async {
     const offset = 1;
     final _sqliteVariablesForOwners =

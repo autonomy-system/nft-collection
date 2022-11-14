@@ -59,6 +59,9 @@ abstract class AssetTokenDao {
   @Query('DELETE FROM AssetToken WHERE id NOT IN (:ids)')
   Future<void> deleteAssetsNotIn(List<String> ids);
 
+  @Query('DELETE FROM AssetToken WHERE id NOT IN (:ids) AND ownerAddress=:owner')
+  Future<void> deleteAssetsNotInByOwner(List<String> ids, String owner);
+
   @Query('DELETE FROM AssetToken WHERE ownerAddress NOT IN (:owners)')
   Future<void> deleteAssetsNotBelongs(List<String> owners);
 
