@@ -156,6 +156,8 @@ class TokensServiceImpl extends TokensService {
       tokenIDs.addAll(ids);
     });
 
+    await _database.assetDao.deleteAssetsNotIn(tokenIDs + debugTokenIDs + pendingTokens);
+
     final dbTokenIDs = (await _assetDao.findAllAssetTokenIDs()).toSet();
     final expectedNewTokenIDs = tokenIDs.toSet().difference(dbTokenIDs);
     NftCollection.logger.info(
@@ -198,8 +200,6 @@ class TokensServiceImpl extends TokensService {
             final tokenIDs = assets.map((e) => e.id).toList();
             await _database.assetDao
                 .deleteAssetsNotInByOwner(tokenIDs + pendingTokens, address);
-            await _database.provenanceDao
-                .deleteProvenanceNotBelongs(tokenIDs + pendingTokens);
           }
           return assets;
         },
@@ -207,9 +207,18 @@ class TokensServiceImpl extends TokensService {
     );
     final assets = assetsLists.flattened.toList();
 
-    if (assets.isEmpty) {
-      await _database.assetDao.removeAllExcludePending();
-      await _database.provenanceDao.removeAll();
+    if (assets.length < size) {
+      if (assets.isNotEmpty) {
+        final tokenIDs = assets.map((e) => e.id).toList();
+        final pendingTokens = await _getPendingTokenIds();
+        NftCollection.logger
+            .info("[fetchLatestAssets] Pending tokens: $pendingTokens");
+        await _database.assetDao.deleteAssetsNotIn(tokenIDs + pendingTokens);
+        await _database.provenanceDao.deleteProvenanceNotBelongs(tokenIDs + pendingTokens);
+      } else {
+        await _database.assetDao.removeAllExcludePending();
+        await _database.provenanceDao.removeAll();
+      }
     }
     return assets;
   }
