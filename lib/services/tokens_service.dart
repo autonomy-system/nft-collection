@@ -146,11 +146,15 @@ class TokensServiceImpl extends TokensService {
     NftCollection.logger.info("[refreshTokensInIsolate] start");
     await startIsolateOrWait();
 
-    final tokenIDs = await getTokenIDs(addresses);
     final pendingTokens = await _getPendingTokenIds();
     NftCollection.logger.info("[refreshTokensInIsolate] Pending tokens: "
         "$pendingTokens");
-    await _database.assetDao.deleteAssetsNotIn(tokenIDs + debugTokenIDs + pendingTokens);
+    List<String> tokenIDs = [];
+    addresses.map((address) async {
+      final ids = await _indexer.getNftIDsByOwner(address);
+      await _database.assetDao.deleteAssetsNotInByOwner(ids + pendingTokens, address);
+      tokenIDs.addAll(ids);
+    });
 
     final dbTokenIDs = (await _assetDao.findAllAssetTokenIDs()).toSet();
     final expectedNewTokenIDs = tokenIDs.toSet().difference(dbTokenIDs);
@@ -180,28 +184,32 @@ class TokensServiceImpl extends TokensService {
       disposeIsolate();
     }
 
+    final pendingTokens = await _getPendingTokenIds();
+    NftCollection.logger
+        .info("[fetchLatestAssets] Pending tokens: $pendingTokens");
+
     final assetsLists = await Future.wait(
       addresses.map(
-        (address) async {
-          final assets = await _indexer.getNftTokensByOwner(address, 0, size);
-          return mapOwnerAddress(assets, address);
+            (address) async {
+          final rawAssets = await _indexer.getNftTokensByOwner(address, 0, size);
+          final assets = mapOwnerAddress(rawAssets, address);
+          await insertAssetsWithProvenance(assets, retainOwners: addresses);
+          if (assets.length < size && assets.isNotEmpty) {
+            final tokenIDs = assets.map((e) => e.id).toList();
+            await _database.assetDao
+                .deleteAssetsNotInByOwner(tokenIDs + pendingTokens, address);
+            await _database.provenanceDao
+                .deleteProvenanceNotBelongs(tokenIDs + pendingTokens);
+          }
+          return assets;
         },
       ),
     );
     final assets = assetsLists.flattened.toList();
-    await insertAssetsWithProvenance(assets, retainOwners: addresses);
-    if (assets.length < size) {
-      if (assets.isNotEmpty) {
-        final tokenIDs = assets.map((e) => e.id).toList();
-        final pendingTokens = await _getPendingTokenIds();
-        NftCollection.logger
-            .info("[fetchLatestAssets] Pending tokens: $pendingTokens");
-        await _database.assetDao.deleteAssetsNotIn(tokenIDs + pendingTokens);
-        await _database.provenanceDao.deleteProvenanceNotBelongs(tokenIDs + pendingTokens);
-      } else {
-        await _database.assetDao.removeAllExcludePending();
-        await _database.provenanceDao.removeAll();
-      }
+
+    if (assets.isEmpty) {
+      await _database.assetDao.removeAllExcludePending();
+      await _database.provenanceDao.removeAll();
     }
     return assets;
   }
@@ -285,12 +293,6 @@ class TokensServiceImpl extends TokensService {
     }
     await _database.assetDao.insertAssets(tokens);
     await _database.provenanceDao.insertProvenance(provenance);
-  }
-
-  Future<List<String>> getTokenIDs(List<String> addresses) async {
-    final idsLists =
-        await Future.wait(addresses.map((e) => _indexer.getNftIDsByOwner(e)));
-    return idsLists.flattened.toList();
   }
 
   @override
