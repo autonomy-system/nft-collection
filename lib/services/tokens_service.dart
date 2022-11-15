@@ -150,11 +150,12 @@ class TokensServiceImpl extends TokensService {
     NftCollection.logger.info("[refreshTokensInIsolate] Pending tokens: "
         "$pendingTokens");
     List<String> tokenIDs = [];
-    addresses.map((address) async {
+
+    for (final address in addresses) {
       final ids = await _indexer.getNftIDsByOwner(address);
       await _database.assetDao.deleteAssetsNotInByOwner(ids + pendingTokens, address);
       tokenIDs.addAll(ids);
-    });
+    }
 
     await _database.assetDao.deleteAssetsNotIn(tokenIDs + debugTokenIDs + pendingTokens);
 
