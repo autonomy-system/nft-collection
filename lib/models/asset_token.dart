@@ -54,6 +54,7 @@ class AssetToken {
   DateTime? updateTime;
   bool? pending;
   String? initialSaleModel;
+  bool? isFeralfileFrame;
 
   AssetToken({
     required this.artistName,
@@ -92,6 +93,7 @@ class AssetToken {
     required this.lastActivityTime,
     this.provenances,
     this.updateTime,
+    this.isFeralfileFrame,
     this.pending = false,
   });
 
@@ -131,6 +133,7 @@ class AssetToken {
         balance: asset.balance,
         lastActivityTime: asset.lastActivityTime,
         provenances: asset.provenance,
+        isFeralfileFrame: asset.projectMetadata.latest.artworkMetadata?["isFeralfileFrame"],
         pending: false,
       );
 

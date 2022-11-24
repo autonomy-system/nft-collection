@@ -131,6 +131,7 @@ class ProjectMetadataData {
     required this.artistId,
     required this.originalFileUrl,
     required this.initialSaleModel,
+    required this.artworkMetadata,
   });
 
   String? artistName;
@@ -153,6 +154,7 @@ class ProjectMetadataData {
   String? artistId;
   String? originalFileUrl;
   String? initialSaleModel;
+  Map<String, dynamic>? artworkMetadata;
 
   factory ProjectMetadataData.fromJson(Map<String, dynamic> json) =>
       ProjectMetadataData(
@@ -176,6 +178,7 @@ class ProjectMetadataData {
         artistId: json["artistID"],
         originalFileUrl: json["originalFileURL"],
         initialSaleModel: json["initialSaleModel"],
+        artworkMetadata: json["artworkMetadata"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -198,5 +201,6 @@ class ProjectMetadataData {
         "artistID": artistId,
         "originalFileURL": originalFileUrl,
         "initialSaleModel": initialSaleModel,
+        "artworkMetadata": artworkMetadata,
       };
 }
