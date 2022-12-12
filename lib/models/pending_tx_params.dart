@@ -6,22 +6,34 @@
 //
 
 class PendingTxParams {
-  final String indexID;
   final String blockchain;
   final String id;
   final String contractAddress;
   final String ownerAccount;
   final String pendingTx;
+  final String timestamp;
+  final String signature;
+  final String? publicKey;
 
-  PendingTxParams(this.indexID, this.blockchain, this.id, this.contractAddress,
-      this.ownerAccount, this.pendingTx);
+  PendingTxParams({
+    required this.blockchain,
+    required this.id,
+    required this.contractAddress,
+    required this.ownerAccount,
+    required this.pendingTx,
+    required this.timestamp,
+    required this.signature,
+    this.publicKey,
+  });
 
   Map<String, dynamic> toJson() => {
-        'indexID': indexID,
         'blockchain': blockchain,
         'id': id,
         'contractAddress': contractAddress,
         'ownerAccount': ownerAccount,
         'pendingTx': pendingTx,
+        'timestamp': timestamp,
+        'signature': signature,
+        'publicKey': publicKey,
       };
 }

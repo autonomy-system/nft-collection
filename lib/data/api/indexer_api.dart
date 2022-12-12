@@ -47,7 +47,7 @@ abstract class IndexerApi {
     @Query("owner") String owner,
   );
 
-  @POST("/nft/pending")
+  @POST("/v1/nft/pending")
   Future postNftPendingToken(
       @Body() Map<String, dynamic> payload,
   );
