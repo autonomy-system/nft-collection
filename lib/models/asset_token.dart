@@ -7,14 +7,12 @@
 
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:floor_annotation/floor_annotation.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/provenance.dart';
 
-@Entity(primaryKeys: [
-  "id",
-  "ownerAddress"
-])
+@Entity(primaryKeys: ["id", "ownerAddress"])
 class AssetToken {
   String? artistName;
   String? artistURL;
@@ -55,6 +53,8 @@ class AssetToken {
   bool? pending;
   String? initialSaleModel;
   bool? isFeralfileFrame;
+  String? originTokenInfoId;
+  bool swapped;
 
   AssetToken({
     required this.artistName,
@@ -95,6 +95,8 @@ class AssetToken {
     this.updateTime,
     this.isFeralfileFrame,
     this.pending = false,
+    required this.originTokenInfoId,
+    required this.swapped,
   });
 
   factory AssetToken.fromAsset(Asset asset) => AssetToken(
@@ -133,8 +135,11 @@ class AssetToken {
         balance: asset.balance,
         lastActivityTime: asset.lastActivityTime,
         provenances: asset.provenance,
-        isFeralfileFrame: asset.projectMetadata.latest.artworkMetadata?["isFeralfileFrame"],
+        isFeralfileFrame:
+            asset.projectMetadata.latest.artworkMetadata?["isFeralfileFrame"],
         pending: false,
+        originTokenInfoId: asset.originTokenInfo?.firstOrNull?.id,
+        swapped: asset.swapped,
       );
 
   @override
