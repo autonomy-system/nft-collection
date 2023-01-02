@@ -83,7 +83,7 @@ class Asset {
               .toList()
           : [],
       originTokenInfo: json["originTokenInfo"] != null
-          ? (json["originTokenInfo"] as List<Map<String, dynamic>>)
+          ? (json["originTokenInfo"] as List<dynamic>)
               .map((e) => OriginTokenInfo.fromJson(e))
               .toList()
           : null,
