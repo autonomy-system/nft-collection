@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:nft_collection/models/origin_token_info.dart';
 import 'package:nft_collection/models/provenance.dart';
 
 class Asset {
@@ -26,6 +27,8 @@ class Asset {
     required this.projectMetadata,
     required this.lastActivityTime,
     required this.provenance,
+    required this.originTokenInfo,
+    required this.swapped,
   });
 
   String id;
@@ -46,6 +49,8 @@ class Asset {
   ProjectMetadata projectMetadata;
   DateTime lastActivityTime;
   List<Provenance> provenance;
+  List<OriginTokenInfo>? originTokenInfo;
+  bool swapped;
 
   factory Asset.fromJson(Map<String, dynamic> json) {
     final Map<String, int> owners = json["owners"]?.map<String, int>(
@@ -77,6 +82,12 @@ class Asset {
               .values
               .toList()
           : [],
+      originTokenInfo: json["originTokenInfo"] != null
+          ? (json["originTokenInfo"] as List<Map<String, dynamic>>)
+              .map((e) => OriginTokenInfo.fromJson(e))
+              .toList()
+          : null,
+      swapped: json["swapped"] as bool,
     );
   }
 
