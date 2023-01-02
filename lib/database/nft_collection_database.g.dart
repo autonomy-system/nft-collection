@@ -71,7 +71,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
     Callback? callback,
   ]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 9,
+      version: 10,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -87,7 +87,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `editionName` TEXT, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT NOT NULL, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `updateTime` INTEGER, `pending` INTEGER, `initialSaleModel` TEXT, `isFeralfileFrame` INTEGER, PRIMARY KEY (`id`, `ownerAddress`))');
+            'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `editionName` TEXT, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT NOT NULL, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `updateTime` INTEGER, `pending` INTEGER, `initialSaleModel` TEXT, `isFeralfileFrame` INTEGER, `originTokenInfoId` TEXT, `swapped` INTEGER NOT NULL, PRIMARY KEY (`id`, `ownerAddress`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`id`))');
         await database.execute(
@@ -161,7 +161,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                   'initialSaleModel': item.initialSaleModel,
                   'isFeralfileFrame': item.isFeralfileFrame == null
                       ? null
-                      : (item.isFeralfileFrame! ? 1 : 0)
+                      : (item.isFeralfileFrame! ? 1 : 0),
+                  'originTokenInfoId': item.originTokenInfoId,
+                  'swapped': item.swapped ? 1 : 0
                 }),
         _assetTokenUpdateAdapter = UpdateAdapter(
             database,
@@ -210,7 +212,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                   'initialSaleModel': item.initialSaleModel,
                   'isFeralfileFrame': item.isFeralfileFrame == null
                       ? null
-                      : (item.isFeralfileFrame! ? 1 : 0)
+                      : (item.isFeralfileFrame! ? 1 : 0),
+                  'originTokenInfoId': item.originTokenInfoId,
+                  'swapped': item.swapped ? 1 : 0
                 }),
         _assetTokenDeletionAdapter = DeletionAdapter(
             database,
@@ -259,7 +263,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                   'initialSaleModel': item.initialSaleModel,
                   'isFeralfileFrame': item.isFeralfileFrame == null
                       ? null
-                      : (item.isFeralfileFrame! ? 1 : 0)
+                      : (item.isFeralfileFrame! ? 1 : 0),
+                  'originTokenInfoId': item.originTokenInfoId,
+                  'swapped': item.swapped ? 1 : 0
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -321,7 +327,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
             pending:
-                row['pending'] == null ? null : (row['pending'] as int) != 0));
+                row['pending'] == null ? null : (row['pending'] as int) != 0,
+            originTokenInfoId: row['originTokenInfoId'] as String?,
+            swapped: (row['swapped'] as int) != 0));
   }
 
   @override
@@ -378,7 +386,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
             pending:
-                row['pending'] == null ? null : (row['pending'] as int) != 0),
+                row['pending'] == null ? null : (row['pending'] as int) != 0,
+            originTokenInfoId: row['originTokenInfoId'] as String?,
+            swapped: (row['swapped'] as int) != 0),
         arguments: [...owners]);
   }
 
@@ -430,7 +440,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
             pending:
-                row['pending'] == null ? null : (row['pending'] as int) != 0),
+                row['pending'] == null ? null : (row['pending'] as int) != 0,
+            originTokenInfoId: row['originTokenInfoId'] as String?,
+            swapped: (row['swapped'] as int) != 0),
         arguments: [blockchain]);
   }
 
@@ -484,7 +496,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
             pending:
-                row['pending'] == null ? null : (row['pending'] as int) != 0),
+                row['pending'] == null ? null : (row['pending'] as int) != 0,
+            originTokenInfoId: row['originTokenInfoId'] as String?,
+            swapped: (row['swapped'] as int) != 0),
         arguments: [id, owner]);
   }
 
@@ -539,7 +553,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
             pending:
-                row['pending'] == null ? null : (row['pending'] as int) != 0),
+                row['pending'] == null ? null : (row['pending'] as int) != 0,
+            originTokenInfoId: row['originTokenInfoId'] as String?,
+            swapped: (row['swapped'] as int) != 0),
         arguments: [...ids]);
   }
 
@@ -610,7 +626,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
             pending:
-                row['pending'] == null ? null : (row['pending'] as int) != 0));
+                row['pending'] == null ? null : (row['pending'] as int) != 0,
+            originTokenInfoId: row['originTokenInfoId'] as String?,
+            swapped: (row['swapped'] as int) != 0));
   }
 
   @override
