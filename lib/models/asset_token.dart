@@ -7,6 +7,7 @@
 
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:floor_annotation/floor_annotation.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/provenance.dart';
@@ -137,7 +138,7 @@ class AssetToken {
         isFeralfileFrame:
             asset.projectMetadata.latest.artworkMetadata?["isFeralfileFrame"],
         pending: false,
-        originTokenInfoId: asset.originTokenInfo?[0].id,
+        originTokenInfoId: asset.originTokenInfo?.firstOrNull?.id,
         swapped: asset.swapped,
       );
 
