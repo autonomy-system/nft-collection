@@ -54,7 +54,7 @@ class AssetToken {
   String? initialSaleModel;
   bool? isFeralfileFrame;
   String? originTokenInfoId;
-  bool swapped;
+  bool? swapped;
 
   AssetToken({
     required this.artistName,
@@ -96,7 +96,7 @@ class AssetToken {
     this.isFeralfileFrame,
     this.pending = false,
     required this.originTokenInfoId,
-    required this.swapped,
+    this.swapped = false,
   });
 
   factory AssetToken.fromAsset(Asset asset) => AssetToken(
@@ -139,7 +139,7 @@ class AssetToken {
             asset.projectMetadata.latest.artworkMetadata?["isFeralfileFrame"],
         pending: false,
         originTokenInfoId: asset.originTokenInfo?.firstOrNull?.id,
-        swapped: asset.swapped,
+        swapped: asset.swapped ?? false,
       );
 
   @override

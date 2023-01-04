@@ -28,7 +28,7 @@ class Asset {
     required this.lastActivityTime,
     required this.provenance,
     required this.originTokenInfo,
-    required this.swapped,
+    this.swapped = false,
   });
 
   String id;
@@ -50,7 +50,7 @@ class Asset {
   DateTime lastActivityTime;
   List<Provenance> provenance;
   List<OriginTokenInfo>? originTokenInfo;
-  bool swapped;
+  bool? swapped;
 
   factory Asset.fromJson(Map<String, dynamic> json) {
     final Map<String, int> owners = json["owners"]?.map<String, int>(
@@ -87,7 +87,7 @@ class Asset {
               .map((e) => OriginTokenInfo.fromJson(e))
               .toList()
           : null,
-      swapped: json["swapped"] as bool,
+      swapped: json["swapped"] as bool?,
     );
   }
 
