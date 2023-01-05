@@ -382,7 +382,10 @@ class TokensServiceImpl extends TokensService {
 
       if (result.key == REFRESH_ALL_TOKENS) {
         if (!result.done) {
-          _refreshAllTokensWorker?.sink.add(1);
+          if (_refreshAllTokensWorker != null &&
+              !_refreshAllTokensWorker!.isClosed) {
+            _refreshAllTokensWorker!.sink.add(1);
+          }
         } else {
           _configurationService.setLatestRefreshTokens(DateTime.now());
           _refreshAllTokensWorker?.close();
