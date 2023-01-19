@@ -65,13 +65,10 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
 
   ProvenanceDao? _provenanceDaoInstance;
 
-  Future<sqflite.Database> open(
-    String path,
-    List<Migration> migrations, [
-    Callback? callback,
-  ]) async {
+  Future<sqflite.Database> open(String path, List<Migration> migrations,
+      [Callback? callback]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 10,
+      version: 11,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -87,7 +84,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `editionName` TEXT, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT NOT NULL, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `updateTime` INTEGER, `pending` INTEGER, `initialSaleModel` TEXT, `isFeralfileFrame` INTEGER, `originTokenInfoId` TEXT, `swapped` INTEGER, PRIMARY KEY (`id`, `ownerAddress`))');
+            'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `editionName` TEXT, `id` TEXT NOT NULL, `maxEdition` INTEGER, `scrollable` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT NOT NULL, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `updateTime` INTEGER, `pending` INTEGER, `initialSaleModel` TEXT, `isFeralfileFrame` INTEGER, `originTokenInfoId` TEXT, `swapped` INTEGER, PRIMARY KEY (`id`, `ownerAddress`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`id`))');
         await database.execute(
@@ -139,6 +136,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                   'editionName': item.editionName,
                   'id': item.id,
                   'maxEdition': item.maxEdition,
+                  'scrollable': item.scrollable == null
+                      ? null
+                      : (item.scrollable! ? 1 : 0),
                   'medium': item.medium,
                   'mimeType': item.mimeType,
                   'mintedAt': item.mintedAt,
@@ -191,6 +191,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                   'editionName': item.editionName,
                   'id': item.id,
                   'maxEdition': item.maxEdition,
+                  'scrollable': item.scrollable == null
+                      ? null
+                      : (item.scrollable! ? 1 : 0),
                   'medium': item.medium,
                   'mimeType': item.mimeType,
                   'mintedAt': item.mintedAt,
@@ -243,6 +246,9 @@ class _$AssetTokenDao extends AssetTokenDao {
                   'editionName': item.editionName,
                   'id': item.id,
                   'maxEdition': item.maxEdition,
+                  'scrollable': item.scrollable == null
+                      ? null
+                      : (item.scrollable! ? 1 : 0),
                   'medium': item.medium,
                   'mimeType': item.mimeType,
                   'mintedAt': item.mintedAt,
@@ -329,6 +335,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             isFeralfileFrame: row['isFeralfileFrame'] == null
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
+            scrollable: row['scrollable'] == null
+                ? null
+                : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
             originTokenInfoId: row['originTokenInfoId'] as String?,
@@ -389,6 +398,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             isFeralfileFrame: row['isFeralfileFrame'] == null
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
+            scrollable: row['scrollable'] == null
+                ? null
+                : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
             originTokenInfoId: row['originTokenInfoId'] as String?,
@@ -444,6 +456,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             isFeralfileFrame: row['isFeralfileFrame'] == null
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
+            scrollable: row['scrollable'] == null
+                ? null
+                : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
             originTokenInfoId: row['originTokenInfoId'] as String?,
@@ -501,6 +516,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             isFeralfileFrame: row['isFeralfileFrame'] == null
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
+            scrollable: row['scrollable'] == null
+                ? null
+                : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
             originTokenInfoId: row['originTokenInfoId'] as String?,
@@ -559,6 +577,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             isFeralfileFrame: row['isFeralfileFrame'] == null
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
+            scrollable: row['scrollable'] == null
+                ? null
+                : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
             originTokenInfoId: row['originTokenInfoId'] as String?,
@@ -633,6 +654,9 @@ class _$AssetTokenDao extends AssetTokenDao {
             isFeralfileFrame: row['isFeralfileFrame'] == null
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0,
+            scrollable: row['scrollable'] == null
+                ? null
+                : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
             originTokenInfoId: row['originTokenInfoId'] as String?,

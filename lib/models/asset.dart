@@ -5,6 +5,7 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'package:nft_collection/models/attributes.dart';
 import 'package:nft_collection/models/origin_token_info.dart';
 import 'package:nft_collection/models/provenance.dart';
 
@@ -29,6 +30,7 @@ class Asset {
     required this.provenance,
     required this.originTokenInfo,
     this.swapped = false,
+    this.attributes,
   });
 
   String id;
@@ -51,6 +53,7 @@ class Asset {
   List<Provenance> provenance;
   List<OriginTokenInfo>? originTokenInfo;
   bool? swapped;
+  Attributes? attributes;
 
   factory Asset.fromJson(Map<String, dynamic> json) {
     final Map<String, int> owners = json["owners"]?.map<String, int>(
@@ -58,37 +61,39 @@ class Asset {
         {};
 
     return Asset(
-      id: json["indexID"],
-      edition: json["edition"],
-      editionName: json["editionName"],
-      blockchain: json["blockchain"],
-      fungible: json["fungible"] == true,
-      mintedAt: DateTime.parse(json["mintedAt"]),
-      contractType: json["contractType"],
-      tokenId: json["id"],
-      contractAddress: json["contractAddress"],
-      blockchainURL: json["blockchainURL"],
-      balance: json["balance"],
-      owner: json["owner"],
-      owners: owners,
-      thumbnailID: json["thumbnailID"],
-      projectMetadata: ProjectMetadata.fromJson(json["projectMetadata"]),
-      lastActivityTime: DateTime.parse(json['lastActivityTime']),
-      provenance: json["provenance"] != null
-          ? (json["provenance"] as List<dynamic>)
-              .asMap()
-              .map<int, Provenance>((key, value) => MapEntry(
-                  key, Provenance.fromJson(value, json['indexID'], key)))
-              .values
-              .toList()
-          : [],
-      originTokenInfo: json["originTokenInfo"] != null
-          ? (json["originTokenInfo"] as List<dynamic>)
-              .map((e) => OriginTokenInfo.fromJson(e))
-              .toList()
-          : null,
-      swapped: json["swapped"] as bool?,
-    );
+        id: json["indexID"],
+        edition: json["edition"],
+        editionName: json["editionName"],
+        blockchain: json["blockchain"],
+        fungible: json["fungible"] == true,
+        mintedAt: DateTime.parse(json["mintedAt"]),
+        contractType: json["contractType"],
+        tokenId: json["id"],
+        contractAddress: json["contractAddress"],
+        blockchainURL: json["blockchainURL"],
+        balance: json["balance"],
+        owner: json["owner"],
+        owners: owners,
+        thumbnailID: json["thumbnailID"],
+        projectMetadata: ProjectMetadata.fromJson(json["projectMetadata"]),
+        lastActivityTime: DateTime.parse(json['lastActivityTime']),
+        provenance: json["provenance"] != null
+            ? (json["provenance"] as List<dynamic>)
+                .asMap()
+                .map<int, Provenance>((key, value) => MapEntry(
+                    key, Provenance.fromJson(value, json['indexID'], key)))
+                .values
+                .toList()
+            : [],
+        originTokenInfo: json["originTokenInfo"] != null
+            ? (json["originTokenInfo"] as List<dynamic>)
+                .map((e) => OriginTokenInfo.fromJson(e))
+                .toList()
+            : null,
+        swapped: json["swapped"] as bool?,
+        attributes: json['attributes'] != null
+            ? Attributes.fromJson(json['attributes'])
+            : null);
   }
 
   String? get saleModel {

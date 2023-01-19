@@ -33,6 +33,7 @@ class AssetToken {
   String? editionName;
   String id;
   int? maxEdition;
+  bool? scrollable;
   String? medium;
   String? mimeType;
   String? mintedAt;
@@ -94,6 +95,7 @@ class AssetToken {
     this.provenances,
     this.updateTime,
     this.isFeralfileFrame,
+    this.scrollable,
     this.pending = false,
     required this.originTokenInfoId,
     this.swapped = false,
@@ -140,6 +142,7 @@ class AssetToken {
         pending: false,
         originTokenInfoId: asset.originTokenInfo?.firstOrNull?.id,
         swapped: asset.swapped ?? false,
+        scrollable: asset.attributes?.scrollable,
       );
 
   @override
