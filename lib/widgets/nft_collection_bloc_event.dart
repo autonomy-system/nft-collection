@@ -29,4 +29,6 @@ class RequestIndexEvent extends NftCollectionBlocEvent {
   RequestIndexEvent(this.addresses);
 }
 
+class ClearTokensEvent extends NftCollectionBlocEvent {}
+
 class PurgeCache extends NftCollectionBlocEvent {}
