@@ -73,7 +73,7 @@ class NftCollectionBloc
     if (indexerIds.isNotEmpty) {
       final assets = await tokensService.fetchManualTokens(indexerIds);
       if (assets.isNotEmpty) {
-        add(AddNewTokensEvent(tokens: assets, state: state.state));
+        add(UpdateTokensEvent(tokens: assets, state: state.state));
       }
     }
     return indexerIds;
@@ -164,6 +164,8 @@ class NftCollectionBloc
         await database.tokenDao
             .deleteTokensNotBelongs(_addresses.map((e) => e.address).toList());
 
+        add(UpdateTokensEvent(state: state.state));
+
         final pendingTokens = await database.tokenDao.findAllPendingTokens();
         NftCollection.logger
             .info("[NftCollectionBloc] ${pendingTokens.length} pending tokens. "
@@ -197,18 +199,18 @@ class NftCollectionBloc
 
           if (event.isNotEmpty) {
             NftCollection.logger.info(
-                "[Stream.refreshTokensInIsolate] AddNewTokensEvent ${event.length} tokens");
+                "[Stream.refreshTokensInIsolate] UpdateTokensEvent ${event.length} tokens");
 
-            add(AddNewTokensEvent(
+            add(UpdateTokensEvent(
                 state: NftLoadingState.loading, tokens: event));
           }
         }, onDone: () async {
           NftCollection.logger
               .info("[Stream.refreshTokensInIsolate] getEvent Done");
-          add(AddNewTokensEvent(state: NftLoadingState.done));
+          add(UpdateTokensEvent(state: NftLoadingState.done));
         });
       } catch (exception) {
-        add(AddNewTokensEvent(state: NftLoadingState.error));
+        add(UpdateTokensEvent(state: NftLoadingState.error));
 
         NftCollection.logger.warning("Error: $exception");
       }
@@ -239,7 +241,7 @@ class NftCollectionBloc
       ));
     });
 
-    on<AddNewTokensEvent>((event, emit) async {
+    on<UpdateTokensEvent>((event, emit) async {
       final tokens = [...event.tokens, ...state.tokens]
           .unique((element) => element.id + element.owner);
 
