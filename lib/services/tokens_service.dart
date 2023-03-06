@@ -362,10 +362,14 @@ class TokensServiceImpl extends TokensService {
 
       final lastUpdatedAt = DateTime.now();
 
-      for (var lastRefreshedTime in addresses.keys) {
+      await Future.wait(addresses.keys.map((lastRefreshedTime) async {
+        if (addresses[lastRefreshedTime]?.isEmpty ?? true) return;
         final owners = addresses[lastRefreshedTime]?.join(',');
-        if (owners == null) continue;
-        while (true) {
+        if (owners == null) return;
+
+        do {
+          NftCollection.logger
+              .info('[REFRESH_ALL_TOKENS] $owners at $lastRefreshedTime');
           final assets = await isolateIndexerAPI.getNftTokensByOwner(
             owners,
             offsetMap[lastRefreshedTime] ?? 0,
@@ -375,20 +379,19 @@ class TokensServiceImpl extends TokensService {
 
           if (assets.isEmpty) {
             offsetMap.remove(lastRefreshedTime);
-            break;
+          } else {
+            _isolateSendPort?.send(FetchTokensSuccess(
+                key, uuid, addresses[lastRefreshedTime]!, assets, false, null));
+
+            offsetMap[lastRefreshedTime] =
+                (offsetMap[lastRefreshedTime] ?? 0) + assets.length;
           }
+        } while (offsetMap[lastRefreshedTime] != null);
+      }));
+      final inputAddresses = addresses.values.expand((list) => list).toList();
 
-          _isolateSendPort?.send(FetchTokensSuccess(
-              key, uuid, addresses[lastRefreshedTime]!, assets, false, null));
-
-          offsetMap[lastRefreshedTime] =
-              (offsetMap[lastRefreshedTime] ?? 0) + assets.length;
-        }
-        if (offsetMap.isEmpty) {
-          _isolateSendPort?.send(FetchTokensSuccess(key, uuid,
-              addresses[lastRefreshedTime]!, [], true, lastUpdatedAt));
-        }
-      }
+      _isolateSendPort?.send(FetchTokensSuccess(
+          key, uuid, inputAddresses, [], true, lastUpdatedAt));
     } catch (exception) {
       _isolateSendPort?.send(FetchTokenFailure(key, uuid, exception));
     }
