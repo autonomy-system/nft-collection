@@ -24,7 +24,6 @@ class AssetToken {
     required this.balance,
     required this.owner,
     required this.owners,
-    this.thumbnailID,
     this.projectMetadata,
     required this.lastActivityTime,
     required this.lastRefreshedTime,
@@ -54,7 +53,6 @@ class AssetToken {
   String owner;
   Map<String, int>
       owners; // Map from owner's address to number of owned tokens.
-  String? thumbnailID;
   ProjectMetadata? projectMetadata;
   DateTime lastActivityTime;
   DateTime lastRefreshedTime;
@@ -85,6 +83,7 @@ class AssetToken {
   String? get sourceURL => asset?.sourceURL;
   String? get previewURL => asset?.previewURL;
   String? get thumbnailURL => asset?.thumbnailURL;
+  String? get thumbnailID => asset?.thumbnailID;
   String? get galleryThumbnailURL => asset?.galleryThumbnailURL;
   String? get assetData => asset?.assetData;
   String? get assetURL => asset?.assetURL;
@@ -112,7 +111,6 @@ class AssetToken {
       balance: json["balance"],
       owner: json["owner"],
       owners: owners,
-      thumbnailID: json["thumbnailID"],
       projectMetadata: projectMetadata,
       lastActivityTime: DateTime.parse(json['lastActivityTime']),
       lastRefreshedTime: DateTime.parse(json['lastRefreshedTime']),

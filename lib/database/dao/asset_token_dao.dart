@@ -67,7 +67,6 @@ class AssetTokenDao {
                 : (row['isDebugged'] as int) != 0,
             originTokenInfo: [],
             provenance: [],
-            thumbnailID: row['thumbnailID'] as String?,
             originTokenInfoId: row['originTokenInfoId'] as String?,
             asset: Asset(
               row['indexID'] as String?,
