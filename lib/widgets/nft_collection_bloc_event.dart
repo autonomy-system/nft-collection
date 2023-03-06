@@ -30,6 +30,12 @@ class RefreshNftCollectionByOwners extends NftCollectionBlocEvent {
   }
 }
 
+class RefreshNftCollectionByIDs extends NftCollectionBlocEvent {
+  final List<String>? ids;
+  final List<String>? debugTokenIds;
+  RefreshNftCollectionByIDs({this.ids, this.debugTokenIds});
+}
+
 class AddNewTokensEvent extends NftCollectionBlocEvent {
   final NftLoadingState state;
   final List<AssetToken> tokens;
@@ -40,47 +46,10 @@ class ReloadEvent extends NftCollectionBlocEvent {
   ReloadEvent();
 }
 
-class RefreshNftCollectionByIDs extends NftCollectionBlocEvent {
-  final List<String>? ids;
-  final List<String>? debugTokenIds;
-  RefreshNftCollectionByIDs({this.ids, this.debugTokenIds});
-}
-
-class UpdateHiddenTokens extends NftCollectionBlocEvent {
-  final List<String> tokens;
-
-  UpdateHiddenTokens({this.tokens = const []});
-}
-
-class RefreshTokenEvent extends NftCollectionBlocEvent {
-  RefreshTokenEvent();
-}
-
 class GetTokensByOwnerEvent extends NftCollectionBlocEvent {
   final PageKey pageKey;
   GetTokensByOwnerEvent({required this.pageKey});
 }
-
-class GetTokensByIDsEvent extends NftCollectionBlocEvent {
-  final PageKey pageKey;
-  GetTokensByIDsEvent({required this.pageKey});
-}
-
-class PingIndexerEvent extends NftCollectionBlocEvent {
-  PingIndexerEvent();
-}
-
-class InitPageController extends NftCollectionBlocEvent {
-  /// load collection by address or by token id
-  final bool getByAddress;
-  InitPageController({this.getByAddress = true});
-}
-
-// class FetchTokenEvent extends NftCollectionBlocEvent {
-//   final List<String> addresses;
-
-//   FetchTokenEvent(this.addresses);
-// }
 
 class PageKey {
   final int? offset;

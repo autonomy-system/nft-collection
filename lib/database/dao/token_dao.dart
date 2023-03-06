@@ -10,31 +10,8 @@ import 'package:nft_collection/models/token.dart';
 
 @dao
 abstract class TokenDao {
-  @Query('SELECT * FROM Token ORDER BY lastActivityTime DESC, title, assetID')
-  Future<List<Token>> findAllTokens();
-
-  @Query('SELECT DISTINCT * FROM Token'
-      ' WHERE owner IN (:owners)'
-      ' ORDER BY lastActivityTime DESC, title, assetID')
-  Future<List<Token>> findAllTokensByOwners(List<String> owners);
-
-  @Query('SELECT * FROM Token WHERE blockchain = :blockchain')
-  Future<List<Token>> findTokensByBlockchain(String blockchain);
-
-  @Query('SELECT * FROM Token WHERE id = :id AND owner = :owner')
-  Future<Token?> findTokenByIdAndOwner(String id, String owner);
-
-  @Query('SELECT * FROM Token WHERE id IN (:ids)')
-  Future<List<Token>> findAllTokensByIds(List<String> ids);
-
   @Query('SELECT id FROM Token')
   Future<List<String>> findAllTokenIDs();
-
-  @Query('SELECT id FROM Token WHERE owner=:owner')
-  Future<List<String>> findAllTokenIDsByOwner(String owner);
-
-  @Query('SELECT DISTINCT artistID FROM Token')
-  Future<List<String>> findAllTokenArtistIDs();
 
   @Query('SELECT * FROM Token WHERE pending = 1')
   Future<List<Token>> findAllPendingTokens();
@@ -62,9 +39,6 @@ abstract class TokenDao {
 
   @Query('DELETE FROM Token WHERE id NOT IN (:ids) AND owner=:owner')
   Future<void> deleteTokensNotInByOwner(List<String> ids, String owner);
-
-  // @Query('DELETE FROM Token WHERE id NOT IN (:ids) AND owner IN (:owners)')
-  // Future<void> deleteTokensNotInByOwners(List<String> ids, List<String> owners);
 
   @Query('DELETE FROM Token WHERE owner NOT IN (:owners)')
   Future<void> deleteTokensNotBelongs(List<String> owners);

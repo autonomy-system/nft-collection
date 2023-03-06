@@ -211,7 +211,7 @@ class _IndexerApi implements IndexerApi {
     )
         .compose(
           _dio.options,
-          '/v2/nft/pending',
+          '/v1/nft/pending',
           queryParameters: queryParameters,
           data: _data,
         )
