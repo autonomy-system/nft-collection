@@ -31,6 +31,9 @@ abstract class AssetDao {
   @delete
   Future<void> deleteAsset(Asset asset);
 
+  @Query('DELETE FROM Asset WHERE assetID = (:id)')
+  Future<void> deleteAssetByID(String id);
+
   @Query('DELETE FROM Asset')
   Future<void> removeAll();
 }

@@ -580,6 +580,12 @@ class _$AssetDao extends AssetDao {
   }
 
   @override
+  Future<void> deleteAssetByID(String id) async {
+    await _queryAdapter.queryNoReturn('DELETE FROM Asset WHERE assetID = (?1)',
+        arguments: [id]);
+  }
+
+  @override
   Future<void> removeAll() async {
     await _queryAdapter.queryNoReturn('DELETE FROM Asset');
   }
