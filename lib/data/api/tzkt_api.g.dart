@@ -9,7 +9,10 @@ part of 'tzkt_api.dart';
 // ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers
 
 class _TZKTApi implements TZKTApi {
-  _TZKTApi(this._dio, {this.baseUrl}) {
+  _TZKTApi(
+    this._dio, {
+    this.baseUrl,
+  }) {
     baseUrl ??= 'https://api.tzkt.io';
   }
 
@@ -18,24 +21,35 @@ class _TZKTApi implements TZKTApi {
   String? baseUrl;
 
   @override
-  Future<List<TZKTTokenTransfer>> getTokenTransfer(
-      {required to, sort = "timestamp", tokenIds, select}) async {
+  Future<List<TZKTTokenTransfer>> getTokenTransfer({
+    required to,
+    sort = "timestamp",
+    tokenIds,
+    select,
+  }) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'to.in': to,
       r'sort.desc': sort,
       r'token.tokenId.in': tokenIds,
-      r'select': select
+      r'select': select,
     };
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
-    final _result = await _dio.fetch<List<dynamic>>(
-        _setStreamType<List<TZKTTokenTransfer>>(
-            Options(method: 'GET', headers: _headers, extra: _extra)
-                .compose(_dio.options, '/v1/tokens/transfers',
-                    queryParameters: queryParameters, data: _data)
-                .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+    final _result = await _dio
+        .fetch<List<dynamic>>(_setStreamType<List<TZKTTokenTransfer>>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
+            .compose(
+              _dio.options,
+              '/v1/tokens/transfers',
+              queryParameters: queryParameters,
+              data: _data,
+            )
+            .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     var value = _result.data!
         .map((dynamic i) =>
             TZKTTokenTransfer.fromJson(i as Map<String, dynamic>))

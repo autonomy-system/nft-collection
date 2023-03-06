@@ -61,14 +61,19 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
     changeListener = listener ?? StreamController<String>.broadcast();
   }
 
-  AssetTokenDao? _assetDaoInstance;
+  TokenDao? _tokenDaoInstance;
+
+  AssetDao? _assetDaoInstance;
 
   ProvenanceDao? _provenanceDaoInstance;
 
-  Future<sqflite.Database> open(String path, List<Migration> migrations,
-      [Callback? callback]) async {
+  Future<sqflite.Database> open(
+    String path,
+    List<Migration> migrations, [
+    Callback? callback,
+  ]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 11,
+      version: 1,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -84,9 +89,13 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `editionName` TEXT, `id` TEXT NOT NULL, `maxEdition` INTEGER, `scrollable` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT NOT NULL, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `updateTime` INTEGER, `pending` INTEGER, `initialSaleModel` TEXT, `isFeralfileFrame` INTEGER, `originTokenInfoId` TEXT, `swapped` INTEGER, PRIMARY KEY (`id`, `ownerAddress`))');
+            'CREATE TABLE IF NOT EXISTS `Token` (`id` TEXT NOT NULL, `tokenId` TEXT, `blockchain` TEXT NOT NULL, `fungible` INTEGER, `contractType` TEXT, `contractAddress` TEXT, `edition` INTEGER NOT NULL, `editionName` TEXT, `mintedAt` INTEGER, `balance` INTEGER, `owner` TEXT NOT NULL, `owners` TEXT NOT NULL, `source` TEXT, `swapped` INTEGER, `burned` INTEGER, `lastActivityTime` INTEGER NOT NULL, `lastRefreshedTime` INTEGER NOT NULL, `ipfsPinned` INTEGER, `scrollable` INTEGER, `pending` INTEGER, `isDebugged` INTEGER, `initialSaleModel` TEXT, `originTokenInfoId` TEXT, `indexID` TEXT, PRIMARY KEY (`id`, `owner`))');
+        await database.execute(
+            'CREATE TABLE IF NOT EXISTS `Asset` (`indexID` TEXT, `thumbnailID` TEXT, `lastRefreshedTime` INTEGER, `artistID` TEXT, `artistName` TEXT, `artistURL` TEXT, `assetID` TEXT, `title` TEXT, `description` TEXT, `mimeType` TEXT, `medium` TEXT, `maxEdition` INTEGER, `source` TEXT, `sourceURL` TEXT, `previewURL` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `assetData` TEXT, `assetURL` TEXT, `isFeralfileFrame` INTEGER, `initialSaleModel` TEXT, `originalFileURL` TEXT, PRIMARY KEY (`indexID`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`id`))');
+        await database.execute(
+            'CREATE INDEX `index_Token_lastActivityTime_id` ON `Token` (`lastActivityTime`, `id`)');
         await database.execute(
             'CREATE INDEX `index_Provenance_id` ON `Provenance` (`id`)');
 
@@ -97,8 +106,13 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
   }
 
   @override
-  AssetTokenDao get assetDao {
-    return _assetDaoInstance ??= _$AssetTokenDao(database, changeListener);
+  TokenDao get tokenDao {
+    return _tokenDaoInstance ??= _$TokenDao(database, changeListener);
+  }
+
+  @override
+  AssetDao get assetDao {
+    return _assetDaoInstance ??= _$AssetDao(database, changeListener);
   }
 
   @override
@@ -107,174 +121,132 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
   }
 }
 
-class _$AssetTokenDao extends AssetTokenDao {
-  _$AssetTokenDao(
+class _$TokenDao extends TokenDao {
+  _$TokenDao(
     this.database,
     this.changeListener,
   )   : _queryAdapter = QueryAdapter(database),
-        _assetTokenInsertionAdapter = InsertionAdapter(
+        _tokenInsertionAdapter = InsertionAdapter(
             database,
-            'AssetToken',
-            (AssetToken item) => <String, Object?>{
-                  'artistName': item.artistName,
-                  'artistURL': item.artistURL,
-                  'artistID': item.artistID,
-                  'assetData': item.assetData,
-                  'assetID': item.assetID,
-                  'assetURL': item.assetURL,
-                  'basePrice': item.basePrice,
-                  'baseCurrency': item.baseCurrency,
+            'Token',
+            (Token item) => <String, Object?>{
+                  'id': item.id,
+                  'tokenId': item.tokenId,
                   'blockchain': item.blockchain,
-                  'blockchainUrl': item.blockchainUrl,
                   'fungible':
                       item.fungible == null ? null : (item.fungible! ? 1 : 0),
                   'contractType': item.contractType,
-                  'tokenId': item.tokenId,
                   'contractAddress': item.contractAddress,
-                  'desc': item.desc,
                   'edition': item.edition,
                   'editionName': item.editionName,
-                  'id': item.id,
-                  'maxEdition': item.maxEdition,
+                  'mintedAt': _nullableDateTimeConverter.encode(item.mintedAt),
+                  'balance': item.balance,
+                  'owner': item.owner,
+                  'owners': _tokenOwnersConverter.encode(item.owners),
+                  'source': item.source,
+                  'swapped':
+                      item.swapped == null ? null : (item.swapped! ? 1 : 0),
+                  'burned': item.burned == null ? null : (item.burned! ? 1 : 0),
+                  'lastActivityTime':
+                      _dateTimeConverter.encode(item.lastActivityTime),
+                  'lastRefreshedTime':
+                      _dateTimeConverter.encode(item.lastRefreshedTime),
+                  'ipfsPinned': item.ipfsPinned == null
+                      ? null
+                      : (item.ipfsPinned! ? 1 : 0),
                   'scrollable': item.scrollable == null
                       ? null
                       : (item.scrollable! ? 1 : 0),
-                  'medium': item.medium,
-                  'mimeType': item.mimeType,
-                  'mintedAt': item.mintedAt,
-                  'previewURL': item.previewURL,
-                  'source': item.source,
-                  'sourceURL': item.sourceURL,
-                  'thumbnailID': item.thumbnailID,
-                  'thumbnailURL': item.thumbnailURL,
-                  'galleryThumbnailURL': item.galleryThumbnailURL,
-                  'title': item.title,
-                  'ownerAddress': item.ownerAddress,
-                  'owners': _tokenOwnersConverter.encode(item.owners),
-                  'balance': item.balance,
-                  'lastActivityTime':
-                      _dateTimeConverter.encode(item.lastActivityTime),
-                  'updateTime':
-                      _nullableDateTimeConverter.encode(item.updateTime),
                   'pending':
                       item.pending == null ? null : (item.pending! ? 1 : 0),
-                  'initialSaleModel': item.initialSaleModel,
-                  'isFeralfileFrame': item.isFeralfileFrame == null
+                  'isDebugged': item.isDebugged == null
                       ? null
-                      : (item.isFeralfileFrame! ? 1 : 0),
+                      : (item.isDebugged! ? 1 : 0),
+                  'initialSaleModel': item.initialSaleModel,
                   'originTokenInfoId': item.originTokenInfoId,
-                  'swapped':
-                      item.swapped == null ? null : (item.swapped! ? 1 : 0)
+                  'indexID': item.indexID
                 }),
-        _assetTokenUpdateAdapter = UpdateAdapter(
+        _tokenUpdateAdapter = UpdateAdapter(
             database,
-            'AssetToken',
-            ['id', 'ownerAddress'],
-            (AssetToken item) => <String, Object?>{
-                  'artistName': item.artistName,
-                  'artistURL': item.artistURL,
-                  'artistID': item.artistID,
-                  'assetData': item.assetData,
-                  'assetID': item.assetID,
-                  'assetURL': item.assetURL,
-                  'basePrice': item.basePrice,
-                  'baseCurrency': item.baseCurrency,
+            'Token',
+            ['id', 'owner'],
+            (Token item) => <String, Object?>{
+                  'id': item.id,
+                  'tokenId': item.tokenId,
                   'blockchain': item.blockchain,
-                  'blockchainUrl': item.blockchainUrl,
                   'fungible':
                       item.fungible == null ? null : (item.fungible! ? 1 : 0),
                   'contractType': item.contractType,
-                  'tokenId': item.tokenId,
                   'contractAddress': item.contractAddress,
-                  'desc': item.desc,
                   'edition': item.edition,
                   'editionName': item.editionName,
-                  'id': item.id,
-                  'maxEdition': item.maxEdition,
+                  'mintedAt': _nullableDateTimeConverter.encode(item.mintedAt),
+                  'balance': item.balance,
+                  'owner': item.owner,
+                  'owners': _tokenOwnersConverter.encode(item.owners),
+                  'source': item.source,
+                  'swapped':
+                      item.swapped == null ? null : (item.swapped! ? 1 : 0),
+                  'burned': item.burned == null ? null : (item.burned! ? 1 : 0),
+                  'lastActivityTime':
+                      _dateTimeConverter.encode(item.lastActivityTime),
+                  'lastRefreshedTime':
+                      _dateTimeConverter.encode(item.lastRefreshedTime),
+                  'ipfsPinned': item.ipfsPinned == null
+                      ? null
+                      : (item.ipfsPinned! ? 1 : 0),
                   'scrollable': item.scrollable == null
                       ? null
                       : (item.scrollable! ? 1 : 0),
-                  'medium': item.medium,
-                  'mimeType': item.mimeType,
-                  'mintedAt': item.mintedAt,
-                  'previewURL': item.previewURL,
-                  'source': item.source,
-                  'sourceURL': item.sourceURL,
-                  'thumbnailID': item.thumbnailID,
-                  'thumbnailURL': item.thumbnailURL,
-                  'galleryThumbnailURL': item.galleryThumbnailURL,
-                  'title': item.title,
-                  'ownerAddress': item.ownerAddress,
-                  'owners': _tokenOwnersConverter.encode(item.owners),
-                  'balance': item.balance,
-                  'lastActivityTime':
-                      _dateTimeConverter.encode(item.lastActivityTime),
-                  'updateTime':
-                      _nullableDateTimeConverter.encode(item.updateTime),
                   'pending':
                       item.pending == null ? null : (item.pending! ? 1 : 0),
-                  'initialSaleModel': item.initialSaleModel,
-                  'isFeralfileFrame': item.isFeralfileFrame == null
+                  'isDebugged': item.isDebugged == null
                       ? null
-                      : (item.isFeralfileFrame! ? 1 : 0),
+                      : (item.isDebugged! ? 1 : 0),
+                  'initialSaleModel': item.initialSaleModel,
                   'originTokenInfoId': item.originTokenInfoId,
-                  'swapped':
-                      item.swapped == null ? null : (item.swapped! ? 1 : 0)
+                  'indexID': item.indexID
                 }),
-        _assetTokenDeletionAdapter = DeletionAdapter(
+        _tokenDeletionAdapter = DeletionAdapter(
             database,
-            'AssetToken',
-            ['id', 'ownerAddress'],
-            (AssetToken item) => <String, Object?>{
-                  'artistName': item.artistName,
-                  'artistURL': item.artistURL,
-                  'artistID': item.artistID,
-                  'assetData': item.assetData,
-                  'assetID': item.assetID,
-                  'assetURL': item.assetURL,
-                  'basePrice': item.basePrice,
-                  'baseCurrency': item.baseCurrency,
+            'Token',
+            ['id', 'owner'],
+            (Token item) => <String, Object?>{
+                  'id': item.id,
+                  'tokenId': item.tokenId,
                   'blockchain': item.blockchain,
-                  'blockchainUrl': item.blockchainUrl,
                   'fungible':
                       item.fungible == null ? null : (item.fungible! ? 1 : 0),
                   'contractType': item.contractType,
-                  'tokenId': item.tokenId,
                   'contractAddress': item.contractAddress,
-                  'desc': item.desc,
                   'edition': item.edition,
                   'editionName': item.editionName,
-                  'id': item.id,
-                  'maxEdition': item.maxEdition,
+                  'mintedAt': _nullableDateTimeConverter.encode(item.mintedAt),
+                  'balance': item.balance,
+                  'owner': item.owner,
+                  'owners': _tokenOwnersConverter.encode(item.owners),
+                  'source': item.source,
+                  'swapped':
+                      item.swapped == null ? null : (item.swapped! ? 1 : 0),
+                  'burned': item.burned == null ? null : (item.burned! ? 1 : 0),
+                  'lastActivityTime':
+                      _dateTimeConverter.encode(item.lastActivityTime),
+                  'lastRefreshedTime':
+                      _dateTimeConverter.encode(item.lastRefreshedTime),
+                  'ipfsPinned': item.ipfsPinned == null
+                      ? null
+                      : (item.ipfsPinned! ? 1 : 0),
                   'scrollable': item.scrollable == null
                       ? null
                       : (item.scrollable! ? 1 : 0),
-                  'medium': item.medium,
-                  'mimeType': item.mimeType,
-                  'mintedAt': item.mintedAt,
-                  'previewURL': item.previewURL,
-                  'source': item.source,
-                  'sourceURL': item.sourceURL,
-                  'thumbnailID': item.thumbnailID,
-                  'thumbnailURL': item.thumbnailURL,
-                  'galleryThumbnailURL': item.galleryThumbnailURL,
-                  'title': item.title,
-                  'ownerAddress': item.ownerAddress,
-                  'owners': _tokenOwnersConverter.encode(item.owners),
-                  'balance': item.balance,
-                  'lastActivityTime':
-                      _dateTimeConverter.encode(item.lastActivityTime),
-                  'updateTime':
-                      _nullableDateTimeConverter.encode(item.updateTime),
                   'pending':
                       item.pending == null ? null : (item.pending! ? 1 : 0),
-                  'initialSaleModel': item.initialSaleModel,
-                  'isFeralfileFrame': item.isFeralfileFrame == null
+                  'isDebugged': item.isDebugged == null
                       ? null
-                      : (item.isFeralfileFrame! ? 1 : 0),
+                      : (item.isDebugged! ? 1 : 0),
+                  'initialSaleModel': item.initialSaleModel,
                   'originTokenInfoId': item.originTokenInfoId,
-                  'swapped':
-                      item.swapped == null ? null : (item.swapped! ? 1 : 0)
+                  'indexID': item.indexID
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -283,385 +255,572 @@ class _$AssetTokenDao extends AssetTokenDao {
 
   final QueryAdapter _queryAdapter;
 
-  final InsertionAdapter<AssetToken> _assetTokenInsertionAdapter;
+  final InsertionAdapter<Token> _tokenInsertionAdapter;
 
-  final UpdateAdapter<AssetToken> _assetTokenUpdateAdapter;
+  final UpdateAdapter<Token> _tokenUpdateAdapter;
 
-  final DeletionAdapter<AssetToken> _assetTokenDeletionAdapter;
+  final DeletionAdapter<Token> _tokenDeletionAdapter;
 
   @override
-  Future<List<AssetToken>> findAllAssetTokens() async {
+  Future<List<Token>> findAllTokens() async {
     return _queryAdapter.queryList(
-        'SELECT * FROM AssetToken ORDER BY lastActivityTime DESC, title, assetID',
-        mapper: (Map<String, Object?> row) => AssetToken(
-            artistName: row['artistName'] as String?,
-            artistURL: row['artistURL'] as String?,
-            artistID: row['artistID'] as String?,
-            assetData: row['assetData'] as String?,
-            assetID: row['assetID'] as String?,
-            assetURL: row['assetURL'] as String?,
-            basePrice: row['basePrice'] as double?,
-            baseCurrency: row['baseCurrency'] as String?,
+        'SELECT * FROM Token ORDER BY lastActivityTime DESC, title, assetID',
+        mapper: (Map<String, Object?> row) => Token(
+            id: row['id'] as String,
+            tokenId: row['tokenId'] as String?,
             blockchain: row['blockchain'] as String,
-            blockchainUrl: row['blockchainUrl'] as String?,
             fungible:
                 row['fungible'] == null ? null : (row['fungible'] as int) != 0,
             contractType: row['contractType'] as String?,
-            tokenId: row['tokenId'] as String?,
             contractAddress: row['contractAddress'] as String?,
-            desc: row['desc'] as String?,
             edition: row['edition'] as int,
             editionName: row['editionName'] as String?,
-            id: row['id'] as String,
-            maxEdition: row['maxEdition'] as int?,
-            medium: row['medium'] as String?,
-            mimeType: row['mimeType'] as String?,
-            mintedAt: row['mintedAt'] as String?,
-            previewURL: row['previewURL'] as String?,
-            source: row['source'] as String?,
-            sourceURL: row['sourceURL'] as String?,
-            thumbnailID: row['thumbnailID'] as String?,
-            thumbnailURL: row['thumbnailURL'] as String?,
-            galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
-            title: row['title'] as String,
-            initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String,
-            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            mintedAt:
+                _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
             balance: row['balance'] as int?,
+            owner: row['owner'] as String,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            source: row['source'] as String?,
+            swapped:
+                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
             lastActivityTime:
                 _dateTimeConverter.decode(row['lastActivityTime'] as int),
-            updateTime:
-                _nullableDateTimeConverter.decode(row['updateTime'] as int?),
-            isFeralfileFrame: row['isFeralfileFrame'] == null
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            ipfsPinned: row['ipfsPinned'] == null
                 ? null
-                : (row['isFeralfileFrame'] as int) != 0,
+                : (row['ipfsPinned'] as int) != 0,
             scrollable: row['scrollable'] == null
                 ? null
                 : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
+            initialSaleModel: row['initialSaleModel'] as String?,
             originTokenInfoId: row['originTokenInfoId'] as String?,
-            swapped:
-                row['swapped'] == null ? null : (row['swapped'] as int) != 0));
+            indexID: row['indexID'] as String?,
+            isDebugged: row['isDebugged'] == null
+                ? null
+                : (row['isDebugged'] as int) != 0));
   }
 
   @override
-  Future<List<AssetToken>> findAllAssetTokensByOwners(
-      List<String> owners) async {
+  Future<List<Token>> findAllTokensByOwners(List<String> owners) async {
     const offset = 1;
     final _sqliteVariablesForOwners =
         Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT DISTINCT * FROM AssetToken WHERE ownerAddress IN (' +
+        'SELECT DISTINCT * FROM Token WHERE owner IN (' +
             _sqliteVariablesForOwners +
             ') ORDER BY lastActivityTime DESC, title, assetID',
-        mapper: (Map<String, Object?> row) => AssetToken(
-            artistName: row['artistName'] as String?,
-            artistURL: row['artistURL'] as String?,
-            artistID: row['artistID'] as String?,
-            assetData: row['assetData'] as String?,
-            assetID: row['assetID'] as String?,
-            assetURL: row['assetURL'] as String?,
-            basePrice: row['basePrice'] as double?,
-            baseCurrency: row['baseCurrency'] as String?,
+        mapper: (Map<String, Object?> row) => Token(
+            id: row['id'] as String,
+            tokenId: row['tokenId'] as String?,
             blockchain: row['blockchain'] as String,
-            blockchainUrl: row['blockchainUrl'] as String?,
             fungible:
                 row['fungible'] == null ? null : (row['fungible'] as int) != 0,
             contractType: row['contractType'] as String?,
-            tokenId: row['tokenId'] as String?,
             contractAddress: row['contractAddress'] as String?,
-            desc: row['desc'] as String?,
             edition: row['edition'] as int,
             editionName: row['editionName'] as String?,
-            id: row['id'] as String,
-            maxEdition: row['maxEdition'] as int?,
-            medium: row['medium'] as String?,
-            mimeType: row['mimeType'] as String?,
-            mintedAt: row['mintedAt'] as String?,
-            previewURL: row['previewURL'] as String?,
-            source: row['source'] as String?,
-            sourceURL: row['sourceURL'] as String?,
-            thumbnailID: row['thumbnailID'] as String?,
-            thumbnailURL: row['thumbnailURL'] as String?,
-            galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
-            title: row['title'] as String,
-            initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String,
-            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            mintedAt:
+                _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
             balance: row['balance'] as int?,
+            owner: row['owner'] as String,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            source: row['source'] as String?,
+            swapped:
+                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
             lastActivityTime:
                 _dateTimeConverter.decode(row['lastActivityTime'] as int),
-            updateTime:
-                _nullableDateTimeConverter.decode(row['updateTime'] as int?),
-            isFeralfileFrame: row['isFeralfileFrame'] == null
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            ipfsPinned: row['ipfsPinned'] == null
                 ? null
-                : (row['isFeralfileFrame'] as int) != 0,
+                : (row['ipfsPinned'] as int) != 0,
             scrollable: row['scrollable'] == null
                 ? null
                 : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
+            initialSaleModel: row['initialSaleModel'] as String?,
             originTokenInfoId: row['originTokenInfoId'] as String?,
-            swapped:
-                row['swapped'] == null ? null : (row['swapped'] as int) != 0),
+            indexID: row['indexID'] as String?,
+            isDebugged: row['isDebugged'] == null
+                ? null
+                : (row['isDebugged'] as int) != 0),
         arguments: [...owners]);
   }
 
   @override
-  Future<List<AssetToken>> findAssetTokensByBlockchain(
-      String blockchain) async {
-    return _queryAdapter.queryList(
-        'SELECT * FROM AssetToken WHERE blockchain = ?1',
-        mapper: (Map<String, Object?> row) => AssetToken(
-            artistName: row['artistName'] as String?,
-            artistURL: row['artistURL'] as String?,
-            artistID: row['artistID'] as String?,
-            assetData: row['assetData'] as String?,
-            assetID: row['assetID'] as String?,
-            assetURL: row['assetURL'] as String?,
-            basePrice: row['basePrice'] as double?,
-            baseCurrency: row['baseCurrency'] as String?,
+  Future<List<Token>> findTokensByBlockchain(String blockchain) async {
+    return _queryAdapter.queryList('SELECT * FROM Token WHERE blockchain = ?1',
+        mapper: (Map<String, Object?> row) => Token(
+            id: row['id'] as String,
+            tokenId: row['tokenId'] as String?,
             blockchain: row['blockchain'] as String,
-            blockchainUrl: row['blockchainUrl'] as String?,
             fungible:
                 row['fungible'] == null ? null : (row['fungible'] as int) != 0,
             contractType: row['contractType'] as String?,
-            tokenId: row['tokenId'] as String?,
             contractAddress: row['contractAddress'] as String?,
-            desc: row['desc'] as String?,
             edition: row['edition'] as int,
             editionName: row['editionName'] as String?,
-            id: row['id'] as String,
-            maxEdition: row['maxEdition'] as int?,
-            medium: row['medium'] as String?,
-            mimeType: row['mimeType'] as String?,
-            mintedAt: row['mintedAt'] as String?,
-            previewURL: row['previewURL'] as String?,
-            source: row['source'] as String?,
-            sourceURL: row['sourceURL'] as String?,
-            thumbnailID: row['thumbnailID'] as String?,
-            thumbnailURL: row['thumbnailURL'] as String?,
-            galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
-            title: row['title'] as String,
-            initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String,
-            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            mintedAt:
+                _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
             balance: row['balance'] as int?,
+            owner: row['owner'] as String,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            source: row['source'] as String?,
+            swapped:
+                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
             lastActivityTime:
                 _dateTimeConverter.decode(row['lastActivityTime'] as int),
-            updateTime:
-                _nullableDateTimeConverter.decode(row['updateTime'] as int?),
-            isFeralfileFrame: row['isFeralfileFrame'] == null
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            ipfsPinned: row['ipfsPinned'] == null
                 ? null
-                : (row['isFeralfileFrame'] as int) != 0,
+                : (row['ipfsPinned'] as int) != 0,
             scrollable: row['scrollable'] == null
                 ? null
                 : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
+            initialSaleModel: row['initialSaleModel'] as String?,
             originTokenInfoId: row['originTokenInfoId'] as String?,
-            swapped:
-                row['swapped'] == null ? null : (row['swapped'] as int) != 0),
+            indexID: row['indexID'] as String?,
+            isDebugged: row['isDebugged'] == null
+                ? null
+                : (row['isDebugged'] as int) != 0),
         arguments: [blockchain]);
   }
 
   @override
-  Future<AssetToken?> findAssetTokenByIdAndOwner(
+  Future<Token?> findTokenByIdAndOwner(
     String id,
     String owner,
   ) async {
     return _queryAdapter.query(
-        'SELECT * FROM AssetToken WHERE id = ?1 AND ownerAddress = ?2',
-        mapper: (Map<String, Object?> row) => AssetToken(
-            artistName: row['artistName'] as String?,
-            artistURL: row['artistURL'] as String?,
-            artistID: row['artistID'] as String?,
-            assetData: row['assetData'] as String?,
-            assetID: row['assetID'] as String?,
-            assetURL: row['assetURL'] as String?,
-            basePrice: row['basePrice'] as double?,
-            baseCurrency: row['baseCurrency'] as String?,
+        'SELECT * FROM Token WHERE id = ?1 AND owner = ?2',
+        mapper: (Map<String, Object?> row) => Token(
+            id: row['id'] as String,
+            tokenId: row['tokenId'] as String?,
             blockchain: row['blockchain'] as String,
-            blockchainUrl: row['blockchainUrl'] as String?,
             fungible:
                 row['fungible'] == null ? null : (row['fungible'] as int) != 0,
             contractType: row['contractType'] as String?,
-            tokenId: row['tokenId'] as String?,
             contractAddress: row['contractAddress'] as String?,
-            desc: row['desc'] as String?,
             edition: row['edition'] as int,
             editionName: row['editionName'] as String?,
-            id: row['id'] as String,
-            maxEdition: row['maxEdition'] as int?,
-            medium: row['medium'] as String?,
-            mimeType: row['mimeType'] as String?,
-            mintedAt: row['mintedAt'] as String?,
-            previewURL: row['previewURL'] as String?,
-            source: row['source'] as String?,
-            sourceURL: row['sourceURL'] as String?,
-            thumbnailID: row['thumbnailID'] as String?,
-            thumbnailURL: row['thumbnailURL'] as String?,
-            galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
-            title: row['title'] as String,
-            initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String,
-            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            mintedAt:
+                _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
             balance: row['balance'] as int?,
+            owner: row['owner'] as String,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            source: row['source'] as String?,
+            swapped:
+                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
             lastActivityTime:
                 _dateTimeConverter.decode(row['lastActivityTime'] as int),
-            updateTime:
-                _nullableDateTimeConverter.decode(row['updateTime'] as int?),
-            isFeralfileFrame: row['isFeralfileFrame'] == null
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            ipfsPinned: row['ipfsPinned'] == null
                 ? null
-                : (row['isFeralfileFrame'] as int) != 0,
+                : (row['ipfsPinned'] as int) != 0,
             scrollable: row['scrollable'] == null
                 ? null
                 : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
+            initialSaleModel: row['initialSaleModel'] as String?,
             originTokenInfoId: row['originTokenInfoId'] as String?,
-            swapped:
-                row['swapped'] == null ? null : (row['swapped'] as int) != 0),
+            indexID: row['indexID'] as String?,
+            isDebugged: row['isDebugged'] == null
+                ? null
+                : (row['isDebugged'] as int) != 0),
         arguments: [id, owner]);
   }
 
   @override
-  Future<List<AssetToken>> findAllAssetTokensByIds(List<String> ids) async {
+  Future<List<Token>> findAllTokensByIds(List<String> ids) async {
     const offset = 1;
     final _sqliteVariablesForIds =
         Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT * FROM AssetToken WHERE id IN (' + _sqliteVariablesForIds + ')',
-        mapper: (Map<String, Object?> row) => AssetToken(
-            artistName: row['artistName'] as String?,
-            artistURL: row['artistURL'] as String?,
-            artistID: row['artistID'] as String?,
-            assetData: row['assetData'] as String?,
-            assetID: row['assetID'] as String?,
-            assetURL: row['assetURL'] as String?,
-            basePrice: row['basePrice'] as double?,
-            baseCurrency: row['baseCurrency'] as String?,
+        'SELECT * FROM Token WHERE id IN (' + _sqliteVariablesForIds + ')',
+        mapper: (Map<String, Object?> row) => Token(
+            id: row['id'] as String,
+            tokenId: row['tokenId'] as String?,
             blockchain: row['blockchain'] as String,
-            blockchainUrl: row['blockchainUrl'] as String?,
             fungible:
                 row['fungible'] == null ? null : (row['fungible'] as int) != 0,
             contractType: row['contractType'] as String?,
-            tokenId: row['tokenId'] as String?,
             contractAddress: row['contractAddress'] as String?,
-            desc: row['desc'] as String?,
             edition: row['edition'] as int,
             editionName: row['editionName'] as String?,
-            id: row['id'] as String,
-            maxEdition: row['maxEdition'] as int?,
-            medium: row['medium'] as String?,
-            mimeType: row['mimeType'] as String?,
-            mintedAt: row['mintedAt'] as String?,
-            previewURL: row['previewURL'] as String?,
-            source: row['source'] as String?,
-            sourceURL: row['sourceURL'] as String?,
-            thumbnailID: row['thumbnailID'] as String?,
-            thumbnailURL: row['thumbnailURL'] as String?,
-            galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
-            title: row['title'] as String,
-            initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String,
-            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            mintedAt:
+                _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
             balance: row['balance'] as int?,
+            owner: row['owner'] as String,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            source: row['source'] as String?,
+            swapped:
+                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
             lastActivityTime:
                 _dateTimeConverter.decode(row['lastActivityTime'] as int),
-            updateTime:
-                _nullableDateTimeConverter.decode(row['updateTime'] as int?),
-            isFeralfileFrame: row['isFeralfileFrame'] == null
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            ipfsPinned: row['ipfsPinned'] == null
                 ? null
-                : (row['isFeralfileFrame'] as int) != 0,
+                : (row['ipfsPinned'] as int) != 0,
             scrollable: row['scrollable'] == null
                 ? null
                 : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
+            initialSaleModel: row['initialSaleModel'] as String?,
             originTokenInfoId: row['originTokenInfoId'] as String?,
-            swapped:
-                row['swapped'] == null ? null : (row['swapped'] as int) != 0),
+            indexID: row['indexID'] as String?,
+            isDebugged: row['isDebugged'] == null
+                ? null
+                : (row['isDebugged'] as int) != 0),
         arguments: [...ids]);
   }
 
   @override
-  Future<List<String>> findAllAssetTokenIDs() async {
-    return _queryAdapter.queryList('SELECT id FROM AssetToken',
-        mapper: (Map<String, Object?> row) => row["id"] as String);
+  Future<List<String>> findAllTokenIDs() async {
+    return _queryAdapter.queryList('SELECT id FROM Token',
+        mapper: (Map<String, Object?> row) => row.values.first as String);
   }
 
   @override
-  Future<List<String>> findAllAssetTokenIDsByOwner(String owner) async {
-    return await _queryAdapter.queryList(
-      'SELECT id FROM AssetToken WHERE ownerAddress=?1',
-      arguments: [owner],
-      mapper: (Map<String, Object?> row) => row["id"] as String,
-    );
+  Future<List<String>> findAllTokenIDsByOwner(String owner) async {
+    return _queryAdapter.queryList('SELECT id FROM Token WHERE owner=?1',
+        mapper: (Map<String, Object?> row) => row.values.first as String,
+        arguments: [owner]);
   }
 
   @override
-  Future<List<String>> findAllAssetArtistIDs() async {
-    return _queryAdapter.queryList('SELECT DISTINCT artistID FROM AssetToken',
-        mapper: (Map<String, Object?> row) => row["artistID"] as String);
+  Future<List<String>> findAllTokenArtistIDs() async {
+    return _queryAdapter.queryList('SELECT DISTINCT artistID FROM Token',
+        mapper: (Map<String, Object?> row) => row.values.first as String);
   }
 
   @override
-  Future<List<AssetToken>> findAllPendingTokens() async {
-    return _queryAdapter.queryList('SELECT * FROM AssetToken WHERE pending = 1',
-        mapper: (Map<String, Object?> row) => AssetToken(
-            artistName: row['artistName'] as String?,
-            artistURL: row['artistURL'] as String?,
-            artistID: row['artistID'] as String?,
-            assetData: row['assetData'] as String?,
-            assetID: row['assetID'] as String?,
-            assetURL: row['assetURL'] as String?,
-            basePrice: row['basePrice'] as double?,
-            baseCurrency: row['baseCurrency'] as String?,
+  Future<List<Token>> findAllPendingTokens() async {
+    return _queryAdapter.queryList('SELECT * FROM Token WHERE pending = 1',
+        mapper: (Map<String, Object?> row) => Token(
+            id: row['id'] as String,
+            tokenId: row['tokenId'] as String?,
             blockchain: row['blockchain'] as String,
-            blockchainUrl: row['blockchainUrl'] as String?,
             fungible:
                 row['fungible'] == null ? null : (row['fungible'] as int) != 0,
             contractType: row['contractType'] as String?,
-            tokenId: row['tokenId'] as String?,
             contractAddress: row['contractAddress'] as String?,
-            desc: row['desc'] as String?,
             edition: row['edition'] as int,
             editionName: row['editionName'] as String?,
-            id: row['id'] as String,
-            maxEdition: row['maxEdition'] as int?,
-            medium: row['medium'] as String?,
-            mimeType: row['mimeType'] as String?,
-            mintedAt: row['mintedAt'] as String?,
-            previewURL: row['previewURL'] as String?,
-            source: row['source'] as String?,
-            sourceURL: row['sourceURL'] as String?,
-            thumbnailID: row['thumbnailID'] as String?,
-            thumbnailURL: row['thumbnailURL'] as String?,
-            galleryThumbnailURL: row['galleryThumbnailURL'] as String?,
-            title: row['title'] as String,
-            initialSaleModel: row['initialSaleModel'] as String?,
-            ownerAddress: row['ownerAddress'] as String,
-            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            mintedAt:
+                _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
             balance: row['balance'] as int?,
+            owner: row['owner'] as String,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            source: row['source'] as String?,
+            swapped:
+                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
             lastActivityTime:
                 _dateTimeConverter.decode(row['lastActivityTime'] as int),
-            updateTime:
-                _nullableDateTimeConverter.decode(row['updateTime'] as int?),
-            isFeralfileFrame: row['isFeralfileFrame'] == null
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            ipfsPinned: row['ipfsPinned'] == null
                 ? null
-                : (row['isFeralfileFrame'] as int) != 0,
+                : (row['ipfsPinned'] as int) != 0,
             scrollable: row['scrollable'] == null
                 ? null
                 : (row['scrollable'] as int) != 0,
             pending:
                 row['pending'] == null ? null : (row['pending'] as int) != 0,
+            initialSaleModel: row['initialSaleModel'] as String?,
             originTokenInfoId: row['originTokenInfoId'] as String?,
-            swapped:
-                row['swapped'] == null ? null : (row['swapped'] as int) != 0));
+            indexID: row['indexID'] as String?,
+            isDebugged: row['isDebugged'] == null
+                ? null
+                : (row['isDebugged'] as int) != 0));
+  }
+
+  @override
+  Future<void> deleteTokens(List<String> ids) async {
+    const offset = 1;
+    final _sqliteVariablesForIds =
+        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
+            .join(',');
+    await _queryAdapter.queryNoReturn(
+        'DELETE FROM Token WHERE id IN (' + _sqliteVariablesForIds + ')',
+        arguments: [...ids]);
+  }
+
+  @override
+  Future<void> deleteTokenByID(String id) async {
+    await _queryAdapter
+        .queryNoReturn('DELETE FROM Token WHERE id = (?1)', arguments: [id]);
+  }
+
+  @override
+  Future<void> deleteTokensNotIn(List<String> ids) async {
+    const offset = 1;
+    final _sqliteVariablesForIds =
+        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
+            .join(',');
+    await _queryAdapter.queryNoReturn(
+        'DELETE FROM Token WHERE id NOT IN (' + _sqliteVariablesForIds + ')',
+        arguments: [...ids]);
+  }
+
+  @override
+  Future<void> deleteTokensNotInByOwner(
+    List<String> ids,
+    String owner,
+  ) async {
+    const offset = 2;
+    final _sqliteVariablesForIds =
+        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
+            .join(',');
+    await _queryAdapter.queryNoReturn(
+        'DELETE FROM Token WHERE id NOT IN (' +
+            _sqliteVariablesForIds +
+            ') AND owner=?1',
+        arguments: [owner, ...ids]);
+  }
+
+  @override
+  Future<void> deleteTokensNotBelongs(List<String> owners) async {
+    const offset = 1;
+    final _sqliteVariablesForOwners =
+        Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
+            .join(',');
+    await _queryAdapter.queryNoReturn(
+        'DELETE FROM Token WHERE owner NOT IN (' +
+            _sqliteVariablesForOwners +
+            ')',
+        arguments: [...owners]);
+  }
+
+  @override
+  Future<void> removeAll() async {
+    await _queryAdapter.queryNoReturn('DELETE FROM Token');
+  }
+
+  @override
+  Future<void> removeAllExcludePending() async {
+    await _queryAdapter.queryNoReturn('DELETE FROM Token WHERE pending=0');
+  }
+
+  @override
+  Future<void> insertToken(Token token) async {
+    await _tokenInsertionAdapter.insert(token, OnConflictStrategy.replace);
+  }
+
+  @override
+  Future<void> insertTokens(List<Token> assets) async {
+    await _tokenInsertionAdapter.insertList(assets, OnConflictStrategy.replace);
+  }
+
+  @override
+  Future<void> updateToken(Token asset) async {
+    await _tokenUpdateAdapter.update(asset, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> deleteToken(Token asset) async {
+    await _tokenDeletionAdapter.delete(asset);
+  }
+}
+
+class _$AssetDao extends AssetDao {
+  _$AssetDao(
+    this.database,
+    this.changeListener,
+  )   : _queryAdapter = QueryAdapter(database),
+        _assetInsertionAdapter = InsertionAdapter(
+            database,
+            'Asset',
+            (Asset item) => <String, Object?>{
+                  'indexID': item.indexID,
+                  'thumbnailID': item.thumbnailID,
+                  'lastRefreshedTime':
+                      _nullableDateTimeConverter.encode(item.lastRefreshedTime),
+                  'artistID': item.artistID,
+                  'artistName': item.artistName,
+                  'artistURL': item.artistURL,
+                  'assetID': item.assetID,
+                  'title': item.title,
+                  'description': item.description,
+                  'mimeType': item.mimeType,
+                  'medium': item.medium,
+                  'maxEdition': item.maxEdition,
+                  'source': item.source,
+                  'sourceURL': item.sourceURL,
+                  'previewURL': item.previewURL,
+                  'thumbnailURL': item.thumbnailURL,
+                  'galleryThumbnailURL': item.galleryThumbnailURL,
+                  'assetData': item.assetData,
+                  'assetURL': item.assetURL,
+                  'isFeralfileFrame': item.isFeralfileFrame == null
+                      ? null
+                      : (item.isFeralfileFrame! ? 1 : 0),
+                  'initialSaleModel': item.initialSaleModel,
+                  'originalFileURL': item.originalFileURL
+                }),
+        _assetUpdateAdapter = UpdateAdapter(
+            database,
+            'Asset',
+            ['indexID'],
+            (Asset item) => <String, Object?>{
+                  'indexID': item.indexID,
+                  'thumbnailID': item.thumbnailID,
+                  'lastRefreshedTime':
+                      _nullableDateTimeConverter.encode(item.lastRefreshedTime),
+                  'artistID': item.artistID,
+                  'artistName': item.artistName,
+                  'artistURL': item.artistURL,
+                  'assetID': item.assetID,
+                  'title': item.title,
+                  'description': item.description,
+                  'mimeType': item.mimeType,
+                  'medium': item.medium,
+                  'maxEdition': item.maxEdition,
+                  'source': item.source,
+                  'sourceURL': item.sourceURL,
+                  'previewURL': item.previewURL,
+                  'thumbnailURL': item.thumbnailURL,
+                  'galleryThumbnailURL': item.galleryThumbnailURL,
+                  'assetData': item.assetData,
+                  'assetURL': item.assetURL,
+                  'isFeralfileFrame': item.isFeralfileFrame == null
+                      ? null
+                      : (item.isFeralfileFrame! ? 1 : 0),
+                  'initialSaleModel': item.initialSaleModel,
+                  'originalFileURL': item.originalFileURL
+                }),
+        _assetDeletionAdapter = DeletionAdapter(
+            database,
+            'Asset',
+            ['indexID'],
+            (Asset item) => <String, Object?>{
+                  'indexID': item.indexID,
+                  'thumbnailID': item.thumbnailID,
+                  'lastRefreshedTime':
+                      _nullableDateTimeConverter.encode(item.lastRefreshedTime),
+                  'artistID': item.artistID,
+                  'artistName': item.artistName,
+                  'artistURL': item.artistURL,
+                  'assetID': item.assetID,
+                  'title': item.title,
+                  'description': item.description,
+                  'mimeType': item.mimeType,
+                  'medium': item.medium,
+                  'maxEdition': item.maxEdition,
+                  'source': item.source,
+                  'sourceURL': item.sourceURL,
+                  'previewURL': item.previewURL,
+                  'thumbnailURL': item.thumbnailURL,
+                  'galleryThumbnailURL': item.galleryThumbnailURL,
+                  'assetData': item.assetData,
+                  'assetURL': item.assetURL,
+                  'isFeralfileFrame': item.isFeralfileFrame == null
+                      ? null
+                      : (item.isFeralfileFrame! ? 1 : 0),
+                  'initialSaleModel': item.initialSaleModel,
+                  'originalFileURL': item.originalFileURL
+                });
+
+  final sqflite.DatabaseExecutor database;
+
+  final StreamController<String> changeListener;
+
+  final QueryAdapter _queryAdapter;
+
+  final InsertionAdapter<Asset> _assetInsertionAdapter;
+
+  final UpdateAdapter<Asset> _assetUpdateAdapter;
+
+  final DeletionAdapter<Asset> _assetDeletionAdapter;
+
+  @override
+  Future<List<Asset>> findAllAssets() async {
+    return _queryAdapter.queryList('SELECT * FROM Asset',
+        mapper: (Map<String, Object?> row) => Asset(
+            row['indexID'] as String?,
+            row['thumbnailID'] as String?,
+            _nullableDateTimeConverter.decode(row['lastRefreshedTime'] as int?),
+            row['artistID'] as String?,
+            row['artistName'] as String?,
+            row['artistURL'] as String?,
+            row['assetID'] as String?,
+            row['title'] as String?,
+            row['description'] as String?,
+            row['mimeType'] as String?,
+            row['medium'] as String?,
+            row['maxEdition'] as int?,
+            row['source'] as String?,
+            row['sourceURL'] as String?,
+            row['previewURL'] as String?,
+            row['thumbnailURL'] as String?,
+            row['galleryThumbnailURL'] as String?,
+            row['assetData'] as String?,
+            row['assetURL'] as String?,
+            row['initialSaleModel'] as String?,
+            row['originalFileURL'] as String?,
+            row['isFeralfileFrame'] == null
+                ? null
+                : (row['isFeralfileFrame'] as int) != 0));
+  }
+
+  @override
+  Future<List<Asset>> findAllAssetsByIds(List<String> ids) async {
+    const offset = 1;
+    final _sqliteVariablesForIds =
+        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT * FROM Asset WHERE assetID IN (' + _sqliteVariablesForIds + ')',
+        mapper: (Map<String, Object?> row) => Asset(
+            row['indexID'] as String?,
+            row['thumbnailID'] as String?,
+            _nullableDateTimeConverter.decode(row['lastRefreshedTime'] as int?),
+            row['artistID'] as String?,
+            row['artistName'] as String?,
+            row['artistURL'] as String?,
+            row['assetID'] as String?,
+            row['title'] as String?,
+            row['description'] as String?,
+            row['mimeType'] as String?,
+            row['medium'] as String?,
+            row['maxEdition'] as int?,
+            row['source'] as String?,
+            row['sourceURL'] as String?,
+            row['previewURL'] as String?,
+            row['thumbnailURL'] as String?,
+            row['galleryThumbnailURL'] as String?,
+            row['assetData'] as String?,
+            row['assetURL'] as String?,
+            row['initialSaleModel'] as String?,
+            row['originalFileURL'] as String?,
+            row['isFeralfileFrame'] == null
+                ? null
+                : (row['isFeralfileFrame'] as int) != 0),
+        arguments: [...ids]);
+  }
+
+  @override
+  Future<List<String>> findAllAssetIDs() async {
+    return _queryAdapter.queryList('SELECT assetID FROM Asset',
+        mapper: (Map<String, Object?> row) => row.values.first as String);
   }
 
   @override
@@ -671,8 +830,14 @@ class _$AssetTokenDao extends AssetTokenDao {
         Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
             .join(',');
     await _queryAdapter.queryNoReturn(
-        'DELETE FROM AssetToken WHERE id IN (' + _sqliteVariablesForIds + ')',
+        'DELETE FROM Asset WHERE assetID IN (' + _sqliteVariablesForIds + ')',
         arguments: [...ids]);
+  }
+
+  @override
+  Future<void> deleteAssetByID(String id) async {
+    await _queryAdapter.queryNoReturn('DELETE FROM Asset WHERE assetID = (?1)',
+        arguments: [id]);
   }
 
   @override
@@ -682,70 +847,35 @@ class _$AssetTokenDao extends AssetTokenDao {
         Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
             .join(',');
     await _queryAdapter.queryNoReturn(
-        'DELETE FROM AssetToken WHERE id NOT IN (' +
+        'DELETE FROM Asset WHERE assetID NOT IN (' +
             _sqliteVariablesForIds +
             ')',
         arguments: [...ids]);
   }
 
   @override
-  Future<void> deleteAssetsNotInByOwner(
-    List<String> ids,
-    String owner,
-  ) async {
-    const offset = 2;
-    final _sqliteVariablesForIds =
-        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
-            .join(',');
-    await _queryAdapter.queryNoReturn(
-        'DELETE FROM AssetToken WHERE id NOT IN (' +
-            _sqliteVariablesForIds +
-            ') AND ownerAddress=?1',
-        arguments: [owner, ...ids]);
-  }
-
-  @override
-  Future<void> deleteAssetsNotBelongs(List<String> owners) async {
-    const offset = 1;
-    final _sqliteVariablesForOwners =
-        Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
-            .join(',');
-    await _queryAdapter.queryNoReturn(
-        'DELETE FROM AssetToken WHERE ownerAddress NOT IN (' +
-            _sqliteVariablesForOwners +
-            ')',
-        arguments: [...owners]);
-  }
-
-  @override
   Future<void> removeAll() async {
-    await _queryAdapter.queryNoReturn('DELETE FROM AssetToken');
+    await _queryAdapter.queryNoReturn('DELETE FROM Asset');
   }
 
   @override
-  Future<void> removeAllExcludePending() async {
-    await _queryAdapter.queryNoReturn('DELETE FROM AssetToken WHERE pending=0');
+  Future<void> insertAsset(Asset token) async {
+    await _assetInsertionAdapter.insert(token, OnConflictStrategy.replace);
   }
 
   @override
-  Future<void> insertAsset(AssetToken asset) async {
-    await _assetTokenInsertionAdapter.insert(asset, OnConflictStrategy.replace);
+  Future<void> insertAssets(List<Asset> assets) async {
+    await _assetInsertionAdapter.insertList(assets, OnConflictStrategy.replace);
   }
 
   @override
-  Future<void> insertAssets(List<AssetToken> assets) async {
-    await _assetTokenInsertionAdapter.insertList(
-        assets, OnConflictStrategy.replace);
+  Future<void> updateAsset(Asset asset) async {
+    await _assetUpdateAdapter.update(asset, OnConflictStrategy.abort);
   }
 
   @override
-  Future<void> updateAsset(AssetToken asset) async {
-    await _assetTokenUpdateAdapter.update(asset, OnConflictStrategy.abort);
-  }
-
-  @override
-  Future<void> deleteAsset(AssetToken asset) async {
-    await _assetTokenDeletionAdapter.delete(asset);
+  Future<void> deleteAsset(Asset asset) async {
+    await _assetDeletionAdapter.delete(asset);
   }
 }
 

@@ -8,9 +8,12 @@
 import 'dart:async';
 
 import 'package:floor/floor.dart';
+import 'package:nft_collection/database/dao/asset_dao.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
+import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/database/dao/provenance_dao.dart';
-import 'package:nft_collection/models/asset_token.dart';
+import 'package:nft_collection/models/asset.dart';
+import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/models/provenance.dart';
 import 'package:nft_collection/utils/date_time_converter.dart';
 
@@ -24,82 +27,18 @@ part 'nft_collection_database.g.dart'; // the generated code will be there
   NullableDateTimeConverter,
   TokenOwnersConverter,
 ])
-@Database(version: 11, entities: [AssetToken, Provenance])
+@Database(version: 1, entities: [Token, Asset, Provenance])
 abstract class NftCollectionDatabase extends FloorDatabase {
-  AssetTokenDao get assetDao;
+  TokenDao get tokenDao;
+  AssetTokenDao get assetTokenDao => AssetTokenDao(database, changeListener);
+  AssetDao get assetDao;
   ProvenanceDao get provenanceDao;
 
   Future<dynamic> removeAll() async {
     await provenanceDao.removeAll();
+    await tokenDao.removeAll();
     await assetDao.removeAll();
   }
 }
 
-final migrations = [
-  migrateV1ToV2,
-  migrateV2ToV3,
-  migrateV3ToV4,
-  migrateV4ToV5,
-  migrateV5ToV6,
-  migrateV6ToV7,
-  migrateV7ToV8,
-  migrateV8ToV9,
-  migrateV9ToV10,
-  migrateV10ToV11,
-];
-
-final migrateV1ToV2 = Migration(1, 2, (database) async {
-  await database.execute('ALTER TABLE `AssetToken` ADD `pending` INTEGER');
-});
-
-final migrateV2ToV3 = Migration(2, 3, (database) async {
-  await database.execute(
-      'CREATE TABLE IF NOT EXISTS `TokenOwner` (`indexerId` TEXT NOT NULL, `owner` TEXT NOT NULL, `quantity` INTEGER NOT NULL, FOREIGN KEY (`indexerId`) REFERENCES `AssetToken` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`indexerId`, `owner`))');
-});
-
-final migrateV3ToV4 = Migration(3, 4, (database) async {
-  await database.execute('ALTER TABLE `TokenOwner` ADD `updateTime` INTEGER');
-});
-
-final migrateV4ToV5 = Migration(4, 5, (database) async {
-  await database
-      .execute('ALTER TABLE `AssetToken` ADD `initialSaleModel` TEXT');
-});
-
-final migrateV5ToV6 = Migration(5, 6, (database) async {
-  await database.execute('DROP TABLE `Provenance`');
-  await database.execute('DROP TABLE `TokenOwner`');
-  await database.execute('DROP TABLE `AssetToken`');
-  await database.execute(
-      'CREATE TABLE IF NOT EXISTS `AssetToken` (`artistName` TEXT, `artistURL` TEXT, `artistID` TEXT, `assetData` TEXT, `assetID` TEXT, `assetURL` TEXT, `basePrice` REAL, `baseCurrency` TEXT, `blockchain` TEXT NOT NULL, `blockchainUrl` TEXT, `fungible` INTEGER, `contractType` TEXT, `tokenId` TEXT, `contractAddress` TEXT, `desc` TEXT, `edition` INTEGER NOT NULL, `id` TEXT NOT NULL, `maxEdition` INTEGER, `medium` TEXT, `mimeType` TEXT, `mintedAt` TEXT, `previewURL` TEXT, `source` TEXT, `sourceURL` TEXT, `thumbnailID` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `title` TEXT NOT NULL, `ownerAddress` TEXT NOT NULL, `owners` TEXT NOT NULL, `balance` INTEGER, `lastActivityTime` INTEGER NOT NULL, `updateTime` INTEGER, `pending` INTEGER, `initialSaleModel` TEXT, PRIMARY KEY (`id`, `ownerAddress`))');
-  await database.execute(
-      'CREATE TABLE IF NOT EXISTS `Provenance` (`txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`txID`))');
-  await database.execute(
-      'CREATE INDEX `index_Provenance_tokenID` ON `Provenance` (`tokenID`)');
-});
-
-final migrateV6ToV7 = Migration(6, 7, (database) async {
-  await database.execute('DROP TABLE `Provenance`');
-  await database.execute(
-      'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`id`))');
-  await database
-      .execute('CREATE INDEX `index_Provenance_id` ON `Provenance` (`id`)');
-});
-
-final migrateV7ToV8 = Migration(7, 8, (database) async {
-  await database.execute('ALTER TABLE `AssetToken` ADD `editionName` TEXT');
-});
-
-final migrateV8ToV9 = Migration(8, 9, (database) async {
-  await database
-      .execute('ALTER TABLE `AssetToken` ADD `isFeralfileFrame` INTEGER');
-});
-
-final migrateV9ToV10 = Migration(9, 10, (database) async {
-  await database
-      .execute('ALTER TABLE `AssetToken` ADD `originTokenInfoId` TEXT');
-  await database.execute('ALTER TABLE `AssetToken` ADD `swapped` INTEGER');
-});
-final migrateV10ToV11 = Migration(10, 11, (database) async {
-  await database.execute('ALTER TABLE `AssetToken` ADD `scrollable` INTEGER');
-});
+final migrations = <Migration>[];

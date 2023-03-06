@@ -2,14 +2,21 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nft_collection/models/address_index.dart';
 import 'package:nft_collection/nft_collection.dart';
 
 void main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
-    final bloc = await NftCollection.createBloc(
+    await NftCollection.initNftCollection(
         indexerUrl: "https://indexer.test.autonomy.io");
-    runApp(BlocProvider.value(value: bloc, child: const MyApp()));
+    final nftBloc = NftCollectionBloc(
+      NftCollection.tokenService,
+      NftCollection.database,
+      NftCollection.prefs,
+      pendingTokenExpire: const Duration(hours: 1),
+    );
+    runApp(BlocProvider.value(value: nftBloc, child: const MyApp()));
   }, (error, stack) {
     debugPrint("Unhandled exception: $error");
   });
@@ -40,18 +47,44 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late NftCollectionBloc nftBloc;
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     final addresses = [
-      "tz1d2mQ6FcKkGu6vqxN8cmYQs632YAci7NRV",
-      "tz1SidNQb9XcwP7L3MzCZD9JHmWw2ebDzgyX",
-      "tz1hJKhae5FrEDqYVfuAkMXTBYegy9g8jBk6",
-      "tz1UeTFNPbcNJ5ukPytc84is8VZg3cxY3A9H"
+      AddressIndex(
+        address: '0xb8258bB207790b6ec90770CeA6a66a4A9Fc80056',
+        createdAt: DateTime.now().subtract(const Duration(days: 50)),
+      ),
+      AddressIndex(
+        address: 'tz1PPnJzJn2qkpMcz42t1FjKuMFGENQxjyN7',
+        createdAt: DateTime.now().subtract(const Duration(days: 50)),
+      ),
+      AddressIndex(
+        address: '0x49891bFFfe8c573dc969adA7A9E8645A35ceaC92',
+        createdAt: DateTime.now().subtract(const Duration(days: 50)),
+      )
     ];
-    context
-        .read<NftCollectionBloc>()
-        .add(RefreshTokenEvent(addresses: addresses));
+    _scrollController.addListener(_scrollListenerToLoadMore);
+
+    nftBloc = context.read<NftCollectionBloc>();
+
+    nftBloc.add(RefreshNftCollectionByOwners(addresses: addresses));
+
+    nftBloc.add(GetTokensByOwnerEvent(pageKey: PageKey.init()));
+
     super.initState();
+  }
+
+  _scrollListenerToLoadMore() {
+    final nextKey = nftBloc.state.nextKey;
+    if (nextKey == null) return;
+
+    if (_scrollController.position.pixels + 100 >=
+        _scrollController.position.maxScrollExtent) {
+      nftBloc.add(GetTokensByOwnerEvent(pageKey: nextKey));
+    }
   }
 
   @override
@@ -60,22 +93,29 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          IconButton(
-              onPressed: () {
-                context.read<NftCollectionBloc>().add(PurgeCache());
-              },
-              icon: const Icon(Icons.refresh)),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.refresh)),
         ],
       ),
       body: BlocBuilder<NftCollectionBloc, NftCollectionBlocState>(
         builder: (context, state) {
-          return NftCollectionGrid(
-            state: state.state,
-            tokens: state.tokens,
-            onTap: (token) {
-              debugPrint(
-                  "Tapped on token: ${token.title} -- ${token.previewURL}");
+          final tokens = state.tokens;
+          return GridView.builder(
+            controller: _scrollController,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 3,
+              mainAxisSpacing: 3,
+            ),
+            itemBuilder: (context, index) {
+              final asset = tokens[index];
+              return GestureDetector(
+                onTap: () {
+                  // onTap?.call(asset);
+                },
+                child: buildDefaultItemView(context, asset),
+              );
             },
+            itemCount: tokens.length,
           );
         },
       ),
