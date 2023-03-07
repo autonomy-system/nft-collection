@@ -97,9 +97,22 @@ class AssetTokenDao {
   final QueryAdapter _queryAdapter;
   Future<List<AssetToken>> findAllAssetTokens() async {
     return _queryAdapter.queryList(
-      'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE balance !=0 ORDER BY lastActivityTime DESC, title',
+      'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID ORDER BY lastActivityTime DESC, id DESC',
       mapper: mapper,
     );
+  }
+
+  Future<List<AssetToken>> findAllAssetTokensWithoutOffset(
+    List<String> owners,
+  ) async {
+    const offsetOwner = 1;
+    final sqliteVariablesForOwner =
+        Iterable<String>.generate(owners.length, (i) => '?${i + offsetOwner}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE owner IN ($sqliteVariablesForOwner) ORDER BY lastActivityTime DESC, id DESC',
+        mapper: mapper,
+        arguments: [...owners]);
   }
 
   Future<List<AssetToken>> findAllPendingAssetTokens() async {
@@ -123,6 +136,21 @@ class AssetTokenDao {
         'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND (lastActivityTime < ?2 OR (lastActivityTime = ?2 AND id < ?3)) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
         mapper: mapper,
         arguments: [limit, lastTime, id, ...owners]);
+  }
+
+  Future<List<AssetToken>> findAllAssetTokensBeforeByOwners(
+    List<String> owners,
+    int lastTime,
+    String id,
+  ) async {
+    const offsetOwner = 3;
+    final sqliteVariablesForOwner =
+        Iterable<String>.generate(owners.length, (i) => '?${i + offsetOwner}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND  (lastActivityTime >= ?1 AND id >= ?2) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
+        mapper: mapper,
+        arguments: [lastTime, id, ...owners]);
   }
 
   Future<List<AssetToken>> findAllAssetTokensByTokenIDs(

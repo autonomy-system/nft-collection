@@ -85,6 +85,7 @@ class NftCollectionBloc
           NftCollectionBlocState(
             state: NftLoadingState.notRequested,
             tokens: [],
+            nextKey: PageKey.init(),
           ),
         ) {
     on<GetTokensByOwnerEvent>((event, emit) async {
@@ -136,6 +137,22 @@ class NftCollectionBloc
           ),
         );
       }
+    });
+    on<GetTokensBeforeByOwnerEvent>((event, emit) async {
+      List<AssetToken> assetTokens = [];
+      if (event.pageKey == null) {
+        assetTokens = await database.assetTokenDao
+            .findAllAssetTokensWithoutOffset(event.owners);
+      } else {
+        final id = event.pageKey!.id;
+        final lastTime =
+            event.pageKey!.offset ?? DateTime.now().millisecondsSinceEpoch;
+        assetTokens = await database.assetTokenDao
+            .findAllAssetTokensBeforeByOwners(event.owners, lastTime, id);
+      }
+
+      if (assetTokens.isEmpty) return;
+      add(UpdateTokensEvent(state: state.state, tokens: assetTokens));
     });
 
     on<RefreshNftCollectionByOwners>((event, emit) async {
@@ -200,9 +217,17 @@ class NftCollectionBloc
           if (event.isNotEmpty) {
             NftCollection.logger.info(
                 "[Stream.refreshTokensInIsolate] UpdateTokensEvent ${event.length} tokens");
-
-            add(UpdateTokensEvent(
-                state: NftLoadingState.loading, tokens: event));
+            if (state.nextKey?.offset != null) {
+              final addingTokens = event
+                  .where(
+                    (element) =>
+                        element.lastActivityTime.millisecondsSinceEpoch >=
+                        state.nextKey!.offset!,
+                  )
+                  .toList();
+              add(UpdateTokensEvent(
+                  state: NftLoadingState.loading, tokens: addingTokens));
+            }
           }
         }, onDone: () async {
           NftCollection.logger
