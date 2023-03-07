@@ -37,9 +37,9 @@ class RefreshNftCollectionByIDs extends NftCollectionBlocEvent {
 }
 
 class UpdateTokensEvent extends NftCollectionBlocEvent {
-  final NftLoadingState state;
+  final NftLoadingState? state;
   final List<AssetToken> tokens;
-  UpdateTokensEvent({required this.state, this.tokens = const []});
+  UpdateTokensEvent({this.state, this.tokens = const []});
 }
 
 class ReloadEvent extends NftCollectionBlocEvent {

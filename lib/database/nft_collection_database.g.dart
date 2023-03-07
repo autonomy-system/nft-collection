@@ -538,13 +538,15 @@ class _$AssetDao extends AssetDao {
   }
 
   @override
-  Future<List<Asset>> findAllAssetsByIds(List<String> ids) async {
+  Future<List<Asset>> findAllAssetsByIndexIDs(List<String> indexIDs) async {
     const offset = 1;
-    final _sqliteVariablesForIds =
-        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
+    final _sqliteVariablesForIndexIDs =
+        Iterable<String>.generate(indexIDs.length, (i) => '?${i + offset}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT * FROM Asset WHERE assetID IN (' + _sqliteVariablesForIds + ')',
+        'SELECT * FROM Asset WHERE indexID IN (' +
+            _sqliteVariablesForIndexIDs +
+            ')',
         mapper: (Map<String, Object?> row) => Asset(
             row['indexID'] as String?,
             row['thumbnailID'] as String?,
@@ -570,19 +572,19 @@ class _$AssetDao extends AssetDao {
             row['isFeralfileFrame'] == null
                 ? null
                 : (row['isFeralfileFrame'] as int) != 0),
-        arguments: [...ids]);
+        arguments: [...indexIDs]);
   }
 
   @override
-  Future<List<String>> findAllAssetIDs() async {
-    return _queryAdapter.queryList('SELECT assetID FROM Asset',
+  Future<List<String>> findAllIndexIDs() async {
+    return _queryAdapter.queryList('SELECT indexID FROM Asset',
         mapper: (Map<String, Object?> row) => row.values.first as String);
   }
 
   @override
-  Future<void> deleteAssetByID(String id) async {
-    await _queryAdapter.queryNoReturn('DELETE FROM Asset WHERE assetID = (?1)',
-        arguments: [id]);
+  Future<void> deleteAssetByIndexID(String indexID) async {
+    await _queryAdapter.queryNoReturn('DELETE FROM Asset WHERE indexID = (?1)',
+        arguments: [indexID]);
   }
 
   @override

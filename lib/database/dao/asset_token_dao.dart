@@ -32,72 +32,69 @@ class AssetTokenDao {
 
   final StreamController<String> changeListener;
 
-  static AssetToken Function(Map<String, Object?>) mapper =
-      (Map<String, Object?> row) => AssetToken(
-            id: row['id'] as String,
-            tokenId: row['tokenId'] as String?,
-            blockchain: row['blockchain'] as String,
-            fungible:
-                row['fungible'] == null ? false : (row['fungible'] as int) != 0,
-            contractType: row['contractType'] as String,
-            contractAddress: row['contractAddress'] as String?,
-            edition: row['edition'] as int,
-            editionName: row['editionName'] as String?,
-            mintedAt: _dateTimeConverter.decode(row['mintedAt'] as int),
-            balance: row['balance'] as int?,
-            owner: row['owner'] as String,
-            owners: _tokenOwnersConverter.decode(row['owners'] as String),
-            swapped:
-                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
-            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
-            pending:
-                row['pending'] == null ? null : (row['pending'] as int) != 0,
-            scrollable: row['scrollable'] == null
-                ? null
-                : (row['scrollable'] as int) != 0,
-            lastActivityTime:
-                _dateTimeConverter.decode(row['lastActivityTime'] as int),
-            lastRefreshedTime:
-                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
-            ipfsPinned: row['ipfsPinned'] == null
-                ? null
-                : (row['ipfsPinned'] as int) != 0,
-            isDebugged: row['isDebugged'] == null
-                ? null
-                : (row['isDebugged'] as int) != 0,
-            originTokenInfo: [],
-            provenance: [],
-            originTokenInfoId: row['originTokenInfoId'] as String?,
-            asset: Asset(
-              row['indexID'] as String?,
-              row['thumbnailID'] as String?,
-              _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
-              row['artistID'] as String?,
-              row['artistName'] as String?,
-              row['artistURL'] as String?,
-              row['assetID'] as String?,
-              row['title'] as String?,
-              row['description'] as String?,
-              row['mimeType'] as String?,
-              row['medium'] as String?,
-              row['maxEdition'] as int?,
-              row['source'] as String?,
-              row['sourceURL'] as String?,
-              row['previewURL'] as String?,
-              row['thumbnailURL'] as String?,
-              row['galleryThumbnailURL'] as String?,
-              row['assetData'] as String?,
-              row['assetURL'] as String?,
-              row['initialSaleModel'] as String?,
-              row['originalFileURL'] as String?,
-              row['isFeralfileFrame'] as bool?,
-            ),
-          );
+  static AssetToken
+      Function(Map<String, Object?>) mapper = (Map<String, Object?>
+          row) =>
+      AssetToken(
+        id: row['id'] as String,
+        tokenId: row['tokenId'] as String?,
+        blockchain: row['blockchain'] as String,
+        fungible:
+            row['fungible'] == null ? false : (row['fungible'] as int) != 0,
+        contractType: row['contractType'] as String,
+        contractAddress: row['contractAddress'] as String?,
+        edition: row['edition'] as int,
+        editionName: row['editionName'] as String?,
+        mintedAt: _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
+        balance: row['balance'] as int?,
+        owner: row['owner'] as String,
+        owners: _tokenOwnersConverter.decode(row['owners'] as String),
+        swapped: row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+        burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
+        pending: row['pending'] == null ? null : (row['pending'] as int) != 0,
+        scrollable:
+            row['scrollable'] == null ? null : (row['scrollable'] as int) != 0,
+        lastActivityTime:
+            _dateTimeConverter.decode(row['lastActivityTime'] as int),
+        lastRefreshedTime:
+            _dateTimeConverter.decode(row['tokenLastRefresh'] as int),
+        ipfsPinned:
+            row['ipfsPinned'] == null ? null : (row['ipfsPinned'] as int) != 0,
+        isDebugged:
+            row['isDebugged'] == null ? null : (row['isDebugged'] as int) != 0,
+        originTokenInfo: [],
+        provenance: [],
+        originTokenInfoId: row['originTokenInfoId'] as String?,
+        asset: Asset(
+          row['indexID'] as String?,
+          row['thumbnailID'] as String?,
+          _nullableDateTimeConverter.decode(row['tokenLastRefresh'] as int?),
+          row['artistID'] as String?,
+          row['artistName'] as String?,
+          row['artistURL'] as String?,
+          row['assetID'] as String?,
+          row['title'] as String?,
+          row['description'] as String?,
+          row['mimeType'] as String?,
+          row['medium'] as String?,
+          row['maxEdition'] as int?,
+          row['source'] as String?,
+          row['sourceURL'] as String?,
+          row['previewURL'] as String?,
+          row['thumbnailURL'] as String?,
+          row['galleryThumbnailURL'] as String?,
+          row['assetData'] as String?,
+          row['assetURL'] as String?,
+          row['initialSaleModel'] as String?,
+          row['originalFileURL'] as String?,
+          row['isFeralfileFrame'] as bool?,
+        ),
+      );
 
   final QueryAdapter _queryAdapter;
   Future<List<AssetToken>> findAllAssetTokens() async {
     return _queryAdapter.queryList(
-      'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID ORDER BY lastActivityTime DESC, id DESC',
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID ORDER BY lastActivityTime DESC, id DESC',
       mapper: mapper,
     );
   }
@@ -110,14 +107,14 @@ class AssetTokenDao {
         Iterable<String>.generate(owners.length, (i) => '?${i + offsetOwner}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE owner IN ($sqliteVariablesForOwner) ORDER BY lastActivityTime DESC, id DESC',
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE owner IN ($sqliteVariablesForOwner) ORDER BY lastActivityTime DESC, id DESC',
         mapper: mapper,
         arguments: [...owners]);
   }
 
   Future<List<AssetToken>> findAllPendingAssetTokens() async {
     return _queryAdapter.queryList(
-      'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE pending = 1',
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE pending = 1',
       mapper: mapper,
     );
   }
@@ -133,7 +130,7 @@ class AssetTokenDao {
         Iterable<String>.generate(owners.length, (i) => '?${i + offsetOwner}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND (lastActivityTime < ?2 OR (lastActivityTime = ?2 AND id < ?3)) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND (lastActivityTime < ?2 OR (lastActivityTime = ?2 AND id < ?3)) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
         mapper: mapper,
         arguments: [limit, lastTime, id, ...owners]);
   }
@@ -148,7 +145,7 @@ class AssetTokenDao {
         Iterable<String>.generate(owners.length, (i) => '?${i + offsetOwner}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND  (lastActivityTime >= ?1 AND id >= ?2) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND  (lastActivityTime >= ?1 AND id >= ?2) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
         mapper: mapper,
         arguments: [lastTime, id, ...owners]);
   }
@@ -161,7 +158,7 @@ class AssetTokenDao {
         Iterable<String>.generate(ids.length, (i) => '?${i + offsetOwner}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE ((id IN ($sqliteVariablesForOwner)))',
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE ((id IN ($sqliteVariablesForOwner)))',
         mapper: mapper,
         arguments: [...ids]);
   }
@@ -169,14 +166,14 @@ class AssetTokenDao {
   Future<AssetToken?> findAssetTokenByIdAndOwner(
       String id, String owner) async {
     return _queryAdapter.query(
-        'SELECT * FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE id = ?1 AND owner = ?2',
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE id = ?1 AND owner = ?2',
         mapper: mapper,
         arguments: [id, owner]);
   }
 
   Future<List<String>> findAllAssetTokenIDsByOwner(String owner) async {
     return _queryAdapter.queryList(
-        'SELECT id FROM Token INNER JOIN Asset ON Token.indexID = Asset.indexID WHERE owner=?1',
+        'SELECT id FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE owner=?1',
         mapper: (Map<String, Object?> row) => row.values.first as String,
         arguments: [owner]);
   }

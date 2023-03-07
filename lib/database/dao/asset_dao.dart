@@ -13,11 +13,11 @@ abstract class AssetDao {
   @Query('SELECT * FROM Asset')
   Future<List<Asset>> findAllAssets();
 
-  @Query('SELECT * FROM Asset WHERE assetID IN (:ids)')
-  Future<List<Asset>> findAllAssetsByIds(List<String> ids);
+  @Query('SELECT * FROM Asset WHERE indexID IN (:indexIDs)')
+  Future<List<Asset>> findAllAssetsByIndexIDs(List<String> indexIDs);
 
-  @Query('SELECT assetID FROM Asset')
-  Future<List<String>> findAllAssetIDs();
+  @Query('SELECT indexID FROM Asset')
+  Future<List<String>> findAllIndexIDs();
 
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertAsset(Asset token);
@@ -31,8 +31,8 @@ abstract class AssetDao {
   @delete
   Future<void> deleteAsset(Asset asset);
 
-  @Query('DELETE FROM Asset WHERE assetID = (:id)')
-  Future<void> deleteAssetByID(String id);
+  @Query('DELETE FROM Asset WHERE indexID = (:indexID)')
+  Future<void> deleteAssetByIndexID(String indexID);
 
   @Query('DELETE FROM Asset')
   Future<void> removeAll();
