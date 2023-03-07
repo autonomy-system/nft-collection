@@ -149,6 +149,69 @@ class AssetToken {
   }
 }
 
+class CompactedAssetToken {
+  CompactedAssetToken({
+    required this.id,
+    required this.balance,
+    required this.owner,
+    required this.lastActivityTime,
+    required this.lastRefreshedTime,
+    this.mimeType,
+    this.previewURL,
+    this.thumbnailURL,
+    this.thumbnailID,
+    this.galleryThumbnailURL,
+    this.pending,
+    this.isDebugged,
+    this.artistID,
+    this.blockchain,
+    this.tokenId,
+    this.title,
+  });
+
+  String id;
+
+  int? balance;
+  String owner;
+
+  DateTime lastActivityTime;
+  DateTime lastRefreshedTime;
+
+  bool? pending;
+  bool? isDebugged;
+
+  String? mimeType;
+  String? previewURL;
+  String? thumbnailURL;
+  String? thumbnailID;
+  String? galleryThumbnailURL;
+  String? artistID;
+  String? blockchain;
+  String? tokenId;
+  String? title;
+
+  factory CompactedAssetToken.fromAssetToken(AssetToken assetToken) {
+    return CompactedAssetToken(
+      id: assetToken.id,
+      balance: assetToken.balance,
+      owner: assetToken.owner,
+      lastActivityTime: assetToken.lastActivityTime,
+      lastRefreshedTime: assetToken.lastRefreshedTime,
+      mimeType: assetToken.mimeType,
+      previewURL: assetToken.previewURL,
+      thumbnailURL: assetToken.thumbnailURL,
+      thumbnailID: assetToken.thumbnailID,
+      galleryThumbnailURL: assetToken.galleryThumbnailURL,
+      pending: assetToken.pending,
+      isDebugged: assetToken.isDebugged,
+      artistID: assetToken.artistID,
+      blockchain: assetToken.blockchain,
+      tokenId: assetToken.tokenId,
+      title: assetToken.title,
+    );
+  }
+}
+
 class ProjectMetadata {
   ProjectMetadata({
     required this.origin,

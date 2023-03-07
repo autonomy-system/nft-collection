@@ -16,7 +16,7 @@ import 'package:nft_collection/utils/list_extentions.dart';
 
 class NftCollectionBlocState {
   final NftLoadingState state;
-  final List<AssetToken> tokens;
+  final List<CompactedAssetToken> tokens;
 
   final PageKey? nextKey;
 
@@ -31,7 +31,7 @@ class NftCollectionBlocState {
 
   NftCollectionBlocState copyWith({
     NftLoadingState? state,
-    List<AssetToken>? tokens,
+    List<CompactedAssetToken>? tokens,
     required PageKey? nextKey,
     bool? isLoading,
   }) {
@@ -97,11 +97,6 @@ class NftCollectionBloc
         currentTokens.clear();
       }
       state.nextKey?.isLoaded = true;
-      emit(state.copyWith(
-        isLoading: true,
-        nextKey: state.nextKey,
-        state: NftLoadingState.loading,
-      ));
 
       const limit = indexerTokensPageSize;
       final lastTime =
@@ -111,18 +106,23 @@ class NftCollectionBloc
       final assetTokens = await database.assetTokenDao
           .findAllAssetTokensByOwners(activeAddress, limit, lastTime, id);
 
-      final isLastPage = assetTokens.length < indexerTokensPageSize;
+      final compactedAssetToken = assetTokens
+          .map((e) => CompactedAssetToken.fromAssetToken(e))
+          .toList();
+
+      final isLastPage = compactedAssetToken.length < indexerTokensPageSize;
       PageKey? nextKey;
-      if (assetTokens.isNotEmpty) {
+      if (compactedAssetToken.isNotEmpty) {
         nextKey = PageKey(
-          offset: assetTokens.last.lastActivityTime.millisecondsSinceEpoch,
-          id: assetTokens.last.id,
+          offset:
+              compactedAssetToken.last.lastActivityTime.millisecondsSinceEpoch,
+          id: compactedAssetToken.last.id,
         );
       }
 
       if (isLastPage) {
         emit(state.copyWith(
-          tokens: currentTokens + assetTokens,
+          tokens: currentTokens + compactedAssetToken,
           nextKey: null,
           isLoading: false,
           state: NftLoadingState.done,
@@ -130,7 +130,7 @@ class NftCollectionBloc
       } else {
         emit(
           state.copyWith(
-            tokens: currentTokens + assetTokens,
+            tokens: currentTokens + compactedAssetToken,
             nextKey: nextKey,
             isLoading: false,
             state: NftLoadingState.loading,
@@ -138,6 +138,7 @@ class NftCollectionBloc
         );
       }
     });
+
     on<GetTokensBeforeByOwnerEvent>((event, emit) async {
       List<AssetToken> assetTokens = [];
       if (event.pageKey == null) {
@@ -171,6 +172,9 @@ class NftCollectionBloc
           "debugTokenIds: $_debugTokenIds");
 
       try {
+        if (event.isRefresh) {
+          UpdateTokensEvent(state: state.state);
+        }
         final lastRefreshedTime = prefs.getLatestRefreshTokens();
 
         final mapAddresses = mapAddressesByLastRefreshedTime(
@@ -207,8 +211,7 @@ class NftCollectionBloc
             "[NftCollectionBloc][start] _tokensService.refreshTokensInIsolate");
         final stream = await tokensService.refreshTokensInIsolate(mapAddresses);
         if (tokensService.isRefreshAllTokensListen) return;
-        emit(state.copyWith(
-            nextKey: state.nextKey, state: NftLoadingState.loading));
+
         stream.listen((event) async {
           NftCollection.logger.info("[Stream.refreshTokensInIsolate] getEvent");
 
@@ -227,14 +230,17 @@ class NftCollectionBloc
             } else {
               addingTokens = event;
             }
-            add(UpdateTokensEvent(
-              state: NftLoadingState.loading,
-              tokens: addingTokens,
-            ));
+            if (addingTokens.isNotEmpty) {
+              add(UpdateTokensEvent(
+                state: NftLoadingState.loading,
+                tokens: addingTokens,
+              ));
+            }
           }
         }, onDone: () async {
           NftCollection.logger
               .info("[Stream.refreshTokensInIsolate] getEvent Done");
+          if (state.state == NftLoadingState.done) return;
           add(UpdateTokensEvent(state: NftLoadingState.done));
         });
       } catch (exception) {
@@ -262,18 +268,26 @@ class NftCollectionBloc
 
       final assetTokens =
           await database.assetTokenDao.findAllAssetTokensByTokenIDs(event.ids!);
+      final compactedAssetToken = assetTokens
+          .map((e) => CompactedAssetToken.fromAssetToken(e))
+          .toList();
       emit(state.copyWith(
         nextKey: state.nextKey,
-        tokens: assetTokens,
+        tokens: compactedAssetToken,
         state: NftLoadingState.done,
       ));
     });
 
     on<UpdateTokensEvent>((event, emit) async {
       if (event.tokens.isEmpty && event.state == null) return;
+      NftCollection.logger
+          .info("[NftCollectionBloc] UpdateTokensEvent ${event.tokens.length}");
       final tokens = state.tokens;
       if (event.tokens.isNotEmpty) {
-        tokens.insertAll(0, event.tokens);
+        final compactedAssetToken = event.tokens
+            .map((e) => CompactedAssetToken.fromAssetToken(e))
+            .toList();
+        tokens.insertAll(0, compactedAssetToken);
         tokens.unique((element) => element.id + element.owner);
       }
 

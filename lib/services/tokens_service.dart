@@ -116,7 +116,7 @@ class TokensServiceImpl extends TokensService {
   Future purgeCachedGallery() async {
     disposeIsolate();
     _configurationService.setLatestRefreshTokens(null);
-    await _tokenDao.removeAllExcludePending();
+    await _tokenDao.removeAll();
   }
 
   Future<List<String>> _getPendingTokenIds() async {
@@ -233,13 +233,19 @@ class TokensServiceImpl extends TokensService {
 
   @override
   Future setCustomTokens(List<AssetToken> assetTokens) async {
-    final tokens = assetTokens.map((e) => Token.fromAssetToken(e)).toList();
-    final assets = assetTokens
-        .where((element) => element.asset != null)
-        .map((e) => e.asset as Asset)
-        .toList();
-    await _database.tokenDao.insertTokens(tokens);
-    await _database.assetDao.insertAssets(assets);
+    try {
+      final tokens = assetTokens.map((e) => Token.fromAssetToken(e)).toList();
+      final assets = assetTokens
+          .where((element) => element.asset != null)
+          .map((e) => e.asset as Asset)
+          .toList();
+      await _database.tokenDao.insertTokensAbort(tokens);
+      await _database.assetDao.insertAssetsAbort(assets);
+    } catch (e) {
+      NftCollection.logger.info("[TokensService] "
+          "setCustomTokens "
+          "error: $e");
+    }
   }
 
   @override

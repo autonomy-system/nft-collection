@@ -15,21 +15,21 @@ import 'package:path/path.dart' as p;
 
 import 'nft_collection_bloc_event.dart';
 
-typedef OnTapCallBack = void Function(AssetToken);
+typedef OnTapCallBack = void Function(CompactedAssetToken);
 
 typedef LoadingIndicatorBuilder = Widget Function(BuildContext context);
 
 typedef EmptyGalleryViewBuilder = Widget Function(BuildContext context);
 
 typedef CustomGalleryViewBuilder = Widget Function(
-    BuildContext context, List<AssetToken> tokens);
+    BuildContext context, List<CompactedAssetToken> tokens);
 
 typedef ItemViewBuilder = Widget Function(
-    BuildContext context, AssetToken asset);
+    BuildContext context, CompactedAssetToken asset);
 
 class NftCollectionGrid extends StatelessWidget {
   final NftLoadingState state;
-  final List<AssetToken> tokens;
+  final List<CompactedAssetToken> tokens;
   final int? columnCount;
   final double itemSpacing;
   final LoadingIndicatorBuilder loadingIndicatorBuilder;
@@ -111,7 +111,7 @@ Widget _buildLoadingIndicator(BuildContext context) {
   );
 }
 
-Widget buildDefaultItemView(BuildContext context, AssetToken token) {
+Widget buildDefaultItemView(BuildContext context, CompactedAssetToken token) {
   final ext = p.extension(token.thumbnailURL!);
   const cachedImageSize = 1024;
 

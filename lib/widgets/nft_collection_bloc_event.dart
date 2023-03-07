@@ -11,10 +11,12 @@ class RefreshNftCollectionByOwners extends NftCollectionBlocEvent {
   final List<AddressIndex>? addresses;
   final List<AddressIndex>? hiddenAddresses;
   final List<String>? debugTokens;
+  final bool isRefresh;
   RefreshNftCollectionByOwners({
     this.addresses,
     this.hiddenAddresses,
     this.debugTokens,
+    this.isRefresh = false,
   });
 
   RefreshNftCollectionByOwners copyWith({

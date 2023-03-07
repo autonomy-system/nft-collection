@@ -25,6 +25,9 @@ abstract class AssetDao {
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertAssets(List<Asset> assets);
 
+  @Insert(onConflict: OnConflictStrategy.abort)
+  Future<void> insertAssetsAbort(List<Asset> assets);
+
   @update
   Future<void> updateAsset(Asset asset);
 
