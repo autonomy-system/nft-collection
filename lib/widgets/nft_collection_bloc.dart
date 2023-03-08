@@ -13,10 +13,11 @@ import 'package:nft_collection/services/configuration_service.dart';
 import 'package:nft_collection/services/tokens_service.dart';
 import 'package:nft_collection/utils/constants.dart';
 import 'package:nft_collection/utils/list_extentions.dart';
+import 'package:nft_collection/utils/sorted_list.dart';
 
 class NftCollectionBlocState {
   final NftLoadingState state;
-  final List<CompactedAssetToken> tokens;
+  final AuList<CompactedAssetToken> tokens;
 
   final PageKey? nextKey;
 
@@ -29,12 +30,12 @@ class NftCollectionBlocState {
     this.isLoading = false,
   });
 
-  NftCollectionBlocState copyWith({
-    NftLoadingState? state,
-    List<CompactedAssetToken>? tokens,
-    required PageKey? nextKey,
-    bool? isLoading,
-  }) {
+  NftCollectionBlocState copyWith(
+      {NftLoadingState? state,
+      AuList<CompactedAssetToken>? tokens,
+      required PageKey? nextKey,
+      bool? isLoading,
+      id}) {
     return NftCollectionBlocState(
       state: state ?? this.state,
       tokens: tokens ?? this.tokens,
@@ -45,12 +46,12 @@ class NftCollectionBlocState {
 }
 
 class NftCollectionBloc
-    extends Bloc<NftCollectionBlocEvent, NftCollectionBlocState>
-    with ChangeNotifier {
+    extends Bloc<NftCollectionBlocEvent, NftCollectionBlocState> {
   final TokensService tokensService;
   final NftCollectionDatabase database;
   final Duration pendingTokenExpire;
   final NftCollectionPrefs prefs;
+  final bool isSortedToken;
 
   static List<AddressIndex> _addresses = [];
   static List<AddressIndex> _hiddenAddresses = [];
@@ -80,11 +81,11 @@ class NftCollectionBloc
   }
 
   NftCollectionBloc(this.tokensService, this.database, this.prefs,
-      {required this.pendingTokenExpire})
+      {required this.pendingTokenExpire, this.isSortedToken = true})
       : super(
           NftCollectionBlocState(
             state: NftLoadingState.notRequested,
-            tokens: [],
+            tokens: isSortedToken ? SortedList() : NormalList(),
             nextKey: PageKey.init(),
           ),
         ) {
@@ -120,9 +121,11 @@ class NftCollectionBloc
         );
       }
 
+      state.tokens.addAll(compactedAssetToken);
+
       if (isLastPage) {
         emit(state.copyWith(
-          tokens: currentTokens + compactedAssetToken,
+          tokens: state.tokens,
           nextKey: null,
           isLoading: false,
           state: NftLoadingState.done,
@@ -130,7 +133,7 @@ class NftCollectionBloc
       } else {
         emit(
           state.copyWith(
-            tokens: currentTokens + compactedAssetToken,
+            tokens: state.tokens,
             nextKey: nextKey,
             isLoading: false,
             state: NftLoadingState.loading,
@@ -260,7 +263,7 @@ class NftCollectionBloc
       if (event.ids?.isEmpty ?? true) {
         emit(state.copyWith(
           nextKey: state.nextKey,
-          tokens: [],
+          tokens: SortedList(),
           state: NftLoadingState.done,
         ));
         return;
@@ -271,9 +274,11 @@ class NftCollectionBloc
       final compactedAssetToken = assetTokens
           .map((e) => CompactedAssetToken.fromAssetToken(e))
           .toList();
+      state.tokens.addAll(compactedAssetToken);
+
       emit(state.copyWith(
         nextKey: state.nextKey,
-        tokens: compactedAssetToken,
+        tokens: state.tokens,
         state: NftLoadingState.done,
       ));
     });
@@ -287,7 +292,7 @@ class NftCollectionBloc
         final compactedAssetToken = event.tokens
             .map((e) => CompactedAssetToken.fromAssetToken(e))
             .toList();
-        tokens.insertAll(0, compactedAssetToken);
+        tokens.addAll(compactedAssetToken);
         tokens.unique((element) => element.id + element.owner);
       }
 

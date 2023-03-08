@@ -149,7 +149,7 @@ class AssetToken {
   }
 }
 
-class CompactedAssetToken {
+class CompactedAssetToken extends Comparable<CompactedAssetToken> {
   CompactedAssetToken({
     required this.id,
     required this.balance,
@@ -209,6 +209,11 @@ class CompactedAssetToken {
       tokenId: assetToken.tokenId,
       title: assetToken.title,
     );
+  }
+
+  @override
+  int compareTo(other) {
+    return other.lastActivityTime.compareTo(lastActivityTime);
   }
 }
 
