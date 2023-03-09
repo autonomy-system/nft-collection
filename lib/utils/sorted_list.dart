@@ -1,7 +1,7 @@
 abstract class AuList<T> {
   late List<T> _list;
 
-  List<T> get items => _list;
+  List<T> get items => List.unmodifiable(_list);
 
   int get length => _list.length;
 
@@ -38,7 +38,7 @@ abstract class AuList<T> {
   AuList<T> unique([Function(T element)? id, bool inplace = true]);
 }
 
-class SortedList<T extends Comparable<T>> with AuList<T> {
+class SortedList<T extends Comparable<T>> extends AuList<T> {
   SortedList([List<T>? value]) {
     _list = value ?? <T>[];
   }
@@ -68,7 +68,7 @@ class SortedList<T extends Comparable<T>> with AuList<T> {
   }
 }
 
-class NormalList<T> with AuList<T> {
+class NormalList<T> extends AuList<T> {
   NormalList([List<T>? value]) {
     _list = value ?? <T>[];
   }
