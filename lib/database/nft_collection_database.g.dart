@@ -388,7 +388,7 @@ class _$TokenDao extends TokenDao {
 
   @override
   Future<void> insertTokensAbort(List<Token> assets) async {
-    await _tokenInsertionAdapter.insertList(assets, OnConflictStrategy.abort);
+    await _tokenInsertionAdapter.insertList(assets, OnConflictStrategy.ignore);
   }
 
   @override
@@ -609,7 +609,7 @@ class _$AssetDao extends AssetDao {
 
   @override
   Future<void> insertAssetsAbort(List<Asset> assets) async {
-    await _assetInsertionAdapter.insertList(assets, OnConflictStrategy.abort);
+    await _assetInsertionAdapter.insertList(assets, OnConflictStrategy.ignore);
   }
 
   @override

@@ -22,7 +22,7 @@ abstract class TokenDao {
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertTokens(List<Token> assets);
 
-  @Insert(onConflict: OnConflictStrategy.abort)
+  @Insert(onConflict: OnConflictStrategy.ignore)
   Future<void> insertTokensAbort(List<Token> assets);
 
   @update

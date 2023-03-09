@@ -169,12 +169,12 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
     this.title,
   });
 
-  String id;
+  final String id;
 
   int? balance;
   String owner;
 
-  DateTime lastActivityTime;
+  final DateTime lastActivityTime;
   DateTime lastRefreshedTime;
 
   bool? pending;
@@ -213,6 +213,9 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
 
   @override
   int compareTo(other) {
+    if (other.lastActivityTime.compareTo(lastActivityTime) == 0) {
+      return other.id.compareTo(id);
+    }
     return other.lastActivityTime.compareTo(lastActivityTime);
   }
 }

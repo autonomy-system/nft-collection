@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/address_index.dart';
@@ -176,7 +175,7 @@ class NftCollectionBloc
 
       try {
         if (event.isRefresh) {
-          UpdateTokensEvent(state: state.state);
+          add(UpdateTokensEvent(state: state.state));
         }
         final lastRefreshedTime = prefs.getLatestRefreshTokens();
 
