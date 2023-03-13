@@ -213,9 +213,14 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
 
   @override
   int compareTo(other) {
+    if (other.id.compareTo(id) == 0 && other.owner.compareTo(owner) == 0) {
+      return other.id.compareTo(id);
+    }
+
     if (other.lastActivityTime.compareTo(lastActivityTime) == 0) {
       return other.id.compareTo(id);
     }
+
     return other.lastActivityTime.compareTo(lastActivityTime);
   }
 }
