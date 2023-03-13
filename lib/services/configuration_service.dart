@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NftCollectionPrefs {
-  static const _keyLastRefreshTokenTime = "last_refresh_token_time";
+  static const _keyLastRefreshTokenTime = "last_refresh_at";
   static const _keyPendingAddresses = "pending_addresses";
 
   final SharedPreferences _prefs;
