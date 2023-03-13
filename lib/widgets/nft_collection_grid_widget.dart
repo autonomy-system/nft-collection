@@ -15,25 +15,25 @@ import 'package:path/path.dart' as p;
 
 import 'nft_collection_bloc_event.dart';
 
-typedef OnTapCallBack = void Function(AssetToken);
+typedef OnTapCallBack = void Function(CompactedAssetToken);
 
 typedef LoadingIndicatorBuilder = Widget Function(BuildContext context);
 
 typedef EmptyGalleryViewBuilder = Widget Function(BuildContext context);
 
 typedef CustomGalleryViewBuilder = Widget Function(
-    BuildContext context, List<AssetToken> tokens);
+    BuildContext context, List<CompactedAssetToken> tokens);
 
 typedef ItemViewBuilder = Widget Function(
-    BuildContext context, AssetToken asset);
+    BuildContext context, CompactedAssetToken asset);
 
 class NftCollectionGrid extends StatelessWidget {
   final NftLoadingState state;
-  final List<AssetToken> tokens;
+  final List<CompactedAssetToken> tokens;
   final int? columnCount;
   final double itemSpacing;
   final LoadingIndicatorBuilder loadingIndicatorBuilder;
-  final EmptyGalleryViewBuilder emptyGalleryViewBuilder;
+  final EmptyGalleryViewBuilder? emptyGalleryViewBuilder;
   final CustomGalleryViewBuilder? customGalleryViewBuilder;
   final ItemViewBuilder itemViewBuilder;
   final OnTapCallBack? onTap;
@@ -45,9 +45,9 @@ class NftCollectionGrid extends StatelessWidget {
       this.columnCount,
       this.itemSpacing = 3.0,
       this.loadingIndicatorBuilder = _buildLoadingIndicator,
-      this.emptyGalleryViewBuilder = _buildEmptyGallery,
+      this.emptyGalleryViewBuilder,
       this.customGalleryViewBuilder,
-      this.itemViewBuilder = _buildDefaultItemView,
+      this.itemViewBuilder = buildDefaultItemView,
       this.onTap})
       : super(key: key);
 
@@ -71,7 +71,9 @@ class NftCollectionGrid extends StatelessWidget {
           .contains(state)) {
         return loadingIndicatorBuilder(context);
       } else {
-        return emptyGalleryViewBuilder(context);
+        if (emptyGalleryViewBuilder != null) {
+          return emptyGalleryViewBuilder!(context);
+        }
       }
     }
     return customGalleryViewBuilder?.call(context, tokens) ??
@@ -109,11 +111,7 @@ Widget _buildLoadingIndicator(BuildContext context) {
   );
 }
 
-Widget _buildEmptyGallery(BuildContext context) {
-  return const SizedBox();
-}
-
-Widget _buildDefaultItemView(BuildContext context, AssetToken token) {
+Widget buildDefaultItemView(BuildContext context, CompactedAssetToken token) {
   final ext = p.extension(token.thumbnailURL!);
   const cachedImageSize = 1024;
 

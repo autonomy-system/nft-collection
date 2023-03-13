@@ -19,85 +19,88 @@ class _IndexerApi implements IndexerApi {
   String? baseUrl;
 
   @override
-  Future<List<Asset>> getNftTokens(ids) async {
+  Future<List<AssetToken>> getNftTokens(ids) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(ids);
-    final _result =
-        await _dio.fetch<List<dynamic>>(_setStreamType<List<Asset>>(Options(
+    final _result = await _dio
+        .fetch<List<dynamic>>(_setStreamType<List<AssetToken>>(Options(
       method: 'POST',
       headers: _headers,
       extra: _extra,
     )
             .compose(
               _dio.options,
-              '/v1/nft/query',
+              '/v2/nft/query',
               queryParameters: queryParameters,
               data: _data,
             )
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     var value = _result.data!
-        .map((dynamic i) => Asset.fromJson(i as Map<String, dynamic>))
+        .map((dynamic i) => AssetToken.fromJson(i as Map<String, dynamic>))
         .toList();
     return value;
   }
 
   @override
-  Future<List<Asset>> getNFTTokens(offset) async {
+  Future<List<AssetToken>> getNFTTokens(offset) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{r'offset': offset};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
-    final _result =
-        await _dio.fetch<List<dynamic>>(_setStreamType<List<Asset>>(Options(
+    final _result = await _dio
+        .fetch<List<dynamic>>(_setStreamType<List<AssetToken>>(Options(
       method: 'POST',
       headers: _headers,
       extra: _extra,
     )
             .compose(
               _dio.options,
-              '/v1/nft/query',
+              '/v2/nft/query',
               queryParameters: queryParameters,
               data: _data,
             )
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     var value = _result.data!
-        .map((dynamic i) => Asset.fromJson(i as Map<String, dynamic>))
+        .map((dynamic i) => AssetToken.fromJson(i as Map<String, dynamic>))
         .toList();
     return value;
   }
 
   @override
-  Future<List<Asset>> getNftTokensByOwner(
+  Future<List<AssetToken>> getNftTokensByOwner(
     owner,
     offset,
     size,
+    lastUpdatedAt,
   ) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'owner': owner,
       r'offset': offset,
       r'size': size,
+      r'lastUpdatedAt': lastUpdatedAt,
     };
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
-    final _result =
-        await _dio.fetch<List<dynamic>>(_setStreamType<List<Asset>>(Options(
+    final _result = await _dio
+        .fetch<List<dynamic>>(_setStreamType<List<AssetToken>>(Options(
       method: 'GET',
       headers: _headers,
       extra: _extra,
     )
             .compose(
               _dio.options,
-              '/v1/nft',
+              '/v2/nft',
               queryParameters: queryParameters,
               data: _data,
             )
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     var value = _result.data!
-        .map((dynamic i) => Asset.fromJson(i as Map<String, dynamic>))
+        .map((dynamic i) => AssetToken.fromJson(i as Map<String, dynamic>))
         .toList();
     return value;
   }

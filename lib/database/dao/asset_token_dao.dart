@@ -5,79 +5,176 @@
 //  that can be found in the LICENSE file.
 //
 
+// ignore_for_file: depend_on_referenced_packages
+
+import 'dart:async';
+
 import 'package:floor/floor.dart';
+import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/asset_token.dart';
+import 'package:nft_collection/models/token.dart';
+import 'package:nft_collection/utils/date_time_converter.dart';
+
+// ignore: depend_on_referenced_packages
+import 'package:sqflite/sqflite.dart' as sqflite;
+
+// ignore_for_file: unused_element
+final _dateTimeConverter = DateTimeConverter();
+final _nullableDateTimeConverter = NullableDateTimeConverter();
+final _tokenOwnersConverter = TokenOwnersConverter();
 
 @dao
-abstract class AssetTokenDao {
-  @Query(
-      'SELECT * FROM AssetToken ORDER BY lastActivityTime DESC, title, assetID')
-  Future<List<AssetToken>> findAllAssetTokens();
+class AssetTokenDao {
+  AssetTokenDao(this.database, this.changeListener)
+      : _queryAdapter = QueryAdapter(database);
 
-  @Query('SELECT DISTINCT * FROM AssetToken'
-      ' WHERE ownerAddress IN (:owners)'
-      ' ORDER BY lastActivityTime DESC, title, assetID')
-  Future<List<AssetToken>> findAllAssetTokensByOwners(List<String> owners);
+  final sqflite.DatabaseExecutor database;
 
-  @Query(
-      'SELECT * FROM AssetToken WHERE blockchain = :blockchain')
-  Future<List<AssetToken>> findAssetTokensByBlockchain(String blockchain);
+  final StreamController<String> changeListener;
 
-  @Query('SELECT * FROM AssetToken WHERE id = :id AND ownerAddress = :owner')
-  Future<AssetToken?> findAssetTokenByIdAndOwner(String id, String owner);
+  static AssetToken
+      Function(Map<String, Object?>) mapper = (Map<String, Object?>
+          row) =>
+      AssetToken(
+        id: row['id'] as String,
+        tokenId: row['tokenId'] as String?,
+        blockchain: row['blockchain'] as String,
+        fungible:
+            row['fungible'] == null ? false : (row['fungible'] as int) != 0,
+        contractType: row['contractType'] as String,
+        contractAddress: row['contractAddress'] as String?,
+        edition: row['edition'] as int,
+        editionName: row['editionName'] as String?,
+        mintedAt: _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
+        balance: row['balance'] as int?,
+        owner: row['owner'] as String,
+        owners: _tokenOwnersConverter.decode(row['owners'] as String),
+        swapped: row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+        burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
+        pending: row['pending'] == null ? null : (row['pending'] as int) != 0,
+        scrollable:
+            row['scrollable'] == null ? null : (row['scrollable'] as int) != 0,
+        lastActivityTime:
+            _dateTimeConverter.decode(row['lastActivityTime'] as int),
+        lastRefreshedTime:
+            _dateTimeConverter.decode(row['tokenLastRefresh'] as int),
+        ipfsPinned:
+            row['ipfsPinned'] == null ? null : (row['ipfsPinned'] as int) != 0,
+        isDebugged:
+            row['isDebugged'] == null ? null : (row['isDebugged'] as int) != 0,
+        originTokenInfo: [],
+        provenance: [],
+        originTokenInfoId: row['originTokenInfoId'] as String?,
+        asset: Asset(
+          row['indexID'] as String?,
+          row['thumbnailID'] as String?,
+          _nullableDateTimeConverter.decode(row['tokenLastRefresh'] as int?),
+          row['artistID'] as String?,
+          row['artistName'] as String?,
+          row['artistURL'] as String?,
+          row['assetID'] as String?,
+          row['title'] as String?,
+          row['description'] as String?,
+          row['mimeType'] as String?,
+          row['medium'] as String?,
+          row['maxEdition'] as int?,
+          row['source'] as String?,
+          row['sourceURL'] as String?,
+          row['previewURL'] as String?,
+          row['thumbnailURL'] as String?,
+          row['galleryThumbnailURL'] as String?,
+          row['assetData'] as String?,
+          row['assetURL'] as String?,
+          row['initialSaleModel'] as String?,
+          row['originalFileURL'] as String?,
+          row['isFeralfileFrame'] as bool?,
+        ),
+      );
 
-  @Query('SELECT * FROM AssetToken WHERE id IN (:ids)')
-  Future<List<AssetToken>> findAllAssetTokensByIds(List<String> ids);
+  final QueryAdapter _queryAdapter;
+  Future<List<AssetToken>> findAllAssetTokens() async {
+    return _queryAdapter.queryList(
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID ORDER BY lastActivityTime DESC, id DESC',
+      mapper: mapper,
+    );
+  }
 
-  @Query('SELECT id FROM AssetToken')
-  Future<List<String>> findAllAssetTokenIDs();
+  Future<List<AssetToken>> findAllAssetTokensWithoutOffset(
+    List<String> owners,
+  ) async {
+    const offsetOwner = 1;
+    final sqliteVariablesForOwner =
+        Iterable<String>.generate(owners.length, (i) => '?${i + offsetOwner}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE owner IN ($sqliteVariablesForOwner) ORDER BY lastActivityTime DESC, id DESC',
+        mapper: mapper,
+        arguments: [...owners]);
+  }
 
-  @Query('SELECT id FROM AssetToken WHERE ownerAddress=:owner')
-  Future<List<String>> findAllAssetTokenIDsByOwner(String owner);
+  Future<List<AssetToken>> findAllPendingAssetTokens() async {
+    return _queryAdapter.queryList(
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE pending = 1',
+      mapper: mapper,
+    );
+  }
 
-  @Query('SELECT DISTINCT artistID FROM AssetToken')
-  Future<List<String>> findAllAssetArtistIDs();
+  Future<List<AssetToken>> findAllAssetTokensByOwners(
+    List<String> owners,
+    int limit,
+    int lastTime,
+    String id,
+  ) async {
+    const offsetOwner = 4;
+    final sqliteVariablesForOwner =
+        Iterable<String>.generate(owners.length, (i) => '?${i + offsetOwner}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND (lastActivityTime < ?2 OR (lastActivityTime = ?2 AND id < ?3)) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
+        mapper: mapper,
+        arguments: [limit, lastTime, id, ...owners]);
+  }
 
-  @Query('SELECT * FROM AssetToken WHERE pending = 1')
-  Future<List<AssetToken>> findAllPendingTokens();
+  Future<List<AssetToken>> findAllAssetTokensBeforeByOwners(
+    List<String> owners,
+    int lastTime,
+    String id,
+  ) async {
+    const offsetOwner = 3;
+    final sqliteVariablesForOwner =
+        Iterable<String>.generate(owners.length, (i) => '?${i + offsetOwner}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND  (lastActivityTime >= ?1 AND id >= ?2) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
+        mapper: mapper,
+        arguments: [lastTime, id, ...owners]);
+  }
 
-  @Insert(onConflict: OnConflictStrategy.replace)
-  Future<void> insertAsset(AssetToken asset);
+  Future<List<AssetToken>> findAllAssetTokensByTokenIDs(
+    List<String> ids,
+  ) async {
+    const offsetOwner = 1;
+    final sqliteVariablesForOwner =
+        Iterable<String>.generate(ids.length, (i) => '?${i + offsetOwner}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE ((id IN ($sqliteVariablesForOwner)))',
+        mapper: mapper,
+        arguments: [...ids]);
+  }
 
-  @Insert(onConflict: OnConflictStrategy.replace)
-  Future<void> insertAssets(List<AssetToken> assets);
+  Future<AssetToken?> findAssetTokenByIdAndOwner(
+      String id, String owner) async {
+    return _queryAdapter.query(
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE id = ?1 AND owner = ?2',
+        mapper: mapper,
+        arguments: [id, owner]);
+  }
 
-  @update
-  Future<void> updateAsset(AssetToken asset);
-
-  @delete
-  Future<void> deleteAsset(AssetToken asset);
-
-  @Query('DELETE FROM AssetToken WHERE id IN (:ids)')
-  Future<void> deleteAssets(List<String> ids);
-
-  @Query('DELETE FROM AssetToken WHERE id NOT IN (:ids)')
-  Future<void> deleteAssetsNotIn(List<String> ids);
-
-  @Query('DELETE FROM AssetToken WHERE id NOT IN (:ids) AND ownerAddress=:owner')
-  Future<void> deleteAssetsNotInByOwner(List<String> ids, String owner);
-
-  @Query('DELETE FROM AssetToken WHERE ownerAddress NOT IN (:owners)')
-  Future<void> deleteAssetsNotBelongs(List<String> owners);
-
-  @Query('DELETE FROM AssetToken')
-  Future<void> removeAll();
-
-  @Query('DELETE FROM AssetToken WHERE pending=0')
-  Future<void> removeAllExcludePending();
+  Future<List<String>> findAllAssetTokenIDsByOwner(String owner) async {
+    return _queryAdapter.queryList(
+        'SELECT id FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE owner=?1',
+        mapper: (Map<String, Object?> row) => row.values.first as String,
+        arguments: [owner]);
+  }
 }
-
-/** MARK: - Important!
- *** Because of limitation of Floor, please override this in auto-generated app_database.g.dart
-
-    @override
-    Future<List<String>> findAllAssetTokenIDs() async {
-    return _queryAdapter.queryList('SELECT id FROM AssetToken',
-    mapper: (Map<String, Object?> row) => row['id'] as String);
-    }
- */

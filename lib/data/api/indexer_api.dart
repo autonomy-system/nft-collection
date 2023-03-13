@@ -6,7 +6,7 @@
 //
 
 import 'package:dio/dio.dart';
-import 'package:nft_collection/models/asset.dart';
+import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/models/identity.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -16,19 +16,20 @@ part 'indexer_api.g.dart';
 abstract class IndexerApi {
   factory IndexerApi(Dio dio, {String baseUrl}) = _IndexerApi;
 
-  @POST("/v1/nft/query")
-  Future<List<Asset>> getNftTokens(@Body() Map<String, List<String>> ids);
+  @POST("/v2/nft/query")
+  Future<List<AssetToken>> getNftTokens(@Body() Map<String, List<String>> ids);
 
-  @POST("/v1/nft/query")
-  Future<List<Asset>> getNFTTokens(
+  @POST("/v2/nft/query")
+  Future<List<AssetToken>> getNFTTokens(
     @Query("offset") int offset,
   );
 
-  @GET("/v1/nft")
-  Future<List<Asset>> getNftTokensByOwner(
+  @GET("/v2/nft")
+  Future<List<AssetToken>> getNftTokensByOwner(
     @Query("owner") String owner,
     @Query("offset") int offset,
     @Query("size") int size,
+    @Query("lastUpdatedAt") int? lastUpdatedAt,
   );
 
   @POST("/nft/index")
@@ -49,6 +50,6 @@ abstract class IndexerApi {
 
   @POST("/v1/nft/pending")
   Future postNftPendingToken(
-      @Body() Map<String, dynamic> payload,
+    @Body() Map<String, dynamic> payload,
   );
 }
