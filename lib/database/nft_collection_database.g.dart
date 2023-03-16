@@ -310,6 +310,13 @@ class _$TokenDao extends TokenDao {
   }
 
   @override
+  Future<DateTime?> getLastRefreshedTime() async {
+    return _queryAdapter.query('SELECT max(lastRefreshedTime) FROM Token',
+        mapper: (Map<String, Object?> row) =>
+            _nullableDateTimeConverter.decode(row.values.first as int?));
+  }
+
+  @override
   Future<void> deleteTokens(List<String> ids) async {
     const offset = 1;
     final _sqliteVariablesForIds =

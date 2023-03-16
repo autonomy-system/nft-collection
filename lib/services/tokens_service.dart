@@ -193,7 +193,13 @@ class TokensServiceImpl extends TokensService {
       }
       provenance.addAll(assetToken.provenance);
     }
+
+    final tokensLog =
+        tokens.map((e) => "id: ${e.id} balance: ${e.balance} ").toList();
     await _database.tokenDao.insertTokens(tokens);
+    NftCollection.logger
+        .info("[insertAssetsWithProvenance][tokens] $tokensLog");
+
     await _database.assetDao.insertAssets(assets);
     await _database.provenanceDao.insertProvenance(provenance);
   }
@@ -294,7 +300,10 @@ class TokensServiceImpl extends TokensService {
         if (result.done) {
           _refreshAllTokensWorker?.close();
           _configurationService.removePendingAddresses(result.addresses);
-          _configurationService.setLatestRefreshTokens(result.lastUpdatedAt);
+          final lastRefreshedTime = await _tokenDao.getLastRefreshedTime();
+          _configurationService.setLatestRefreshTokens(lastRefreshedTime);
+          NftCollection.logger.info(
+              '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at ${lastRefreshedTime?.millisecondsSinceEpoch != null ? lastRefreshedTime!.millisecondsSinceEpoch ~/ 1000 : null}');
           NftCollection.logger.info("[REFRESH_ALL_TOKENS][end]");
         }
       }
@@ -366,16 +375,12 @@ class TokensServiceImpl extends TokensService {
       final Map<int, int> offsetMap =
           addresses.map((key, value) => MapEntry(key, 0));
 
-      final lastUpdatedAt = DateTime.now();
-
       await Future.wait(addresses.keys.map((lastRefreshedTime) async {
         if (addresses[lastRefreshedTime]?.isEmpty ?? true) return;
         final owners = addresses[lastRefreshedTime]?.join(',');
         if (owners == null) return;
 
         do {
-          NftCollection.logger
-              .info('[REFRESH_ALL_TOKENS] $owners at $lastRefreshedTime');
           final assets = await isolateIndexerAPI.getNftTokensByOwner(
             owners,
             offsetMap[lastRefreshedTime] ?? 0,
@@ -387,7 +392,7 @@ class TokensServiceImpl extends TokensService {
             offsetMap.remove(lastRefreshedTime);
           } else {
             _isolateSendPort?.send(FetchTokensSuccess(
-                key, uuid, addresses[lastRefreshedTime]!, assets, false, null));
+                key, uuid, addresses[lastRefreshedTime]!, assets, false));
 
             offsetMap[lastRefreshedTime] =
                 (offsetMap[lastRefreshedTime] ?? 0) + assets.length;
@@ -396,8 +401,8 @@ class TokensServiceImpl extends TokensService {
       }));
       final inputAddresses = addresses.values.expand((list) => list).toList();
 
-      _isolateSendPort?.send(FetchTokensSuccess(
-          key, uuid, inputAddresses, [], true, lastUpdatedAt));
+      _isolateSendPort
+          ?.send(FetchTokensSuccess(key, uuid, inputAddresses, [], true));
     } catch (exception) {
       _isolateSendPort?.send(FetchTokenFailure(key, uuid, exception));
     }
@@ -424,7 +429,6 @@ class FetchTokensSuccess extends TokensServiceResult {
   final String key;
   final String uuid;
   final List<String> addresses;
-  final DateTime? lastUpdatedAt;
   final List<AssetToken> assets;
   bool done;
 
@@ -434,7 +438,6 @@ class FetchTokensSuccess extends TokensServiceResult {
     this.addresses,
     this.assets,
     this.done,
-    this.lastUpdatedAt,
   );
 }
 

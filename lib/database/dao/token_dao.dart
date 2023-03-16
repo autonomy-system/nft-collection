@@ -16,6 +16,9 @@ abstract class TokenDao {
   @Query('SELECT * FROM Token WHERE pending = 1')
   Future<List<Token>> findAllPendingTokens();
 
+  @Query('SELECT max(lastRefreshedTime) FROM Token')
+  Future<DateTime?> getLastRefreshedTime();
+
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertToken(Token token);
 
