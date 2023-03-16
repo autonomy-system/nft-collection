@@ -13,6 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/data/api/tzkt_api.dart';
+import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/asset.dart';
@@ -74,6 +75,7 @@ class TokensServiceImpl extends TokensService {
   Future<void> get isolateReady => _isolateReady.future;
 
   TokenDao get _tokenDao => _database.tokenDao;
+  AssetTokenDao get _assetTokenDao => _database.assetTokenDao;
 
   Future<void> start() async {
     if (_sendPort != null) return;
@@ -300,7 +302,7 @@ class TokensServiceImpl extends TokensService {
         if (result.done) {
           _refreshAllTokensWorker?.close();
           _configurationService.removePendingAddresses(result.addresses);
-          final lastRefreshedTime = await _tokenDao.getLastRefreshedTime();
+          final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
           _configurationService.setLatestRefreshTokens(lastRefreshedTime);
           NftCollection.logger.info(
               '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at ${lastRefreshedTime?.millisecondsSinceEpoch != null ? lastRefreshedTime!.millisecondsSinceEpoch ~/ 1000 : null}');
