@@ -119,6 +119,14 @@ class AssetTokenDao {
     );
   }
 
+  Future<DateTime?> getLastRefreshedTime() async {
+    final listDateTime = await _queryAdapter.queryList(
+        'SELECT lastRefreshedTime FROM Token ORDER BY lastRefreshedTime DESC LIMIT 1',
+        mapper: (Map<String, Object?> row) =>
+            _dateTimeConverter.decode(row.values.first as int));
+    return listDateTime.isEmpty ? null : listDateTime.first;
+  }
+
   Future<List<AssetToken>> findAllAssetTokensByOwners(
     List<String> owners,
     int limit,
