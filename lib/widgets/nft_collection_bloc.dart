@@ -270,6 +270,9 @@ class NftCollectionBloc
 
       final assetTokens =
           await database.assetTokenDao.findAllAssetTokensByTokenIDs(event.ids!);
+
+      assetTokens.removeWhere((element) =>
+          !activeAddress.contains(element.owner) && element.isDebugged != true);
       final compactedAssetToken = assetTokens
           .map((e) => CompactedAssetToken.fromAssetToken(e))
           .toList();
