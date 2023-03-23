@@ -167,6 +167,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
     this.blockchain,
     this.tokenId,
     this.title,
+    this.source,
   });
 
   final String id;
@@ -189,6 +190,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
   String? blockchain;
   String? tokenId;
   String? title;
+  String? source;
 
   factory CompactedAssetToken.fromAssetToken(AssetToken assetToken) {
     return CompactedAssetToken(
@@ -208,6 +210,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
       blockchain: assetToken.blockchain,
       tokenId: assetToken.tokenId,
       title: assetToken.title,
+      source: assetToken.source,
     );
   }
 

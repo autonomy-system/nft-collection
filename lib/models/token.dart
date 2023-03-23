@@ -86,7 +86,8 @@ class Token {
         editionName: assetToken.editionName,
         id: assetToken.id,
         mintedAt: assetToken.mintedAt,
-        source: assetToken.projectMetadata?.latest.source,
+        source: assetToken.projectMetadata?.latest.source ??
+            assetToken.asset?.source,
         owners: assetToken.owners,
         balance: assetToken.balance,
         lastActivityTime: assetToken.lastActivityTime,
@@ -101,7 +102,8 @@ class Token {
         scrollable: assetToken.attributes?.scrollable,
         tokenId: assetToken.tokenId,
         isDebugged: assetToken.isDebugged ?? false,
-        indexID: assetToken.projectMetadata?.indexID,
+        indexID:
+            assetToken.projectMetadata?.indexID ?? assetToken.asset?.indexID,
       );
 
   @override
