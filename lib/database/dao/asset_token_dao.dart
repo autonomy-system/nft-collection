@@ -87,7 +87,9 @@ class AssetTokenDao {
           row['assetURL'] as String?,
           row['initialSaleModel'] as String?,
           row['originalFileURL'] as String?,
-          row['isFeralfileFrame'] as bool?,
+          row['isFeralfileFrame'] == null
+              ? null
+              : (row['isFeralfileFrame'] as int) != 0,
         ),
       );
 

@@ -102,6 +102,8 @@ class NftCollectionBloc
       final lastTime =
           event.pageKey.offset ?? DateTime.now().millisecondsSinceEpoch;
       final id = event.pageKey.id;
+      NftCollection.logger.info(
+          "[NftCollectionBloc] GetTokensBeforeByOwnerEvent ${event.pageKey}");
 
       final assetTokens = await database.assetTokenDao
           .findAllAssetTokensByOwners(activeAddress, limit, lastTime, id);
@@ -112,6 +114,7 @@ class NftCollectionBloc
 
       final isLastPage = compactedAssetToken.length < indexerTokensPageSize;
       PageKey? nextKey;
+
       if (compactedAssetToken.isNotEmpty) {
         nextKey = PageKey(
           offset:
@@ -121,6 +124,9 @@ class NftCollectionBloc
       }
 
       state.tokens.addAll(compactedAssetToken);
+
+      NftCollection.logger.info(
+          "[NftCollectionBloc] GetTokensBeforeByOwnerEvent ${compactedAssetToken.length}");
 
       if (isLastPage) {
         emit(state.copyWith(
@@ -143,6 +149,8 @@ class NftCollectionBloc
 
     on<GetTokensBeforeByOwnerEvent>((event, emit) async {
       List<AssetToken> assetTokens = [];
+      NftCollection.logger.info(
+          "[NftCollectionBloc] GetTokensBeforeByOwnerEvent ${event.pageKey}");
       if (event.pageKey == null) {
         assetTokens = await database.assetTokenDao
             .findAllAssetTokensWithoutOffset(event.owners);
@@ -153,6 +161,8 @@ class NftCollectionBloc
         assetTokens = await database.assetTokenDao
             .findAllAssetTokensBeforeByOwners(event.owners, lastTime, id);
       }
+      NftCollection.logger.info(
+          "[NftCollectionBloc] GetTokensBeforeByOwnerEvent ${assetTokens.length}");
 
       if (assetTokens.isEmpty) return;
       add(UpdateTokensEvent(tokens: assetTokens));
