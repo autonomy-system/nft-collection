@@ -32,6 +32,7 @@ class Asset {
   bool? isFeralfileFrame;
   String? initialSaleModel;
   String? originalFileURL;
+  String? artworkMetadata;
 
   Asset(
     this.indexID,
@@ -56,7 +57,9 @@ class Asset {
     this.initialSaleModel,
     this.originalFileURL,
     this.isFeralfileFrame,
+    this.artworkMetadata,
   );
+
   Asset.init({
     this.indexID,
     this.thumbnailID,
@@ -80,6 +83,7 @@ class Asset {
     this.initialSaleModel,
     this.originalFileURL,
     this.isFeralfileFrame,
+    this.artworkMetadata,
   });
 
   factory Asset.fromJson(Map<String, dynamic> map) {
@@ -112,6 +116,7 @@ class Asset {
           : null,
       map['originalFileURL'] != null ? map['originalFileURL'] as String : null,
       map['isFeralfileFrame'] != null ? map['isFeralfileFrame'] as bool : null,
+      map['artworkMetadata'] != null ? map['artworkMetadata'] as String : null,
     );
   }
 }

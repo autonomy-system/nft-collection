@@ -90,6 +90,7 @@ class AssetTokenDao {
           row['isFeralfileFrame'] == null
               ? null
               : (row['isFeralfileFrame'] as int) != 0,
+          row['artworkMetadata'] as String?,
         ),
       );
 
