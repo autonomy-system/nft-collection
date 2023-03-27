@@ -73,7 +73,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
     Callback? callback,
   ]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 1,
+      version: 2,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -91,7 +91,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Token` (`id` TEXT NOT NULL, `tokenId` TEXT, `blockchain` TEXT NOT NULL, `fungible` INTEGER, `contractType` TEXT, `contractAddress` TEXT, `edition` INTEGER NOT NULL, `editionName` TEXT, `mintedAt` INTEGER, `balance` INTEGER, `owner` TEXT NOT NULL, `owners` TEXT NOT NULL, `source` TEXT, `swapped` INTEGER, `burned` INTEGER, `lastActivityTime` INTEGER NOT NULL, `lastRefreshedTime` INTEGER NOT NULL, `ipfsPinned` INTEGER, `scrollable` INTEGER, `pending` INTEGER, `isDebugged` INTEGER, `initialSaleModel` TEXT, `originTokenInfoId` TEXT, `indexID` TEXT, PRIMARY KEY (`id`, `owner`))');
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Asset` (`indexID` TEXT, `thumbnailID` TEXT, `lastRefreshedTime` INTEGER, `artistID` TEXT, `artistName` TEXT, `artistURL` TEXT, `assetID` TEXT, `title` TEXT, `description` TEXT, `mimeType` TEXT, `medium` TEXT, `maxEdition` INTEGER, `source` TEXT, `sourceURL` TEXT, `previewURL` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `assetData` TEXT, `assetURL` TEXT, `isFeralfileFrame` INTEGER, `initialSaleModel` TEXT, `originalFileURL` TEXT, PRIMARY KEY (`indexID`))');
+            'CREATE TABLE IF NOT EXISTS `Asset` (`indexID` TEXT, `thumbnailID` TEXT, `lastRefreshedTime` INTEGER, `artistID` TEXT, `artistName` TEXT, `artistURL` TEXT, `assetID` TEXT, `title` TEXT, `description` TEXT, `mimeType` TEXT, `medium` TEXT, `maxEdition` INTEGER, `source` TEXT, `sourceURL` TEXT, `previewURL` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `assetData` TEXT, `assetURL` TEXT, `isFeralfileFrame` INTEGER, `initialSaleModel` TEXT, `originalFileURL` TEXT, `artworkMetadata` TEXT, PRIMARY KEY (`indexID`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`id`))');
         await database.execute(
@@ -435,7 +435,8 @@ class _$AssetDao extends AssetDao {
                       ? null
                       : (item.isFeralfileFrame! ? 1 : 0),
                   'initialSaleModel': item.initialSaleModel,
-                  'originalFileURL': item.originalFileURL
+                  'originalFileURL': item.originalFileURL,
+                  'artworkMetadata': item.artworkMetadata
                 }),
         _assetUpdateAdapter = UpdateAdapter(
             database,
@@ -466,7 +467,8 @@ class _$AssetDao extends AssetDao {
                       ? null
                       : (item.isFeralfileFrame! ? 1 : 0),
                   'initialSaleModel': item.initialSaleModel,
-                  'originalFileURL': item.originalFileURL
+                  'originalFileURL': item.originalFileURL,
+                  'artworkMetadata': item.artworkMetadata
                 }),
         _assetDeletionAdapter = DeletionAdapter(
             database,
@@ -497,7 +499,8 @@ class _$AssetDao extends AssetDao {
                       ? null
                       : (item.isFeralfileFrame! ? 1 : 0),
                   'initialSaleModel': item.initialSaleModel,
-                  'originalFileURL': item.originalFileURL
+                  'originalFileURL': item.originalFileURL,
+                  'artworkMetadata': item.artworkMetadata
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -539,7 +542,8 @@ class _$AssetDao extends AssetDao {
             row['originalFileURL'] as String?,
             row['isFeralfileFrame'] == null
                 ? null
-                : (row['isFeralfileFrame'] as int) != 0));
+                : (row['isFeralfileFrame'] as int) != 0,
+            row['artworkMetadata'] as String?));
   }
 
   @override
@@ -576,7 +580,8 @@ class _$AssetDao extends AssetDao {
             row['originalFileURL'] as String?,
             row['isFeralfileFrame'] == null
                 ? null
-                : (row['isFeralfileFrame'] as int) != 0),
+                : (row['isFeralfileFrame'] as int) != 0,
+            row['artworkMetadata'] as String?),
         arguments: [...indexIDs]);
   }
 
