@@ -5,6 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'dart:convert';
+
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/attributes.dart';
 import 'package:nft_collection/models/origin_token_info.dart';
@@ -289,7 +291,7 @@ class ProjectMetadata {
         latest.initialSaleModel,
         latest.originalFileUrl,
         latest.artworkMetadata?['isFeralfileFrame'],
-        latest.artworkMetadata.toString(),
+        jsonEncode(latest.artworkMetadata),
       );
 
   factory ProjectMetadata.fromJson(Map<String, dynamic> json) =>
