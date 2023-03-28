@@ -217,6 +217,12 @@ class NftCollectionBloc
           await database.tokenDao.deleteTokens(removePendingIds);
         }
 
+        if (pendingTokens.length - removePendingIds.length > 0) {
+          tokensService.reindexAddresses(
+            _addresses.map((e) => e.address).toList(),
+          );
+        }
+
         fetchManuallyTokens(_debugTokenIds);
 
         NftCollection.logger.info(
