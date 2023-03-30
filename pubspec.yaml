@@ -23,7 +23,7 @@ dependencies:
   flutter_svg: ^1.1.5
   get_it: ^7.2.0
   json_annotation: ^4.7.0
-  json_serializable: ^6.4.0
+  json_serializable: ^6.6.1
   uuid: ^3.0.6
   retrofit: ^3.0.1+1
   shared_preferences: ^2.0.15
