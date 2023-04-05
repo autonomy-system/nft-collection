@@ -86,11 +86,9 @@ type Query {
 }
  */
 
-
-
-const String tokensByOwnerAllQuery = r'''
-  query Tokens($owners: [String!]! = [], $size: Int64! = 50, $lastUpdatedAt: Time, $offset: Int64! = 0) {
-  tokens(owners: $owners, size: $size, lastUpdatedAt: $lastUpdatedAt, offset: $offset) {
+const String getTokens = r'''
+  query getTokens($owners: [String!]! = [],$ids: [String!]! = [], $size: Int64! = 50, $lastUpdatedAt: Time, $offset: Int64! = 0) {
+  tokens(owners: $owners,ids: $ids, size: $size, lastUpdatedAt: $lastUpdatedAt, offset: $offset) {
     id
     blockchain
     fungible

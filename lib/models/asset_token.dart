@@ -96,10 +96,7 @@ class AssetToken {
             (key, value) => MapEntry(key as String, (value as int?) ?? 0)) ??
         {};
     final projectMetadata = ProjectMetadata.fromJson(json["asset"]);
-    final lastActivityTime =
-        DateTime.parse(json['lastActivityTime']).isAfter(DateTime(1970))
-            ? DateTime.parse(json['lastActivityTime'])
-            : DateTime.parse(json['lastRefreshedTime']);
+
     return AssetToken(
       id: json["indexID"],
       edition: json["edition"],
@@ -115,8 +112,12 @@ class AssetToken {
       owner: json["owner"],
       owners: owners,
       projectMetadata: projectMetadata,
-      lastActivityTime: lastActivityTime,
-      lastRefreshedTime: DateTime.parse(json['lastRefreshedTime']),
+      lastActivityTime: json['lastActivityTime'] != null
+          ? DateTime.parse(json['lastActivityTime'])
+          : DateTime(1970),
+      lastRefreshedTime: json['lastRefreshedTime'] != null
+          ? DateTime.parse(json['lastRefreshedTime'])
+          : DateTime(1970),
       provenance: json["provenance"] != null
           ? (json["provenance"] as List<dynamic>)
               .asMap()
