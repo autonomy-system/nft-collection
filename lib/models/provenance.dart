@@ -40,7 +40,9 @@ class Provenance {
         blockchain: json['blockchain'] as String,
         txID: json['txid'] as String,
         owner: json['owner'] as String,
-        timestamp: DateTime.parse(json['timestamp'] as String),
+        timestamp: json['timestamp'] != null
+            ? DateTime.parse(json['timestamp'] as String)
+            : DateTime(1970),
         txURL: (json['txURL'] as String?) ?? '',
         tokenID: tokenID,
       );

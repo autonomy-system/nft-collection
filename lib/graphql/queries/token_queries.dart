@@ -105,6 +105,9 @@ const String getTokens = r'''
     burned
     lastActivityTime
     lastRefreshedTime
+    attributes {
+      scrollable
+    }
     asset{
       indexID
       thumbnailID
@@ -130,6 +133,7 @@ const String getTokens = r'''
             galleryThumbnailURL
             assetData
             assetURL
+            artworkMetadata
           }
           latest{
             artistID
@@ -150,6 +154,7 @@ const String getTokens = r'''
             galleryThumbnailURL
             assetData
             assetURL
+            artworkMetadata
           }
         }
       }
