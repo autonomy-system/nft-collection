@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
@@ -70,12 +71,22 @@ class NftCollectionBloc
       StreamController<NftCollectionBlocEvent>.broadcast();
 
   Future<List<String>> fetchManuallyTokens(List<String> indexerIds) async {
-    if (indexerIds.isNotEmpty) {
-      final assets = await tokensService.fetchManualTokens(indexerIds);
+    if (indexerIds.isEmpty) {
+      return indexerIds;
+    }
+
+    int offset = 0;
+
+    while (offset < indexerIds.length) {
+      final count = min(indexerTokensPageSize, indexerIds.length - offset);
+      final ids = indexerIds.sublist(offset, offset + count);
+      offset += count;
+      final assets = await tokensService.fetchManualTokens(ids);
       if (assets.isNotEmpty) {
         add(UpdateTokensEvent(tokens: assets));
       }
     }
+
     return indexerIds;
   }
 
@@ -343,7 +354,7 @@ class NftCollectionBloc
     }
     final result = <int, List<String>>{};
     final listPendingAddresses = prefs.getPendingAddresses();
-    final timestamp = lastRefreshedTime.millisecondsSinceEpoch ~/ 1000;
+    final timestamp = lastRefreshedTime.millisecondsSinceEpoch;
 
     for (var address in addresses) {
       int key = 0;

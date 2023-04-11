@@ -16,6 +16,8 @@ import 'package:nft_collection/data/api/tzkt_api.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
+import 'package:nft_collection/graphql/clients/indexer_client.dart';
+import 'package:nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/models/token.dart';
@@ -23,6 +25,7 @@ import 'package:nft_collection/models/pending_tx_params.dart';
 import 'package:nft_collection/models/provenance.dart';
 import 'package:nft_collection/nft_collection.dart';
 import 'package:nft_collection/services/configuration_service.dart';
+import 'package:nft_collection/services/indexer_service.dart';
 import 'package:nft_collection/utils/constants.dart';
 import 'package:nft_collection/utils/logging_interceptor.dart';
 import 'package:uuid/uuid.dart';
@@ -45,6 +48,7 @@ final _isolateScopeInjector = GetIt.asNewInstance();
 class TokensServiceImpl extends TokensService {
   final String _indexerUrl;
   late IndexerApi _indexer;
+  late IndexerService _indexerService;
   final NftCollectionDatabase _database;
   final NftCollectionPrefs _configurationService;
 
@@ -53,12 +57,14 @@ class TokensServiceImpl extends TokensService {
   static const REINDEX_ADDRESSES = 'REINDEX_ADDRESSES';
 
   TokensServiceImpl(
-      this._indexerUrl, this._database, this._configurationService) {
+    this._indexerUrl,
+    this._database,
+    this._configurationService,
+  ) {
     final dio = Dio()..interceptors.add(LoggingInterceptor());
-    _indexer = IndexerApi(
-      dio,
-      baseUrl: _indexerUrl,
-    );
+    _indexer = IndexerApi(dio, baseUrl: _indexerUrl);
+    final indexerClient = IndexerClient(_indexerUrl);
+    _indexerService = IndexerService(indexerClient);
   }
 
   SendPort? _sendPort;
@@ -222,7 +228,12 @@ class TokensServiceImpl extends TokensService {
 
   @override
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds) async {
-    final manuallyAssets = (await _indexer.getNftTokens({"ids": indexerIds}));
+    final request = QueryListTokensRequest(
+      ids: indexerIds,
+      size: indexerTokensPageSize,
+    );
+
+    final manuallyAssets = await _indexerService.getNftTokens(request);
 
     //stripe owner for manual asset
     for (var i = 0; i < manuallyAssets.length; i++) {
@@ -277,6 +288,10 @@ class TokensServiceImpl extends TokensService {
     dio.interceptors.add(LoggingInterceptor());
     _isolateScopeInjector
         .registerLazySingleton(() => IndexerApi(dio, baseUrl: indexerUrl));
+    final indexerClient = IndexerClient(indexerUrl);
+    _isolateScopeInjector.registerLazySingleton(() => indexerClient);
+    _isolateScopeInjector
+        .registerLazySingleton(() => IndexerService(indexerClient));
     _isolateScopeInjector.registerLazySingleton(() => TZKTApi(dio));
   }
 
@@ -305,7 +320,7 @@ class TokensServiceImpl extends TokensService {
           final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
           _configurationService.setLatestRefreshTokens(lastRefreshedTime);
           NftCollection.logger.info(
-              '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at ${lastRefreshedTime?.millisecondsSinceEpoch != null ? lastRefreshedTime!.millisecondsSinceEpoch ~/ 1000 : null}');
+              '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at $lastRefreshedTime');
           NftCollection.logger.info("[REFRESH_ALL_TOKENS][end]");
         }
       }
@@ -373,7 +388,7 @@ class TokensServiceImpl extends TokensService {
     Map<int, List<String>> addresses,
   ) async {
     try {
-      final isolateIndexerAPI = _isolateScopeInjector<IndexerApi>();
+      final isolateIndexerService = _isolateScopeInjector<IndexerService>();
       final Map<int, int> offsetMap =
           addresses.map((key, value) => MapEntry(key, 0));
 
@@ -383,12 +398,16 @@ class TokensServiceImpl extends TokensService {
         if (owners == null) return;
 
         do {
-          final assets = await isolateIndexerAPI.getNftTokensByOwner(
-            owners,
-            offsetMap[lastRefreshedTime] ?? 0,
-            indexerTokensPageSize,
-            lastRefreshedTime,
+          final request = QueryListTokensRequest(
+            owners: addresses[lastRefreshedTime] ?? [],
+            offset: offsetMap[lastRefreshedTime] ?? 0,
+            size: indexerTokensPageSize,
+            lastUpdatedAt: lastRefreshedTime != 0
+                ? DateTime.fromMillisecondsSinceEpoch(lastRefreshedTime)
+                : null,
           );
+
+          final assets = await isolateIndexerService.getNftTokens(request);
 
           if (assets.isEmpty) {
             offsetMap.remove(lastRefreshedTime);
