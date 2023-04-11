@@ -233,7 +233,7 @@ class TokensServiceImpl extends TokensService {
       size: indexerTokensPageSize,
     );
 
-    final manuallyAssets = (await _indexerService.getNftTokens(request));
+    final manuallyAssets = await _indexerService.getNftTokens(request);
 
     //stripe owner for manual asset
     for (var i = 0; i < manuallyAssets.length; i++) {

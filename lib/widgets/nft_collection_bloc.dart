@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
@@ -77,9 +78,7 @@ class NftCollectionBloc
     int offset = 0;
 
     while (offset < indexerIds.length) {
-      final count = offset + indexerTokensPageSize > indexerIds.length
-          ? indexerIds.length - offset
-          : indexerTokensPageSize;
+      final count = min(indexerTokensPageSize, indexerIds.length - offset);
       final ids = indexerIds.sublist(offset, offset + count);
       offset += count;
       final assets = await tokensService.fetchManualTokens(ids);
