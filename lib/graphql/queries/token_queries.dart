@@ -105,13 +105,13 @@ const String getTokens = r'''
     burned
     lastActivityTime
     lastRefreshedTime
-    attributes {
-      scrollable
-    }
     asset{
       indexID
       thumbnailID
       lastRefreshedTime
+      attributes {
+        scrollable
+      }
       metadata{
         project{
           origin{

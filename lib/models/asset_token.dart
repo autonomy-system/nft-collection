@@ -135,8 +135,8 @@ class AssetToken {
       ipfsPinned: json["ipfsPinned"] as bool?,
       burned: json["burned"] as bool?,
       pending: json["pending"] as bool?,
-      attributes: json['attributes'] != null
-          ? Attributes.fromJson(json['attributes'])
+      attributes: json["asset"]['attributes'] != null
+          ? Attributes.fromJson(json["asset"]['attributes'])
           : null,
       asset: projectMetadata.toAsset,
     );
