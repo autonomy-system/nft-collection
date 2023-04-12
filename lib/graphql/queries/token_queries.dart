@@ -104,6 +104,13 @@ const String getTokens = r'''
     swapped
     burned
     lastActivityTime
+    originTokenInfo {
+      id
+      blockchain
+      fungible
+      contractType
+      contractAddress
+    }
     lastRefreshedTime
     asset{
       indexID
