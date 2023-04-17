@@ -11,7 +11,7 @@ class IndexerClient {
     final link = authLink.concat(httpLink);
 
     return GraphQLClient(
-      cache: GraphQLCache(),
+      cache: GraphQLCache(dataIdFromObject: (data) => null),
       link: link,
     );
   }
