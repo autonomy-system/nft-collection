@@ -279,7 +279,7 @@ class ProjectMetadata {
         latest.title,
         latest.description,
         latest.mimeType,
-        latest.medium,
+        mediumFromMimeType(latest.mimeType),
         latest.maxEdition,
         latest.source,
         latest.sourceUrl,
