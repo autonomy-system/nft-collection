@@ -44,6 +44,7 @@ abstract class NftCollectionDatabase extends FloorDatabase {
 final migrations = <Migration>[migrateV1ToV2];
 
 final migrateV1ToV2 = Migration(1, 2, (database) async {
-  await database.execute(
-      'ALTER TABLE Asset ADD COLUMN artworkMetadata TEXT');
+  await database.execute('ALTER TABLE Asset ADD COLUMN artworkMetadata TEXT');
+  await database
+      .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
 });
