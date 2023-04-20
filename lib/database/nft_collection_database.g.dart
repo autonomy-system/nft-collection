@@ -93,7 +93,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Asset` (`indexID` TEXT, `thumbnailID` TEXT, `lastRefreshedTime` INTEGER, `artistID` TEXT, `artistName` TEXT, `artistURL` TEXT, `assetID` TEXT, `title` TEXT, `description` TEXT, `mimeType` TEXT, `medium` TEXT, `maxEdition` INTEGER, `source` TEXT, `sourceURL` TEXT, `previewURL` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `assetData` TEXT, `assetURL` TEXT, `isFeralfileFrame` INTEGER, `initialSaleModel` TEXT, `originalFileURL` TEXT, `artworkMetadata` TEXT, PRIMARY KEY (`indexID`))');
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, PRIMARY KEY (`id`))');
+            'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, `blockNumber` INTEGER, PRIMARY KEY (`id`))');
         await database.execute(
             'CREATE INDEX `index_Token_lastActivityTime_id` ON `Token` (`lastActivityTime`, `id`)');
         await database.execute(
@@ -644,7 +644,8 @@ class _$ProvenanceDao extends ProvenanceDao {
                   'owner': item.owner,
                   'timestamp': _dateTimeConverter.encode(item.timestamp),
                   'txURL': item.txURL,
-                  'tokenID': item.tokenID
+                  'tokenID': item.tokenID,
+                  'blockNumber': item.blockNumber
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -667,7 +668,8 @@ class _$ProvenanceDao extends ProvenanceDao {
             owner: row['owner'] as String,
             timestamp: _dateTimeConverter.decode(row['timestamp'] as int),
             txURL: row['txURL'] as String,
-            tokenID: row['tokenID'] as String),
+            tokenID: row['tokenID'] as String,
+            blockNumber: row['blockNumber'] as int?),
         arguments: [tokenID]);
   }
 
