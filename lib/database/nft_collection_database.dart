@@ -8,6 +8,7 @@
 import 'dart:async';
 
 import 'package:floor/floor.dart';
+import 'package:nft_collection/database/dao/album_dao.dart';
 import 'package:nft_collection/database/dao/asset_dao.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/dao/token_dao.dart';
@@ -31,6 +32,7 @@ part 'nft_collection_database.g.dart'; // the generated code will be there
 abstract class NftCollectionDatabase extends FloorDatabase {
   TokenDao get tokenDao;
   AssetTokenDao get assetTokenDao => AssetTokenDao(database, changeListener);
+  AlbumDao get albumDao => AlbumDao(database, changeListener);
   AssetDao get assetDao;
   ProvenanceDao get provenanceDao;
 
