@@ -111,6 +111,15 @@ const String getTokens = r'''
       contractType
       contractAddress
     }
+    provenance {
+      type
+      owner
+      blockchain
+      blockNumber
+      timestamp
+      txID
+      txURL
+    }
     lastRefreshedTime
     asset{
       indexID
