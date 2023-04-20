@@ -5,6 +5,8 @@
 //  that can be found in the LICENSE file.
 //
 
+import 'dart:convert';
+
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/attributes.dart';
 import 'package:nft_collection/models/origin_token_info.dart';
@@ -71,25 +73,46 @@ class AssetToken {
   Asset? asset;
 
   String? get artistID => asset?.artistID;
+
   String? get artistName => asset?.artistName;
+
   String? get artistURL => asset?.artistURL;
+
   String? get assetID => asset?.artistID;
+
   String? get title => asset?.title;
+
   String? get description => asset?.description;
+
   String? get mimeType => asset?.mimeType;
+
   String? get medium => asset?.medium;
+
   int? get maxEdition => asset?.maxEdition;
+
   String? get source => asset?.source;
+
   String? get sourceURL => asset?.sourceURL;
+
   String? get previewURL => asset?.previewURL;
+
   String? get thumbnailURL => asset?.thumbnailURL;
+
   String? get thumbnailID => asset?.thumbnailID;
+
   String? get galleryThumbnailURL => asset?.galleryThumbnailURL;
+
   String? get assetData => asset?.assetData;
+
   String? get assetURL => asset?.assetURL;
+
   bool? get isFeralfileFrame => asset?.isFeralfileFrame;
+
   String? get initialSaleModel => asset?.initialSaleModel;
+
   String? get originalFileURL => asset?.originalFileURL;
+
+  String? get artworkMetadata => asset?.artworkMetadata;
 
   factory AssetToken.fromJson(Map<String, dynamic> json) {
     final Map<String, int> owners = json["owners"]?.map<String, int>(
@@ -268,6 +291,7 @@ class ProjectMetadata {
         latest.initialSaleModel,
         latest.originalFileUrl,
         latest.artworkMetadata?['isFeralfileFrame'],
+        jsonEncode(latest.artworkMetadata),
       );
 
   factory ProjectMetadata.fromJson(Map<String, dynamic> json) =>
