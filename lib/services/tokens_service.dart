@@ -124,7 +124,7 @@ class TokensServiceImpl extends TokensService {
   Future purgeCachedGallery() async {
     disposeIsolate();
     _configurationService.setLatestRefreshTokens(null);
-    await _tokenDao.removeAll();
+    await _database.removeAll();
   }
 
   Future<List<String>> _getPendingTokenIds() async {
