@@ -38,18 +38,18 @@ class NftCollectionGrid extends StatelessWidget {
   final ItemViewBuilder itemViewBuilder;
   final OnTapCallBack? onTap;
 
-  const NftCollectionGrid(
-      {Key? key,
-      required this.state,
-      required this.tokens,
-      this.columnCount,
-      this.itemSpacing = 3.0,
-      this.loadingIndicatorBuilder = _buildLoadingIndicator,
-      this.emptyGalleryViewBuilder,
-      this.customGalleryViewBuilder,
-      this.itemViewBuilder = buildDefaultItemView,
-      this.onTap})
-      : super(key: key);
+  const NftCollectionGrid({
+    Key? key,
+    required this.state,
+    required this.tokens,
+    this.columnCount,
+    this.itemSpacing = 3.0,
+    this.loadingIndicatorBuilder = _buildLoadingIndicator,
+    this.emptyGalleryViewBuilder,
+    this.customGalleryViewBuilder,
+    this.itemViewBuilder = buildDefaultItemView,
+    this.onTap,
+  }) : super(key: key);
 
   int _columnCount(BuildContext context) {
     if (columnCount != null) {

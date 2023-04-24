@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 class AddressIndex {
   String address;
   DateTime createdAt;
@@ -19,4 +18,18 @@ class AddressIndex {
 
   @override
   String toString() => 'AddressIndex(address: $address, createdAt: $createdAt)';
+
+  Map<String, dynamic> toJson() {
+    return {
+      'address': address,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+    };
+  }
+
+  factory AddressIndex.fromJson(Map<String, dynamic> json) {
+    return AddressIndex(
+      address: json['address'] as String,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
+    );
+  }
 }
