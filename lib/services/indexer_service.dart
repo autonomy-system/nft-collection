@@ -22,14 +22,14 @@ class IndexerService {
     return data.tokens;
   }
 
-  Future<BlockchainIdentity> getIdentity(QueryIdentityRequest request) async {
+  Future<Identity> getIdentity(QueryIdentityRequest request) async {
     final vars = request.toJson();
     final result = await _client.query(
       doc: identity,
       vars: vars,
     );
     if (result == null) {
-      return BlockchainIdentity('', '', '');
+      return Identity('', '', '');
     }
     final data = QueryIdentityResponse.fromJson(result);
     return data.identity;

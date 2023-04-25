@@ -161,6 +161,24 @@ class AssetTokenDao {
         arguments: [lastTime, id, ...owners]);
   }
 
+  Future<List<AssetToken>> findAllAssetTokensByArtistID(
+    String artistID,
+  ) {
+    return _queryAdapter.queryList(
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE artistID = "$artistID" ORDER BY lastActivityTime DESC, id DESC',
+      mapper: mapper,
+    );
+  }
+
+  Future<List<AssetToken>> findAllAssetTokensByMedium(
+    String medium,
+  ) {
+    return _queryAdapter.queryList(
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE medium = "$medium" ORDER BY lastActivityTime DESC, id DESC',
+      mapper: mapper,
+    );
+  }
+
   Future<List<AssetToken>> findAllAssetTokensByTokenIDs(
     List<String> ids,
   ) async {
