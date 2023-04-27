@@ -78,6 +78,8 @@ class AssetToken {
 
   String? get artistURL => asset?.artistURL;
 
+  String? get artists => asset?.artists;
+
   String? get assetID => asset?.artistID;
 
   String? get title => asset?.title;
@@ -275,6 +277,7 @@ class ProjectMetadata {
         latest.artistId,
         latest.artistName,
         latest.artistUrl,
+        latest.artists,
         latest.assetId,
         latest.title,
         latest.description,
@@ -317,6 +320,7 @@ class ProjectMetadataData {
   ProjectMetadataData({
     required this.artistName,
     required this.artistUrl,
+    required this.artists,
     required this.assetId,
     required this.title,
     required this.description,
@@ -340,6 +344,7 @@ class ProjectMetadataData {
 
   String? artistName;
   String? artistUrl;
+  String artists;
   String? assetId;
   String title;
   String? description;
@@ -364,6 +369,7 @@ class ProjectMetadataData {
       ProjectMetadataData(
         artistName: json["artistName"],
         artistUrl: json["artistURL"],
+        artists: json["artists"],
         assetId: json["assetID"],
         title: json["title"],
         description: json["description"],
@@ -388,6 +394,7 @@ class ProjectMetadataData {
   Map<String, dynamic> toJson() => {
         "artistName": artistName,
         "artistURL": artistUrl,
+        "artists": artists,
         "assetID": assetId,
         "title": title,
         "description": description,

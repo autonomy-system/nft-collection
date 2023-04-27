@@ -57,6 +57,7 @@ type ProjectMetadata {
 	artistID:            String!
 	artistName:          String!
 	artistURL:           String!
+	artists:             String!
 	assetID:             String!
 	title:               String!
 	description:         String!
@@ -134,6 +135,7 @@ const String getTokens = r'''
             artistID
             artistName
             artistURL
+            artists
             assetID
             title
             description
@@ -155,6 +157,7 @@ const String getTokens = r'''
             artistID
             artistName
             artistURL
+            artists
             assetID
             title
             description
