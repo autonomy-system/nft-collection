@@ -16,6 +16,7 @@ class Asset {
   String? artistID;
   String? artistName;
   String? artistURL;
+  String? artists;
   String? assetID;
   String? title;
   String? description;
@@ -41,6 +42,7 @@ class Asset {
     this.artistID,
     this.artistName,
     this.artistURL,
+    this.artists,
     this.assetID,
     this.title,
     this.description,
@@ -67,6 +69,7 @@ class Asset {
     this.artistID,
     this.artistName,
     this.artistURL,
+    this.artists,
     this.assetID,
     this.title,
     this.description,
@@ -96,6 +99,7 @@ class Asset {
       map['metadata']['artistID'] != null ? map['artistID'] as String : null,
       map['artistName'] != null ? map['artistName'] as String : null,
       map['artistURL'] != null ? map['artistURL'] as String : null,
+      map['artists'] != null ? map['artists'] as String : null,
       map['assetID'] != null ? map['assetID'] as String : null,
       map['title'] != null ? map['title'] as String : null,
       map['description'] != null ? map['description'] as String : null,
