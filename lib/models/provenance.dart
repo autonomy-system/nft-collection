@@ -38,7 +38,7 @@ class Provenance {
         id: '$tokenID-$index',
         type: json['type'] as String,
         blockchain: json['blockchain'] as String,
-        txID: json['txid'] as String,
+        txID: (json['txid'] ?? "") as String,
         owner: json['owner'] as String,
         timestamp: json['timestamp'] != null
             ? DateTime.parse(json['timestamp'] as String)
