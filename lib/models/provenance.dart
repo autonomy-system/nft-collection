@@ -20,6 +20,7 @@ class Provenance {
   DateTime timestamp;
   String txURL;
   String tokenID;
+  int? blockNumber;
 
   Provenance({
     required this.id,
@@ -30,6 +31,7 @@ class Provenance {
     required this.timestamp,
     required this.txURL,
     required this.tokenID,
+    this.blockNumber,
   });
 
   factory Provenance.fromJson(
@@ -38,12 +40,13 @@ class Provenance {
         id: '$tokenID-$index',
         type: json['type'] as String,
         blockchain: json['blockchain'] as String,
-        txID: (json['txid'] ?? "") as String,
+        txID: json['txID'] as String,
         owner: json['owner'] as String,
         timestamp: json['timestamp'] != null
             ? DateTime.parse(json['timestamp'] as String)
             : DateTime(1970),
         txURL: (json['txURL'] as String?) ?? '',
         tokenID: tokenID,
+        blockNumber: json['blockNumber'] as int?,
       );
 }

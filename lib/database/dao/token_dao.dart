@@ -13,6 +13,9 @@ abstract class TokenDao {
   @Query('SELECT id FROM Token')
   Future<List<String>> findAllTokenIDs();
 
+  @Query('SELECT id FROM Token where owner IN (:owners)')
+  Future<List<String>> findTokenIDsByOwners(List<String> owners);
+
   @Query('SELECT * FROM Token WHERE pending = 1')
   Future<List<Token>> findAllPendingTokens();
 

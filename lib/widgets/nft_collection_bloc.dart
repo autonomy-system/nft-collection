@@ -182,7 +182,7 @@ class NftCollectionBloc
     on<RefreshNftCollectionByOwners>((event, emit) async {
       NftCollection.logger
           .info("[NftCollectionBloc] RefreshNftCollectionByOwners");
-      _hiddenAddresses = _filterAddressIndexes(event.hiddenAddresses!);
+      _hiddenAddresses = _filterAddressIndexes(event.hiddenAddresses ?? []);
       NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
           "Hidden Addresses: $_hiddenAddresses");
 

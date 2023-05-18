@@ -44,6 +44,8 @@ final migrations = <Migration>[migrateV1ToV2, migrateV2ToV3];
 
 final migrateV1ToV2 = Migration(1, 2, (database) async {
   await database.execute('ALTER TABLE Asset ADD COLUMN artworkMetadata TEXT');
+  await database
+      .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
 });
 
 final migrateV2ToV3 = Migration(2, 3, (database) async {
