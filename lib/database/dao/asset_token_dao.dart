@@ -14,7 +14,6 @@ import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/utils/date_time_converter.dart';
-
 // ignore: depend_on_referenced_packages
 import 'package:sqflite/sqflite.dart' as sqflite;
 
@@ -72,6 +71,7 @@ class AssetTokenDao {
           row['artistID'] as String?,
           row['artistName'] as String?,
           row['artistURL'] as String?,
+          row['artists'] as String?,
           row['assetID'] as String?,
           row['title'] as String?,
           row['description'] as String?,

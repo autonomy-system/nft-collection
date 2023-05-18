@@ -134,6 +134,11 @@ const String getTokens = r'''
             artistID
             artistName
             artistURL
+            artists{
+            name
+            id
+            url
+            }
             assetID
             title
             description
@@ -155,6 +160,11 @@ const String getTokens = r'''
             artistID
             artistName
             artistURL
+            artists{
+            name
+            id
+            url
+            }
             assetID
             title
             description
