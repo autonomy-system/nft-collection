@@ -16,6 +16,7 @@ import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/provenance.dart';
 import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/utils/date_time_converter.dart';
+
 // ignore: depend_on_referenced_packages
 import 'package:sqflite/sqflite.dart' as sqflite;
 
@@ -29,8 +30,11 @@ part 'nft_collection_database.g.dart'; // the generated code will be there
 @Database(version: 4, entities: [Token, Asset, Provenance])
 abstract class NftCollectionDatabase extends FloorDatabase {
   TokenDao get tokenDao;
+
   AssetTokenDao get assetTokenDao => AssetTokenDao(database, changeListener);
+
   AssetDao get assetDao;
+
   ProvenanceDao get provenanceDao;
 
   Future<dynamic> removeAll() async {
@@ -51,5 +55,6 @@ final migrateV2ToV3 = Migration(2, 3, (database) async {
 });
 
 final migrateV3ToV4 = Migration(3, 4, (database) async {
-  await database.execute('ALTER TABLE Asset ADD COLUMN artworkMetadata TEXT');
+  await database
+      .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
 });
