@@ -55,6 +55,10 @@ final migrateV2ToV3 = Migration(2, 3, (database) async {
 });
 
 final migrateV3ToV4 = Migration(3, 4, (database) async {
-  await database
-      .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
+  final countBlockNumber = sqflite.Sqflite.firstIntValue(await database.rawQuery(
+      "SELECT COUNT(*) FROM pragma_table_info('Provenance') WHERE name='blockNumber';"));
+  if (countBlockNumber == 0) {
+    await database
+        .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
+  }
 });
