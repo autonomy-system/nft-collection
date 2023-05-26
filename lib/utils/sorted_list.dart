@@ -35,6 +35,8 @@ abstract class AuList<T> {
     _list.clear();
   }
 
+  AuList<T> toList();
+
   AuList<T> unique([Function(T element)? id, bool inplace = true]);
 }
 
@@ -66,6 +68,11 @@ class SortedList<T extends Comparable<T>> extends AuList<T> {
     list.retainWhere((x) => ids.add(id != null ? id(x) : x));
     return SortedList<T>(list);
   }
+
+  @override
+  SortedList<T> toList() {
+    return SortedList<T>(List<T>.from(_list));
+  }
 }
 
 class NormalList<T> extends AuList<T> {
@@ -89,5 +96,10 @@ class NormalList<T> extends AuList<T> {
     var list = inplace ? _list : List<T>.from(_list);
     list.retainWhere((x) => ids.add(id != null ? id(x) : x));
     return NormalList<T>(list);
+  }
+
+  @override
+  NormalList<T> toList() {
+    return NormalList<T>(List<T>.from(_list));
   }
 }

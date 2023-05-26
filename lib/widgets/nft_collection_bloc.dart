@@ -4,7 +4,6 @@ import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
-
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/address_index.dart';
 import 'package:nft_collection/models/asset_token.dart';
@@ -103,7 +102,7 @@ class NftCollectionBloc
       if (state.isLoading) {
         return;
       }
-      final currentTokens = state.tokens;
+      final currentTokens = state.tokens.toList();
       if (event.pageKey == PageKey.init()) {
         currentTokens.clear();
       }
@@ -134,14 +133,15 @@ class NftCollectionBloc
         );
       }
 
-      state.tokens.addAll(compactedAssetToken);
+      final tokens = state.tokens.toList();
+      tokens.addAll(compactedAssetToken);
 
       NftCollection.logger.info(
           "[NftCollectionBloc] GetTokensBeforeByOwnerEvent ${compactedAssetToken.length}");
 
       if (isLastPage) {
         emit(state.copyWith(
-          tokens: state.tokens,
+          tokens: tokens,
           nextKey: null,
           isLoading: false,
           state: NftLoadingState.done,
@@ -149,7 +149,7 @@ class NftCollectionBloc
       } else {
         emit(
           state.copyWith(
-            tokens: state.tokens,
+            tokens: tokens,
             nextKey: nextKey,
             isLoading: false,
             state: NftLoadingState.loading,
@@ -182,7 +182,7 @@ class NftCollectionBloc
     on<RefreshNftCollectionByOwners>((event, emit) async {
       NftCollection.logger
           .info("[NftCollectionBloc] RefreshNftCollectionByOwners");
-      _hiddenAddresses = _filterAddressIndexes(event.hiddenAddresses ?? []);
+      _hiddenAddresses = _filterAddressIndexes(event.hiddenAddresses!);
       NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
           "Hidden Addresses: $_hiddenAddresses");
 
@@ -303,11 +303,12 @@ class NftCollectionBloc
       final compactedAssetToken = assetTokens
           .map((e) => CompactedAssetToken.fromAssetToken(e))
           .toList();
-      state.tokens.addAll(compactedAssetToken);
+      final tokens = state.tokens.toList();
+      tokens.addAll(compactedAssetToken);
 
       emit(state.copyWith(
         nextKey: state.nextKey,
-        tokens: state.tokens,
+        tokens: tokens,
         state: NftLoadingState.done,
       ));
     });
@@ -316,7 +317,7 @@ class NftCollectionBloc
       if (event.tokens.isEmpty && event.state == null) return;
       NftCollection.logger
           .info("[NftCollectionBloc] UpdateTokensEvent ${event.tokens.length}");
-      final tokens = state.tokens;
+      final tokens = state.tokens.toList();
       if (event.tokens.isNotEmpty) {
         final compactedAssetToken = event.tokens
             .map((e) => CompactedAssetToken.fromAssetToken(e))
