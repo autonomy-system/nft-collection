@@ -324,7 +324,7 @@ class _$TokenDao extends TokenDao {
   }
 
   @override
-  Future<List<Token>> findTokenBalanceByID(String id) async {
+  Future<List<Token>> findTokensByID(String id) async {
     return _queryAdapter.queryList('SELECT * FROM Token WHERE id = (?1)',
         mapper: (Map<String, Object?> row) => Token(
             id: row['id'] as String,

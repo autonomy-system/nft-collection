@@ -20,7 +20,7 @@ abstract class TokenDao {
   Future<List<Token>> findAllPendingTokens();
 
   @Query('SELECT * FROM Token WHERE id = (:id)')
-  Future<List<Token>> findTokenBalanceByID(String id);
+  Future<List<Token>> findTokensByID(String id);
 
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertToken(Token token);
