@@ -324,6 +324,49 @@ class _$TokenDao extends TokenDao {
   }
 
   @override
+  Future<List<Token>> findTokenBalanceByID(String id) async {
+    return _queryAdapter.queryList('SELECT * FROM Token WHERE id = (?1)',
+        mapper: (Map<String, Object?> row) => Token(
+            id: row['id'] as String,
+            tokenId: row['tokenId'] as String?,
+            blockchain: row['blockchain'] as String,
+            fungible:
+                row['fungible'] == null ? null : (row['fungible'] as int) != 0,
+            contractType: row['contractType'] as String?,
+            contractAddress: row['contractAddress'] as String?,
+            edition: row['edition'] as int,
+            editionName: row['editionName'] as String?,
+            mintedAt:
+                _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
+            balance: row['balance'] as int?,
+            owner: row['owner'] as String,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            source: row['source'] as String?,
+            swapped:
+                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
+            lastActivityTime:
+                _dateTimeConverter.decode(row['lastActivityTime'] as int),
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            ipfsPinned: row['ipfsPinned'] == null
+                ? null
+                : (row['ipfsPinned'] as int) != 0,
+            scrollable: row['scrollable'] == null
+                ? null
+                : (row['scrollable'] as int) != 0,
+            pending:
+                row['pending'] == null ? null : (row['pending'] as int) != 0,
+            initialSaleModel: row['initialSaleModel'] as String?,
+            originTokenInfoId: row['originTokenInfoId'] as String?,
+            indexID: row['indexID'] as String?,
+            isDebugged: row['isDebugged'] == null
+                ? null
+                : (row['isDebugged'] as int) != 0),
+        arguments: [id]);
+  }
+
+  @override
   Future<void> deleteTokens(List<String> ids) async {
     const offset = 1;
     final _sqliteVariablesForIds =
