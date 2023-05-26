@@ -10,11 +10,11 @@ import 'dart:async';
 import 'package:floor/floor.dart';
 import 'package:nft_collection/database/dao/asset_dao.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
-import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/database/dao/provenance_dao.dart';
+import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/models/asset.dart';
-import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/models/provenance.dart';
+import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/utils/date_time_converter.dart';
 
 // ignore: depend_on_referenced_packages
@@ -27,11 +27,14 @@ part 'nft_collection_database.g.dart'; // the generated code will be there
   NullableDateTimeConverter,
   TokenOwnersConverter,
 ])
-@Database(version: 2, entities: [Token, Asset, Provenance])
+@Database(version: 4, entities: [Token, Asset, Provenance])
 abstract class NftCollectionDatabase extends FloorDatabase {
   TokenDao get tokenDao;
+
   AssetTokenDao get assetTokenDao => AssetTokenDao(database, changeListener);
+
   AssetDao get assetDao;
+
   ProvenanceDao get provenanceDao;
 
   Future<dynamic> removeAll() async {
@@ -41,10 +44,21 @@ abstract class NftCollectionDatabase extends FloorDatabase {
   }
 }
 
-final migrations = <Migration>[migrateV1ToV2];
+final migrations = <Migration>[migrateV1ToV2, migrateV2ToV3, migrateV3ToV4];
 
 final migrateV1ToV2 = Migration(1, 2, (database) async {
   await database.execute('ALTER TABLE Asset ADD COLUMN artworkMetadata TEXT');
-  await database
-      .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
+});
+
+final migrateV2ToV3 = Migration(2, 3, (database) async {
+  await database.execute('ALTER TABLE Asset ADD COLUMN artists TEXT');
+});
+
+final migrateV3ToV4 = Migration(3, 4, (database) async {
+  final countBlockNumber = sqflite.Sqflite.firstIntValue(await database.rawQuery(
+      "SELECT COUNT(*) FROM pragma_table_info('Provenance') WHERE name='blockNumber';"));
+  if (countBlockNumber == 0) {
+    await database
+        .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
+  }
 });
