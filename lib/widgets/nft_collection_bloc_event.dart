@@ -59,6 +59,16 @@ class GetTokensBeforeByOwnerEvent extends NftCollectionBlocEvent {
   GetTokensBeforeByOwnerEvent({this.pageKey, this.owners = const []});
 }
 
+class AddArtistsEvent extends NftCollectionBlocEvent {
+  final List<String> artists;
+  AddArtistsEvent({required this.artists});
+}
+
+class RemoveArtistsEvent extends NftCollectionBlocEvent {
+  final List<String> artists;
+  RemoveArtistsEvent({required this.artists});
+}
+
 class PageKey {
   final int? offset;
   final String id;

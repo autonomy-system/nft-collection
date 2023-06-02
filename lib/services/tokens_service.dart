@@ -32,14 +32,20 @@ import 'package:uuid/uuid.dart';
 
 abstract class TokensService {
   Future fetchTokensForAddresses(List<String> addresses);
+
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds);
+
   Future setCustomTokens(List<AssetToken> assetTokens);
+
   Future<Stream<List<AssetToken>>> refreshTokensInIsolate(
       Map<int, List<String>> addresses);
+
   Future reindexAddresses(List<String> addresses);
+
   bool get isRefreshAllTokensListen;
 
   Future purgeCachedGallery();
+
   Future postPendingToken(PendingTxParams params);
 }
 
@@ -73,14 +79,17 @@ class TokensServiceImpl extends TokensService {
   var _isolateReady = Completer<void>();
   List<String>? _currentAddresses;
   StreamController<List<AssetToken>>? _refreshAllTokensWorker;
+
   @override
   bool get isRefreshAllTokensListen =>
       _refreshAllTokensWorker?.hasListener ?? false;
   Map<String, Completer<void>> _fetchTokensCompleters = {};
   final Map<String, Completer<void>> _reindexAddressesCompleters = {};
+
   Future<void> get isolateReady => _isolateReady.future;
 
   TokenDao get _tokenDao => _database.tokenDao;
+
   AssetTokenDao get _assetTokenDao => _database.assetTokenDao;
 
   Future<void> start() async {
@@ -128,7 +137,7 @@ class TokensServiceImpl extends TokensService {
   }
 
   Future<List<String>> _getPendingTokenIds() async {
-    return (await _database.tokenDao.findAllPendingTokens())
+    return (await _tokenDao.findAllPendingTokens())
         .map((e) => e.id)
         .toList();
   }
@@ -204,11 +213,17 @@ class TokensServiceImpl extends TokensService {
 
     final tokensLog =
         tokens.map((e) => "id: ${e.id} balance: ${e.balance} ").toList();
-    await _database.tokenDao.insertTokens(tokens);
+    await _tokenDao.insertTokens(tokens);
     NftCollection.logger
         .info("[insertAssetsWithProvenance][tokens] $tokensLog");
 
     await _database.assetDao.insertAssets(assets);
+    final List<String> artists = assets
+        .where((element) => element.artistID != null)
+        .map((e) => e.artistID!)
+        .toSet()
+        .toList();
+    NftCollectionBloc.eventController.add(AddArtistsEvent(artists: artists));
     await _database.provenanceDao.insertProvenance(provenance);
   }
 
@@ -258,8 +273,14 @@ class TokensServiceImpl extends TokensService {
           .where((element) => element.asset != null)
           .map((e) => e.asset as Asset)
           .toList();
-      await _database.tokenDao.insertTokensAbort(tokens);
+      await _tokenDao.insertTokensAbort(tokens);
       await _database.assetDao.insertAssetsAbort(assets);
+      final List<String> artists = assets
+          .where((element) => element.artistID != null)
+          .map((e) => e.artistID!)
+          .toSet()
+          .toList();
+      NftCollectionBloc.eventController.add(AddArtistsEvent(artists: artists));
     } catch (e) {
       NftCollection.logger.info("[TokensService] "
           "setCustomTokens "

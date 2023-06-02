@@ -58,7 +58,9 @@ class NftCollectionBloc
   List<String> _debugTokenIds = [];
 
   static List<AddressIndex> get addresses => _addresses;
+
   static List<AddressIndex> get hiddenAddresses => _hiddenAddresses;
+
   List<String> get debugTokenIds => _debugTokenIds;
 
   static List<String> get activeAddress => addresses
@@ -204,9 +206,13 @@ class NftCollectionBloc
           _addresses,
           lastRefreshedTime,
         );
-
+        final owners = _addresses.map((e) => e.address).toList();
+        final artistIDs = await database.assetTokenDao
+            .findAllArtistIDsByOwner(owners);
+        artistIDs.removeWhere((element) => element == null);
+        add(RemoveArtistsEvent(artists: artistIDs as List<String>));
         await database.tokenDao
-            .deleteTokensNotBelongs(_addresses.map((e) => e.address).toList());
+            .deleteTokensNotBelongs(owners);
 
         final pendingTokens = await database.tokenDao.findAllPendingTokens();
         NftCollection.logger
@@ -226,6 +232,18 @@ class NftCollectionBloc
           NftCollection.logger.info(
               "[NftCollectionBloc] Delete old pending tokens $removePendingIds");
           await database.tokenDao.deleteTokens(removePendingIds);
+          final indexIDs = pendingTokens
+              .where((element) => element.indexID != null)
+              .map((e) => e.indexID!)
+              .toList();
+          final assets =
+              await database.assetDao.findAllAssetsByIndexIDs(indexIDs);
+          final List<String> artists = assets
+              .where((element) => element.artistID != null)
+              .map((e) => e.artistID!)
+              .toSet()
+              .toList();
+          add(RemoveArtistsEvent(artists: artists));
         }
 
         if (pendingTokens.length - removePendingIds.length > 0) {
@@ -345,6 +363,7 @@ class NftCollectionBloc
       tokensService.reindexAddresses(_filterAddresses(event.addresses));
     });
   }
+
   Map<int, List<String>> mapAddressesByLastRefreshedTime(
       List<AddressIndex> addresses, DateTime? lastRefreshedTime) {
     if (addresses.isEmpty) return {};

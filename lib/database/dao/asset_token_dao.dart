@@ -188,4 +188,11 @@ class AssetTokenDao {
         mapper: (Map<String, Object?> row) => row.values.first as String,
         arguments: [owner]);
   }
+
+  Future<List<String?>> findAllArtistIDsByOwner(List<String> owners) async {
+    return _queryAdapter.queryList(
+        'SELECT indexID FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE owner IN ?1',
+        mapper: (Map<String, Object?> row) => row.values.first as String?,
+        arguments: [owners]);
+  }
 }
