@@ -95,6 +95,7 @@ class AssetTokenDao {
       );
 
   final QueryAdapter _queryAdapter;
+
   Future<List<AssetToken>> findAllAssetTokens() async {
     return _queryAdapter.queryList(
       'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID ORDER BY lastActivityTime DESC, id DESC',
@@ -189,10 +190,17 @@ class AssetTokenDao {
         arguments: [owner]);
   }
 
-  Future<List<String?>> findAllArtistIDsByOwner(List<String> owners) async {
+  Future<List<String>> findRemoveArtistIDsByOwner(List<String> owners) async {
     return _queryAdapter.queryList(
-        'SELECT indexID FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE owner IN ?1',
-        mapper: (Map<String, Object?> row) => row.values.first as String?,
+        'WITH tb as (SELECT DISTINCT artistID, owner from Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE artistID NOT NULL), remainers AS (SELECT DISTINCT artistID from tb where owner NOT IN (?1)) SELECT DISTINCT artistID FROM tb WHERE owner in (?1) AND artistID NOT IN remainers',
+        mapper: (Map<String, Object?> row) => row.values.first as String,
         arguments: [owners]);
+  }
+
+  Future<List<String>> findRemoveArtistIDsByID(List<String> ids) async {
+    return _queryAdapter.queryList(
+        'WITH tb as (SELECT DISTINCT artistID, id from Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE artistID NOT NULL), remainers AS (SELECT DISTINCT artistID from tb where id NOT IN (?1)) SELECT DISTINCT artistID FROM tb WHERE id in (?1) AND artistID NOT IN remainers',
+        mapper: (Map<String, Object?> row) => row.values.first as String,
+        arguments: [ids]);
   }
 }
