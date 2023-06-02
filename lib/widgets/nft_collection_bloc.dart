@@ -351,6 +351,9 @@ class NftCollectionBloc
     on<RequestIndexEvent>((event, emit) async {
       tokensService.reindexAddresses(_filterAddresses(event.addresses));
     });
+
+    on<RemoveArtistsEvent>((event, emit) async {});
+    on<AddArtistsEvent>((event, emit) async {});
   }
 
   Map<int, List<String>> mapAddressesByLastRefreshedTime(
