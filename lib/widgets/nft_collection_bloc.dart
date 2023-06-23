@@ -317,7 +317,7 @@ class NftCollectionBloc
       if (event.tokens.isEmpty && event.state == null) return;
       NftCollection.logger
           .info("[NftCollectionBloc] UpdateTokensEvent ${event.tokens.length}");
-      final tokens = state.tokens.toList();
+      AuList<CompactedAssetToken> tokens = state.tokens.toList();
       if (event.tokens.isNotEmpty) {
         final compactedAssetToken = event.tokens
             .map((e) => CompactedAssetToken.fromAssetToken(e))

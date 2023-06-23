@@ -23,7 +23,7 @@ abstract class AuList<T> {
     _list.remove(item);
   }
 
-  void addAll(List<T> items);
+  void addAll(List<T> items, [bool unique = true]);
 
   void insert(T item);
 
@@ -55,9 +55,12 @@ class SortedList<T extends Comparable<T>> extends AuList<T> {
   }
 
   @override
-  void addAll(List<T> items) {
+  void addAll(List<T> items, [bool unique = true]) {
     for (T item in items) {
       insert(item);
+    }
+    if (unique) {
+      _list = _list.toSet().toList();
     }
   }
 
@@ -86,8 +89,11 @@ class NormalList<T> extends AuList<T> {
   }
 
   @override
-  void addAll(List<T> items) {
+  void addAll(List<T> items, [bool unique = true]) {
     _list.addAll(items);
+    if (unique) {
+      _list = _list.toSet().toList();
+    }
   }
 
   @override
