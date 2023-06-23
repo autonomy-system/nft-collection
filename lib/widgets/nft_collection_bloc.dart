@@ -135,6 +135,7 @@ class NftCollectionBloc
 
       final tokens = state.tokens.toList();
       tokens.addAll(compactedAssetToken);
+      tokens.unique((element) => element.id + element.owner);
 
       NftCollection.logger.info(
           "[NftCollectionBloc] GetTokensBeforeByOwnerEvent ${compactedAssetToken.length}");
@@ -305,6 +306,7 @@ class NftCollectionBloc
           .toList();
       final tokens = state.tokens.toList();
       tokens.addAll(compactedAssetToken);
+      tokens.unique((element) => element.id + element.owner);
 
       emit(state.copyWith(
         nextKey: state.nextKey,
