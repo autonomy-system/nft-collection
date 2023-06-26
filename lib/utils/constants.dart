@@ -1,1 +1,1 @@
-const indexerTokensPageSize = 50;
+const indexerTokensPageSize = 5;
