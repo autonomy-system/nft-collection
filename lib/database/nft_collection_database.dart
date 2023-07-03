@@ -12,14 +12,13 @@ import 'package:nft_collection/database/dao/album_dao.dart';
 import 'package:nft_collection/database/dao/asset_dao.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/dao/identity_dao.dart';
-import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/database/dao/provenance_dao.dart';
+import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/identity.dart';
-import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/models/provenance.dart';
+import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/utils/date_time_converter.dart';
-
 // ignore: depend_on_referenced_packages
 import 'package:sqflite/sqflite.dart' as sqflite;
 
@@ -30,12 +29,15 @@ part 'nft_collection_database.g.dart'; // the generated code will be there
   NullableDateTimeConverter,
   TokenOwnersConverter,
 ])
-@Database(version: 3, entities: [Token, Asset, Provenance, Identity])
+@Database(version: 5, entities: [Token, Asset, Provenance, Identity])
 abstract class NftCollectionDatabase extends FloorDatabase {
   TokenDao get tokenDao;
+
   AssetTokenDao get assetTokenDao => AssetTokenDao(database, changeListener);
+
   AlbumDao get albumDao => AlbumDao(database, changeListener);
   AssetDao get assetDao;
+
   ProvenanceDao get provenanceDao;
   IdentityDao get identityDao;
 
@@ -47,14 +49,30 @@ abstract class NftCollectionDatabase extends FloorDatabase {
   }
 }
 
-final migrations = <Migration>[migrateV1ToV2, migrateV2ToV3];
+final migrations = <Migration>[
+  migrateV1ToV2,
+  migrateV2ToV3,
+  migrateV3ToV4,
+  migrateV4ToV5
+];
 
 final migrateV1ToV2 = Migration(1, 2, (database) async {
   await database.execute('ALTER TABLE Asset ADD COLUMN artworkMetadata TEXT');
-  await database
-      .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
 });
+
 final migrateV2ToV3 = Migration(2, 3, (database) async {
+  await database.execute('ALTER TABLE Asset ADD COLUMN artists TEXT');
+});
+
+final migrateV3ToV4 = Migration(3, 4, (database) async {
+  final countBlockNumber = sqflite.Sqflite.firstIntValue(await database.rawQuery(
+      "SELECT COUNT(*) FROM pragma_table_info('Provenance') WHERE name='blockNumber';"));
+  if (countBlockNumber == 0) {
+    await database
+        .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
+  }
+});
+final migrateV4ToV5 = Migration(4, 5, (database) async {
   await database.execute(
       'CREATE TABLE IF NOT EXISTS `Identity` (`accountNumber` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `name` TEXT NOT NULL, `queriedAt` INTEGER NOT NULL, PRIMARY KEY (`accountNumber`))');
 });

@@ -8,7 +8,7 @@ type Token {
 
   	edition:         	Int64!
 	editionName:     	String!
-	mintAt:          	Time
+	mintedAt:          	Time
 	balance:         	Int64!
 	owner:           	String!
 
@@ -96,7 +96,7 @@ const String getTokens = r'''
     contractAddress
     edition
     editionName
-    mintAt
+    mintedAt
     balance
     owner
     indexID
@@ -134,6 +134,11 @@ const String getTokens = r'''
             artistID
             artistName
             artistURL
+            artists{
+            name
+            id
+            url
+            }
             assetID
             title
             description
@@ -155,6 +160,11 @@ const String getTokens = r'''
             artistID
             artistName
             artistURL
+            artists{
+            name
+            id
+            url
+            }
             assetID
             title
             description
