@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class NftCollectionPrefs {
   static const _keyLastRefreshTokenTime = "last_refresh_at";
   static const _keyPendingAddresses = "pending_addresses";
+  static const _keyDidSyncAddress = "did_sync_address";
 
   final SharedPreferences _prefs;
 
@@ -49,5 +50,13 @@ class NftCollectionPrefs {
     final addresses = _prefs.getStringList(_keyPendingAddresses) ?? [];
     addresses.addAll(list);
     return setPendingAddresses(addresses);
+  }
+
+  Future<bool> setDidSyncAddress(bool value) async {
+    return _prefs.setBool(_keyDidSyncAddress, value);
+  }
+
+  bool getDidSyncAddress() {
+    return _prefs.getBool(_keyDidSyncAddress) ?? false;
   }
 }
