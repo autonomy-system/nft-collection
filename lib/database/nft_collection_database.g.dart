@@ -860,6 +860,14 @@ class _$AddressCollectionDao extends AddressCollectionDao {
   }
 
   @override
+  Future<List<String>> findAddressesIsHidden(bool isHidden) async {
+    return _queryAdapter.queryList(
+        'SELECT address FROM AddressCollection WHERE isHidden = ?1',
+        mapper: (Map<String, Object?> row) => row.values.first as String,
+        arguments: [isHidden ? 1 : 0]);
+  }
+
+  @override
   Future<void> setAddressIsHidden(
     List<String> addresses,
     bool isHidden,

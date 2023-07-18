@@ -14,7 +14,7 @@ void main() async {
       NftCollection.tokenService,
       NftCollection.database,
       NftCollection.prefs,
-
+      NftCollection.addressService,
       pendingTokenExpire: const Duration(hours: 1),
     );
     runApp(BlocProvider.value(value: nftBloc, child: const MyApp()));

@@ -16,6 +16,9 @@ abstract class AddressCollectionDao {
   @Query('SELECT * FROM AddressCollection WHERE address IN (:addresses)')
   Future<List<AddressCollection>> findAddresses(List<String> addresses);
 
+  @Query('SELECT address FROM AddressCollection WHERE isHidden = :isHidden')
+  Future<List<String>> findAddressesIsHidden(bool isHidden);
+
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertAddresses(List<AddressCollection> addresses);
 
