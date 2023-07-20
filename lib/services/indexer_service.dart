@@ -7,6 +7,7 @@ import 'package:nft_collection/models/identity.dart';
 
 class IndexerService {
   final IndexerClient _client;
+
   IndexerService(this._client);
 
   Future<List<AssetToken>> getNftTokens(QueryListTokensRequest request) async {

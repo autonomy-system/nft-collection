@@ -14,7 +14,6 @@ import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/data/api/tzkt_api.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
-import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/graphql/clients/indexer_client.dart';
 import 'package:nft_collection/graphql/model/get_list_tokens.dart';
@@ -24,6 +23,7 @@ import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/models/pending_tx_params.dart';
 import 'package:nft_collection/models/provenance.dart';
 import 'package:nft_collection/nft_collection.dart';
+import 'package:nft_collection/services/address_service.dart';
 import 'package:nft_collection/services/configuration_service.dart';
 import 'package:nft_collection/services/indexer_service.dart';
 import 'package:nft_collection/utils/constants.dart';
@@ -32,14 +32,20 @@ import 'package:uuid/uuid.dart';
 
 abstract class TokensService {
   Future fetchTokensForAddresses(List<String> addresses);
+
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds);
+
   Future setCustomTokens(List<AssetToken> assetTokens);
+
   Future<Stream<List<AssetToken>>> refreshTokensInIsolate(
       Map<int, List<String>> addresses);
+
   Future reindexAddresses(List<String> addresses);
+
   bool get isRefreshAllTokensListen;
 
   Future purgeCachedGallery();
+
   Future postPendingToken(PendingTxParams params);
 }
 
@@ -51,6 +57,7 @@ class TokensServiceImpl extends TokensService {
   late IndexerService _indexerService;
   final NftCollectionDatabase _database;
   final NftCollectionPrefs _configurationService;
+  final AddressService _addressService;
 
   static const REFRESH_ALL_TOKENS = 'REFRESH_ALL_TOKENS';
   static const FETCH_TOKENS = 'FETCH_TOKENS';
@@ -60,6 +67,7 @@ class TokensServiceImpl extends TokensService {
     this._indexerUrl,
     this._database,
     this._configurationService,
+    this._addressService,
   ) {
     final dio = Dio()..interceptors.add(LoggingInterceptor());
     _indexer = IndexerApi(dio, baseUrl: _indexerUrl);
@@ -73,14 +81,15 @@ class TokensServiceImpl extends TokensService {
   var _isolateReady = Completer<void>();
   List<String>? _currentAddresses;
   StreamController<List<AssetToken>>? _refreshAllTokensWorker;
+
   @override
   bool get isRefreshAllTokensListen =>
       _refreshAllTokensWorker?.hasListener ?? false;
   Map<String, Completer<void>> _fetchTokensCompleters = {};
   final Map<String, Completer<void>> _reindexAddressesCompleters = {};
+
   Future<void> get isolateReady => _isolateReady.future;
 
-  TokenDao get _tokenDao => _database.tokenDao;
   AssetTokenDao get _assetTokenDao => _database.assetTokenDao;
 
   Future<void> start() async {
@@ -220,7 +229,11 @@ class TokensServiceImpl extends TokensService {
     final completer = Completer();
     _fetchTokensCompleters[uuid] = completer;
 
-    _sendPort!.send([FETCH_TOKENS, uuid, addresses]);
+    _sendPort!.send([
+      FETCH_TOKENS,
+      uuid,
+      {0: addresses}
+    ]);
     NftCollection.logger.info("[FETCH_TOKENS][start] $addresses");
 
     return completer.future;
@@ -318,7 +331,8 @@ class TokensServiceImpl extends TokensService {
           _refreshAllTokensWorker?.close();
           _configurationService.removePendingAddresses(result.addresses);
           final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
-          _configurationService.setLatestRefreshTokens(lastRefreshedTime);
+          _addressService.updateRefreshedTime(result.addresses,
+              lastRefreshedTime ?? DateTime.fromMillisecondsSinceEpoch(0));
           NftCollection.logger.info(
               '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at $lastRefreshedTime');
           NftCollection.logger.info("[REFRESH_ALL_TOKENS][end]");
