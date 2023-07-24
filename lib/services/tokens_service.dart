@@ -132,7 +132,7 @@ class TokensServiceImpl extends TokensService {
   @override
   Future purgeCachedGallery() async {
     disposeIsolate();
-    _configurationService.setLatestRefreshTokens(null);
+    _configurationService.setDidSyncAddress(false);
     await _database.removeAll();
   }
 
