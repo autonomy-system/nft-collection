@@ -292,20 +292,6 @@ class _$TokenDao extends TokenDao {
   }
 
   @override
-  Future<List<String>> findTokenIDsOwnersOwn(List<String> owners) async {
-    const offset = 1;
-    final _sqliteVariablesForOwners =
-        Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
-            .join(',');
-    return _queryAdapter.queryList(
-        'SELECT id FROM Token where owner IN (' +
-            _sqliteVariablesForOwners +
-            ') AND balance > 0',
-        mapper: (Map<String, Object?> row) => row.values.first as String,
-        arguments: [...owners]);
-  }
-
-  @override
   Future<List<Token>> findAllPendingTokens() async {
     return _queryAdapter.queryList('SELECT * FROM Token WHERE pending = 1',
         mapper: (Map<String, Object?> row) => Token(
