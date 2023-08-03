@@ -2,6 +2,7 @@ library nft_collection;
 
 import 'package:logging/logging.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
+import 'package:nft_collection/services/address_service.dart';
 import 'package:nft_collection/services/configuration_service.dart';
 import 'package:nft_collection/services/tokens_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +17,7 @@ class NftCollection {
   static late TokensServiceImpl tokenService;
   static late NftCollectionPrefs prefs;
   static late NftCollectionDatabase database;
+  static late AddressService addressService;
 
   static Future initNftCollection({
     required String indexerUrl,
@@ -31,6 +33,8 @@ class NftCollection {
         .addMigrations(migrations)
         .build();
     prefs = NftCollectionPrefs(await SharedPreferences.getInstance());
-    tokenService = TokensServiceImpl(indexerUrl, database, prefs);
+    addressService = AddressService(database);
+    tokenService =
+        TokensServiceImpl(indexerUrl, database, prefs, addressService);
   }
 }

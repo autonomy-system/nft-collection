@@ -8,12 +8,14 @@
 import 'dart:async';
 
 import 'package:floor/floor.dart';
+import 'package:nft_collection/database/dao/address_collection_dao.dart';
 import 'package:nft_collection/database/dao/album_dao.dart';
 import 'package:nft_collection/database/dao/asset_dao.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/dao/identity_dao.dart';
 import 'package:nft_collection/database/dao/provenance_dao.dart';
 import 'package:nft_collection/database/dao/token_dao.dart';
+import 'package:nft_collection/models/address_collection.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/identity.dart';
 import 'package:nft_collection/models/provenance.dart';
@@ -29,7 +31,9 @@ part 'nft_collection_database.g.dart'; // the generated code will be there
   NullableDateTimeConverter,
   TokenOwnersConverter,
 ])
-@Database(version: 5, entities: [Token, Asset, Provenance, Identity])
+@Database(
+    version: 6,
+    entities: [Token, Asset, Provenance, AddressCollection, Identity])
 abstract class NftCollectionDatabase extends FloorDatabase {
   TokenDao get tokenDao;
 
@@ -41,11 +45,14 @@ abstract class NftCollectionDatabase extends FloorDatabase {
   ProvenanceDao get provenanceDao;
   IdentityDao get identityDao;
 
+  AddressCollectionDao get addressCollectionDao;
+
   Future<dynamic> removeAll() async {
     await provenanceDao.removeAll();
     await tokenDao.removeAll();
     await assetDao.removeAll();
     await identityDao.removeAll();
+    await addressCollectionDao.removeAll();
   }
 }
 
@@ -53,7 +60,8 @@ final migrations = <Migration>[
   migrateV1ToV2,
   migrateV2ToV3,
   migrateV3ToV4,
-  migrateV4ToV5
+  migrateV4ToV5,
+  migrateV5ToV6
 ];
 
 final migrateV1ToV2 = Migration(1, 2, (database) async {
@@ -72,7 +80,13 @@ final migrateV3ToV4 = Migration(3, 4, (database) async {
         .execute('ALTER TABLE Provenance ADD COLUMN blockNumber INTEGER');
   }
 });
+
 final migrateV4ToV5 = Migration(4, 5, (database) async {
+  await database.execute(
+      'CREATE TABLE IF NOT EXISTS `AddressCollection` (`address` TEXT NOT NULL, `lastRefreshedTime` INTEGER NOT NULL, `isHidden` INTEGER NOT NULL, PRIMARY KEY (`address`))');
+});
+
+final migrateV5ToV6 = Migration(5, 6, (database) async {
   await database.execute(
       'CREATE TABLE IF NOT EXISTS `Identity` (`accountNumber` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `name` TEXT NOT NULL, `queriedAt` INTEGER NOT NULL, PRIMARY KEY (`accountNumber`))');
 });

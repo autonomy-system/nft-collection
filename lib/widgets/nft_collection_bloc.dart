@@ -5,9 +5,10 @@ import 'dart:math';
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
-import 'package:nft_collection/models/address_index.dart';
+import 'package:nft_collection/models/address_collection.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/nft_collection.dart';
+import 'package:nft_collection/services/address_service.dart';
 import 'package:nft_collection/services/configuration_service.dart';
 import 'package:nft_collection/services/tokens_service.dart';
 import 'package:nft_collection/utils/constants.dart';
@@ -51,20 +52,11 @@ class NftCollectionBloc
   final Duration pendingTokenExpire;
   final NftCollectionPrefs prefs;
   final bool isSortedToken;
+  final AddressService addressService;
 
-  static List<AddressIndex> _addresses = [];
-  static List<AddressIndex> _hiddenAddresses = [];
   List<String> _debugTokenIds = [];
 
-  static List<AddressIndex> get addresses => _addresses;
-  static List<AddressIndex> get hiddenAddresses => _hiddenAddresses;
   List<String> get debugTokenIds => _debugTokenIds;
-
-  static List<String> get activeAddress => addresses
-      .map((e) => e.address)
-      .toSet()
-      .difference(hiddenAddresses.map((e) => e.address).toSet())
-      .toList();
 
   static StreamController<NftCollectionBlocEvent> eventController =
       StreamController<NftCollectionBlocEvent>.broadcast();
@@ -89,7 +81,8 @@ class NftCollectionBloc
     return indexerIds;
   }
 
-  NftCollectionBloc(this.tokensService, this.database, this.prefs,
+  NftCollectionBloc(
+      this.tokensService, this.database, this.prefs, this.addressService,
       {required this.pendingTokenExpire, this.isSortedToken = true})
       : super(
           NftCollectionBlocState(
@@ -112,9 +105,9 @@ class NftCollectionBloc
       final lastTime =
           event.pageKey.offset ?? DateTime.now().millisecondsSinceEpoch;
       final id = event.pageKey.id;
-      NftCollection.logger.info(
-          "[NftCollectionBloc] GetTokensBeforeByOwnerEvent ${event.pageKey}");
-
+      NftCollection.logger
+          .info("[NftCollectionBloc] GetTokensByOwnerEvent ${event.pageKey}");
+      final activeAddress = await addressService.getActiveAddresses();
       final assetTokens = await database.assetTokenDao
           .findAllAssetTokensByOwners(activeAddress, limit, lastTime, id);
 
@@ -138,7 +131,7 @@ class NftCollectionBloc
       tokens.unique((element) => element.id + element.owner);
 
       NftCollection.logger.info(
-          "[NftCollectionBloc] GetTokensBeforeByOwnerEvent ${compactedAssetToken.length}");
+          "[NftCollectionBloc] GetTokensByOwnerEvent ${compactedAssetToken.length}");
 
       if (isLastPage) {
         emit(state.copyWith(
@@ -183,31 +176,24 @@ class NftCollectionBloc
     on<RefreshNftCollectionByOwners>((event, emit) async {
       NftCollection.logger
           .info("[NftCollectionBloc] RefreshNftCollectionByOwners");
-      _hiddenAddresses = _filterAddressIndexes(event.hiddenAddresses!);
+      final addresses = await _fetchAddresses();
       NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
-          "Hidden Addresses: $_hiddenAddresses");
-
-      _addresses = _filterAddressIndexes(event.addresses!);
-      NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
-          "Addresses: $_addresses");
+          "Addresses: ${addresses.map((e) => e.address).toList()}");
 
       _debugTokenIds = event.debugTokens.unique((e) => e) ?? [];
       NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
           "debugTokenIds: $_debugTokenIds");
 
       try {
-        if (event.isRefresh) {
-          add(UpdateTokensEvent(state: state.state));
-        }
-        final lastRefreshedTime = prefs.getLatestRefreshTokens();
+        final lastRefreshedTime = addresses.last.lastRefreshedTime;
 
-        final mapAddresses = mapAddressesByLastRefreshedTime(
-          _addresses,
+        final mapAddresses = _mapAddressesByLastRefreshedTime(
+          addresses,
           lastRefreshedTime,
         );
 
         await database.tokenDao
-            .deleteTokensNotBelongs(_addresses.map((e) => e.address).toList());
+            .deleteTokensNotBelongs(addresses.map((e) => e.address).toList());
 
         final pendingTokens = await database.tokenDao.findAllPendingTokens();
         NftCollection.logger
@@ -231,7 +217,7 @@ class NftCollectionBloc
 
         if (pendingTokens.length - removePendingIds.length > 0) {
           tokensService.reindexAddresses(
-            _addresses.map((e) => e.address).toList(),
+            addresses.map((e) => e.address).toList(),
           );
         }
 
@@ -298,7 +284,7 @@ class NftCollectionBloc
 
       final assetTokens =
           await database.assetTokenDao.findAllAssetTokensByTokenIDs(event.ids!);
-
+      final activeAddress = await addressService.getActiveAddresses();
       assetTokens.removeWhere((element) =>
           !activeAddress.contains(element.owner) && element.isDebugged != true);
       final compactedAssetToken = assetTokens
@@ -319,7 +305,7 @@ class NftCollectionBloc
       if (event.tokens.isEmpty && event.state == null) return;
       NftCollection.logger
           .info("[NftCollectionBloc] UpdateTokensEvent ${event.tokens.length}");
-      AuList<CompactedAssetToken> tokens = state.tokens.toList();
+      final tokens = state.tokens.toList();
       if (event.tokens.isNotEmpty) {
         final compactedAssetToken = event.tokens
             .map((e) => CompactedAssetToken.fromAssetToken(e))
@@ -327,6 +313,8 @@ class NftCollectionBloc
         tokens.addAll(compactedAssetToken);
         tokens.unique((element) => element.id + element.owner);
       }
+
+      final activeAddress = await addressService.getActiveAddresses();
 
       tokens.removeWhere((element) =>
           !activeAddress.contains(element.owner) && element.isDebugged != true);
@@ -348,8 +336,9 @@ class NftCollectionBloc
       tokensService.reindexAddresses(_filterAddresses(event.addresses));
     });
   }
-  Map<int, List<String>> mapAddressesByLastRefreshedTime(
-      List<AddressIndex> addresses, DateTime? lastRefreshedTime) {
+
+  Map<int, List<String>> _mapAddressesByLastRefreshedTime(
+      List<AddressCollection> addresses, DateTime? lastRefreshedTime) {
     if (addresses.isEmpty) return {};
     final listAddresses = addresses.map((e) => e.address).toList();
     if (lastRefreshedTime == null) {
@@ -361,7 +350,7 @@ class NftCollectionBloc
 
     for (var address in addresses) {
       int key = 0;
-      if (address.createdAt.isBefore(lastRefreshedTime) &&
+      if (address.lastRefreshedTime.isBefore(lastRefreshedTime) &&
           !(listPendingAddresses?.contains(address.address) ?? false)) {
         key = timestamp;
       }
@@ -375,8 +364,14 @@ class NftCollectionBloc
     return result;
   }
 
-  List<AddressIndex> _filterAddressIndexes(List<AddressIndex> addressIndexes) {
-    return addressIndexes
+  Future<List<AddressCollection>> _fetchAddresses() async {
+    final addressCollection = await addressService.getAllAddresses();
+    return _filterAddressCollection(addressCollection);
+  }
+
+  List<AddressCollection> _filterAddressCollection(
+      List<AddressCollection> addresses) {
+    return addresses
         .where((element) => element.address.trim().isNotEmpty)
         .toList();
   }
