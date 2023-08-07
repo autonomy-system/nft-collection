@@ -2,6 +2,33 @@ include: package:flutter_lints/flutter.yaml
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+linter:
+  # The lint rules applied to this project can be customized in the
+  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
+  # included above or to enable additional rules. A list of all available lints
+  # and their documentation is published at
+  # https://dart-lang.github.io/linter/lints/index.html.
+  #
+  # Instead of disabling a lint rule for the entire project in the
+  # section below, it can also be suppressed for a single line of code
+  # or a specific dart file by using the `// ignore: name_of_lint` and
+  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
+  # producing the lint.
+  rules:
+    # style rules
+    constant_identifier_names: false
+    camel_case_types: true
+    library_names: true
+    avoid_catching_errors: true
+    avoid_empty_else: true
+    unnecessary_brace_in_string_interps: true
+    avoid_redundant_argument_values: true
+    leading_newlines_in_multiline_strings: true
+    # formatting: true
+    # lines_longer_than_80_chars: true
+    curly_braces_in_flow_control_structures: true
+    # doc comments
+    slash_for_doc_comments: true
 
 analyzer:
   exclude:
