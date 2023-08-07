@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nft_collection/models/address_index.dart';
 import 'package:nft_collection/nft_collection.dart';
 
 void main() async {
