@@ -30,21 +30,21 @@ class AlbumDao {
       id: row['id'] as String? ?? '',
       name: row['name'] as String?,
       total: row['total'] as int? ?? 0,
-      thumbnailID: row['thumbnailID'] as String?,
+      thumbnailURL: row['thumbnailURL'] as String?,
     );
   };
 
   final QueryAdapter _queryAdapter;
   Future<List<AlbumModel>> getAlbumsByArtist() async {
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, artistID as id, Identity.name as name FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID LEFT JOIN Identity ON Asset.artistID = Identity.accountNumber GROUP BY artistID ORDER BY total DESC',
+      'SELECT count(Token.id) as total, artistID as id, Identity.name as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID LEFT JOIN Identity ON Asset.artistID = Identity.accountNumber GROUP BY artistID ORDER BY total DESC',
       mapper: mapper,
     );
   }
 
   Future<List<AlbumModel>> getAlbumsByMedium() async {
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, medium as id, medium as name FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID LEFT JOIN Identity ON Asset.artistID = Identity.accountNumber GROUP BY medium ORDER BY total DESC',
+      'SELECT count(Token.id) as total, medium as id, medium as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID LEFT JOIN Identity ON Asset.artistID = Identity.accountNumber GROUP BY medium ORDER BY total DESC',
       mapper: mapper,
     );
   }
