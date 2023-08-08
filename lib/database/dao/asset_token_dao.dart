@@ -14,7 +14,6 @@ import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/utils/date_time_converter.dart';
-// ignore: depend_on_referenced_packages
 import 'package:sqflite/sqflite.dart' as sqflite;
 
 // ignore_for_file: unused_element

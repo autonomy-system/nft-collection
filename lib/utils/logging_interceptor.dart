@@ -7,7 +7,7 @@ class LoggingInterceptor extends Interceptor {
   LoggingInterceptor();
 
   @override
-  void onError(DioError err, ErrorInterceptorHandler handler) {
+  void onError(DioException err, ErrorInterceptorHandler handler) {
     final curl = cURLRepresentation(err.requestOptions);
     final message = err.message;
     NftCollection.apiLog.info("API Request: $curl");
