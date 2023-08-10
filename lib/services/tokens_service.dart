@@ -13,7 +13,6 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/data/api/tzkt_api.dart';
-import 'package:nft_collection/database/dao/asset_token_dao.dart';
 import 'package:nft_collection/database/dao/dao.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/graphql/clients/indexer_client.dart';
@@ -27,7 +26,6 @@ import 'package:nft_collection/nft_collection.dart';
 import 'package:nft_collection/services/address_service.dart';
 import 'package:nft_collection/services/configuration_service.dart';
 import 'package:nft_collection/services/indexer_service.dart';
-import 'package:nft_collection/utils/constants.dart';
 import 'package:nft_collection/utils/logging_interceptor.dart';
 import 'package:uuid/uuid.dart';
 
@@ -246,7 +244,6 @@ class TokensServiceImpl extends TokensService {
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds) async {
     final request = QueryListTokensRequest(
       ids: indexerIds,
-      size: indexerTokensPageSize,
     );
 
     final manuallyAssets = await _indexerService.getNftTokens(request);
@@ -424,7 +421,6 @@ class TokensServiceImpl extends TokensService {
           final request = QueryListTokensRequest(
             owners: addresses[lastRefreshedTime] ?? [],
             offset: offsetMap[lastRefreshedTime] ?? 0,
-            size: indexerTokensPageSize,
             lastUpdatedAt: lastRefreshedTime != 0
                 ? DateTime.fromMillisecondsSinceEpoch(lastRefreshedTime)
                 : null,

@@ -33,8 +33,7 @@ class UpdateTokensEvent extends NftCollectionBlocEvent {
   final NftLoadingState? state;
   final List<AssetToken> tokens;
 
-  UpdateTokensEvent(
-      {this.state, this.tokens = const []});
+  UpdateTokensEvent({this.state, this.tokens = const []});
 }
 
 class ReloadEvent extends NftCollectionBlocEvent {
@@ -56,11 +55,13 @@ class GetTokensBeforeByOwnerEvent extends NftCollectionBlocEvent {
 
 class AddArtistsEvent extends NftCollectionBlocEvent {
   final List<String> artists;
+
   AddArtistsEvent({required this.artists});
 }
 
 class RemoveArtistsEvent extends NftCollectionBlocEvent {
   final List<String> artists;
+
   RemoveArtistsEvent({required this.artists});
 }
 
