@@ -67,13 +67,15 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
 
   ProvenanceDao? _provenanceDaoInstance;
 
+  AddressCollectionDao? _addressCollectionDaoInstance;
+
   Future<sqflite.Database> open(
     String path,
     List<Migration> migrations, [
     Callback? callback,
   ]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 4,
+      version: 5,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -94,6 +96,8 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
             'CREATE TABLE IF NOT EXISTS `Asset` (`indexID` TEXT, `thumbnailID` TEXT, `lastRefreshedTime` INTEGER, `artistID` TEXT, `artistName` TEXT, `artistURL` TEXT, `artists` TEXT, `assetID` TEXT, `title` TEXT, `description` TEXT, `mimeType` TEXT, `medium` TEXT, `maxEdition` INTEGER, `source` TEXT, `sourceURL` TEXT, `previewURL` TEXT, `thumbnailURL` TEXT, `galleryThumbnailURL` TEXT, `assetData` TEXT, `assetURL` TEXT, `isFeralfileFrame` INTEGER, `initialSaleModel` TEXT, `originalFileURL` TEXT, `artworkMetadata` TEXT, PRIMARY KEY (`indexID`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, `blockNumber` INTEGER, PRIMARY KEY (`id`))');
+        await database.execute(
+            'CREATE TABLE IF NOT EXISTS `AddressCollection` (`address` TEXT NOT NULL, `lastRefreshedTime` INTEGER NOT NULL, `isHidden` INTEGER NOT NULL, PRIMARY KEY (`address`))');
         await database.execute(
             'CREATE INDEX `index_Token_lastActivityTime_id` ON `Token` (`lastActivityTime`, `id`)');
         await database.execute(
@@ -118,6 +122,12 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
   @override
   ProvenanceDao get provenanceDao {
     return _provenanceDaoInstance ??= _$ProvenanceDao(database, changeListener);
+  }
+
+  @override
+  AddressCollectionDao get addressCollectionDao {
+    return _addressCollectionDaoInstance ??=
+        _$AddressCollectionDao(database, changeListener);
   }
 }
 
@@ -282,6 +292,20 @@ class _$TokenDao extends TokenDao {
   }
 
   @override
+  Future<List<String>> findTokenIDsOwnersOwn(List<String> owners) async {
+    const offset = 1;
+    final _sqliteVariablesForOwners =
+        Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT id FROM Token where owner IN (' +
+            _sqliteVariablesForOwners +
+            ') AND balance > 0',
+        mapper: (Map<String, Object?> row) => row.values.first as String,
+        arguments: [...owners]);
+  }
+
+  @override
   Future<List<Token>> findAllPendingTokens() async {
     return _queryAdapter.queryList('SELECT * FROM Token WHERE pending = 1',
         mapper: (Map<String, Object?> row) => Token(
@@ -321,6 +345,49 @@ class _$TokenDao extends TokenDao {
             isDebugged: row['isDebugged'] == null
                 ? null
                 : (row['isDebugged'] as int) != 0));
+  }
+
+  @override
+  Future<List<Token>> findTokensByID(String id) async {
+    return _queryAdapter.queryList('SELECT * FROM Token WHERE id = (?1)',
+        mapper: (Map<String, Object?> row) => Token(
+            id: row['id'] as String,
+            tokenId: row['tokenId'] as String?,
+            blockchain: row['blockchain'] as String,
+            fungible:
+                row['fungible'] == null ? null : (row['fungible'] as int) != 0,
+            contractType: row['contractType'] as String?,
+            contractAddress: row['contractAddress'] as String?,
+            edition: row['edition'] as int,
+            editionName: row['editionName'] as String?,
+            mintedAt:
+                _nullableDateTimeConverter.decode(row['mintedAt'] as int?),
+            balance: row['balance'] as int?,
+            owner: row['owner'] as String,
+            owners: _tokenOwnersConverter.decode(row['owners'] as String),
+            source: row['source'] as String?,
+            swapped:
+                row['swapped'] == null ? null : (row['swapped'] as int) != 0,
+            burned: row['burned'] == null ? null : (row['burned'] as int) != 0,
+            lastActivityTime:
+                _dateTimeConverter.decode(row['lastActivityTime'] as int),
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            ipfsPinned: row['ipfsPinned'] == null
+                ? null
+                : (row['ipfsPinned'] as int) != 0,
+            scrollable: row['scrollable'] == null
+                ? null
+                : (row['scrollable'] as int) != 0,
+            pending:
+                row['pending'] == null ? null : (row['pending'] as int) != 0,
+            initialSaleModel: row['initialSaleModel'] as String?,
+            originTokenInfoId: row['originTokenInfoId'] as String?,
+            indexID: row['indexID'] as String?,
+            isDebugged: row['isDebugged'] == null
+                ? null
+                : (row['isDebugged'] as int) != 0),
+        arguments: [id]);
   }
 
   @override
@@ -714,6 +781,163 @@ class _$ProvenanceDao extends ProvenanceDao {
   Future<void> insertProvenance(List<Provenance> provenance) async {
     await _provenanceInsertionAdapter.insertList(
         provenance, OnConflictStrategy.replace);
+  }
+}
+
+class _$AddressCollectionDao extends AddressCollectionDao {
+  _$AddressCollectionDao(
+    this.database,
+    this.changeListener,
+  )   : _queryAdapter = QueryAdapter(database),
+        _addressCollectionInsertionAdapter = InsertionAdapter(
+            database,
+            'AddressCollection',
+            (AddressCollection item) => <String, Object?>{
+                  'address': item.address,
+                  'lastRefreshedTime':
+                      _dateTimeConverter.encode(item.lastRefreshedTime),
+                  'isHidden': item.isHidden ? 1 : 0
+                }),
+        _addressCollectionUpdateAdapter = UpdateAdapter(
+            database,
+            'AddressCollection',
+            ['address'],
+            (AddressCollection item) => <String, Object?>{
+                  'address': item.address,
+                  'lastRefreshedTime':
+                      _dateTimeConverter.encode(item.lastRefreshedTime),
+                  'isHidden': item.isHidden ? 1 : 0
+                }),
+        _addressCollectionDeletionAdapter = DeletionAdapter(
+            database,
+            'AddressCollection',
+            ['address'],
+            (AddressCollection item) => <String, Object?>{
+                  'address': item.address,
+                  'lastRefreshedTime':
+                      _dateTimeConverter.encode(item.lastRefreshedTime),
+                  'isHidden': item.isHidden ? 1 : 0
+                });
+
+  final sqflite.DatabaseExecutor database;
+
+  final StreamController<String> changeListener;
+
+  final QueryAdapter _queryAdapter;
+
+  final InsertionAdapter<AddressCollection> _addressCollectionInsertionAdapter;
+
+  final UpdateAdapter<AddressCollection> _addressCollectionUpdateAdapter;
+
+  final DeletionAdapter<AddressCollection> _addressCollectionDeletionAdapter;
+
+  @override
+  Future<List<AddressCollection>> findAllAddresses() async {
+    return _queryAdapter.queryList('SELECT * FROM AddressCollection',
+        mapper: (Map<String, Object?> row) => AddressCollection(
+            address: row['address'] as String,
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            isHidden: (row['isHidden'] as int) != 0));
+  }
+
+  @override
+  Future<List<AddressCollection>> findAddresses(List<String> addresses) async {
+    const offset = 1;
+    final _sqliteVariablesForAddresses =
+        Iterable<String>.generate(addresses.length, (i) => '?${i + offset}')
+            .join(',');
+    return _queryAdapter.queryList(
+        'SELECT * FROM AddressCollection WHERE address IN (' +
+            _sqliteVariablesForAddresses +
+            ')',
+        mapper: (Map<String, Object?> row) => AddressCollection(
+            address: row['address'] as String,
+            lastRefreshedTime:
+                _dateTimeConverter.decode(row['lastRefreshedTime'] as int),
+            isHidden: (row['isHidden'] as int) != 0),
+        arguments: [...addresses]);
+  }
+
+  @override
+  Future<List<String>> findAddressesIsHidden(bool isHidden) async {
+    return _queryAdapter.queryList(
+        'SELECT address FROM AddressCollection WHERE isHidden = ?1',
+        mapper: (Map<String, Object?> row) => row.values.first as String,
+        arguments: [isHidden ? 1 : 0]);
+  }
+
+  @override
+  Future<void> setAddressIsHidden(
+    List<String> addresses,
+    bool isHidden,
+  ) async {
+    const offset = 2;
+    final _sqliteVariablesForAddresses =
+        Iterable<String>.generate(addresses.length, (i) => '?${i + offset}')
+            .join(',');
+    await _queryAdapter.queryNoReturn(
+        'UPDATE AddressCollection SET isHidden = ?1 WHERE address IN (' +
+            _sqliteVariablesForAddresses +
+            ')',
+        arguments: [isHidden ? 1 : 0, ...addresses]);
+  }
+
+  @override
+  Future<void> updateRefreshTime(
+    List<String> addresses,
+    int time,
+  ) async {
+    const offset = 2;
+    final _sqliteVariablesForAddresses =
+        Iterable<String>.generate(addresses.length, (i) => '?${i + offset}')
+            .join(',');
+    await _queryAdapter.queryNoReturn(
+        'UPDATE AddressCollection SET lastRefreshedTime = ?1 WHERE address IN (' +
+            _sqliteVariablesForAddresses +
+            ')',
+        arguments: [time, ...addresses]);
+  }
+
+  @override
+  Future<void> deleteAddresses(List<String> addresses) async {
+    const offset = 1;
+    final _sqliteVariablesForAddresses =
+        Iterable<String>.generate(addresses.length, (i) => '?${i + offset}')
+            .join(',');
+    await _queryAdapter.queryNoReturn(
+        'DELETE FROM AddressCollection WHERE address IN (' +
+            _sqliteVariablesForAddresses +
+            ')',
+        arguments: [...addresses]);
+  }
+
+  @override
+  Future<void> removeAll() async {
+    await _queryAdapter.queryNoReturn('DELETE FROM AddressCollection');
+  }
+
+  @override
+  Future<void> insertAddresses(List<AddressCollection> addresses) async {
+    await _addressCollectionInsertionAdapter.insertList(
+        addresses, OnConflictStrategy.replace);
+  }
+
+  @override
+  Future<void> insertAddressesAbort(List<AddressCollection> addresses) async {
+    await _addressCollectionInsertionAdapter.insertList(
+        addresses, OnConflictStrategy.ignore);
+  }
+
+  @override
+  Future<void> updateAddresses(List<AddressCollection> addresses) async {
+    await _addressCollectionUpdateAdapter.updateList(
+        addresses, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> deleteAddress(AddressCollection address) async {
+    await _addressCollectionDeletionAdapter.delete(address);
   }
 }
 

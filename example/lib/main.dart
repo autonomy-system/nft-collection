@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nft_collection/models/address_index.dart';
 import 'package:nft_collection/nft_collection.dart';
 
 void main() async {
@@ -14,6 +13,7 @@ void main() async {
       NftCollection.tokenService,
       NftCollection.database,
       NftCollection.prefs,
+      NftCollection.addressService,
       pendingTokenExpire: const Duration(hours: 1),
     );
     runApp(BlocProvider.value(value: nftBloc, child: const MyApp()));
@@ -52,25 +52,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    final addresses = [
-      AddressIndex(
-        address: '0xb8258bB207790b6ec90770CeA6a66a4A9Fc80056',
-        createdAt: DateTime.now().subtract(const Duration(days: 50)),
-      ),
-      AddressIndex(
-        address: 'tz1PPnJzJn2qkpMcz42t1FjKuMFGENQxjyN7',
-        createdAt: DateTime.now().subtract(const Duration(days: 50)),
-      ),
-      AddressIndex(
-        address: '0x49891bFFfe8c573dc969adA7A9E8645A35ceaC92',
-        createdAt: DateTime.now().subtract(const Duration(days: 50)),
-      )
-    ];
     _scrollController.addListener(_scrollListenerToLoadMore);
 
     nftBloc = context.read<NftCollectionBloc>();
 
-    nftBloc.add(RefreshNftCollectionByOwners(addresses: addresses));
+    nftBloc.add(RefreshNftCollectionByOwners());
 
     nftBloc.add(GetTokensByOwnerEvent(pageKey: PageKey.init()));
 

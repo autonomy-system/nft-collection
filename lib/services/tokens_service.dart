@@ -14,7 +14,7 @@ import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/data/api/tzkt_api.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
-import 'package:nft_collection/database/dao/token_dao.dart';
+import 'package:nft_collection/database/dao/dao.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/graphql/clients/indexer_client.dart';
 import 'package:nft_collection/graphql/model/get_list_tokens.dart';
@@ -24,6 +24,7 @@ import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/models/pending_tx_params.dart';
 import 'package:nft_collection/models/provenance.dart';
 import 'package:nft_collection/nft_collection.dart';
+import 'package:nft_collection/services/address_service.dart';
 import 'package:nft_collection/services/configuration_service.dart';
 import 'package:nft_collection/services/indexer_service.dart';
 import 'package:nft_collection/utils/constants.dart';
@@ -57,16 +58,14 @@ class TokensServiceImpl extends TokensService {
   late IndexerService _indexerService;
   final NftCollectionDatabase _database;
   final NftCollectionPrefs _configurationService;
+  final AddressService _addressService;
 
   static const REFRESH_ALL_TOKENS = 'REFRESH_ALL_TOKENS';
   static const FETCH_TOKENS = 'FETCH_TOKENS';
   static const REINDEX_ADDRESSES = 'REINDEX_ADDRESSES';
 
-  TokensServiceImpl(
-    this._indexerUrl,
-    this._database,
-    this._configurationService,
-  ) {
+  TokensServiceImpl(this._indexerUrl, this._database,
+      this._configurationService, this._addressService) {
     final dio = Dio()..interceptors.add(LoggingInterceptor());
     _indexer = IndexerApi(dio, baseUrl: _indexerUrl);
     final indexerClient = IndexerClient(_indexerUrl);
@@ -132,14 +131,12 @@ class TokensServiceImpl extends TokensService {
   @override
   Future purgeCachedGallery() async {
     disposeIsolate();
-    _configurationService.setLatestRefreshTokens(null);
+    await _configurationService.setDidSyncAddress(false);
     await _database.removeAll();
   }
 
   Future<List<String>> _getPendingTokenIds() async {
-    return (await _tokenDao.findAllPendingTokens())
-        .map((e) => e.id)
-        .toList();
+    return (await _tokenDao.findAllPendingTokens()).map((e) => e.id).toList();
   }
 
   @override
@@ -235,7 +232,11 @@ class TokensServiceImpl extends TokensService {
     final completer = Completer();
     _fetchTokensCompleters[uuid] = completer;
 
-    _sendPort!.send([FETCH_TOKENS, uuid, addresses]);
+    _sendPort!.send([
+      FETCH_TOKENS,
+      uuid,
+      {0: addresses}
+    ]);
     NftCollection.logger.info("[FETCH_TOKENS][start] $addresses");
 
     return completer.future;
@@ -339,7 +340,8 @@ class TokensServiceImpl extends TokensService {
           _refreshAllTokensWorker?.close();
           _configurationService.removePendingAddresses(result.addresses);
           final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
-          _configurationService.setLatestRefreshTokens(lastRefreshedTime);
+          _addressService.updateRefreshedTime(result.addresses,
+              lastRefreshedTime ?? DateTime.fromMillisecondsSinceEpoch(0));
           NftCollection.logger.info(
               '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at $lastRefreshedTime');
           NftCollection.logger.info("[REFRESH_ALL_TOKENS][end]");

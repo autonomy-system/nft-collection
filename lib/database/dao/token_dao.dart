@@ -16,8 +16,14 @@ abstract class TokenDao {
   @Query('SELECT id FROM Token where owner IN (:owners)')
   Future<List<String>> findTokenIDsByOwners(List<String> owners);
 
+  @Query('SELECT id FROM Token where owner IN (:owners) AND balance > 0')
+  Future<List<String>> findTokenIDsOwnersOwn(List<String> owners);
+
   @Query('SELECT * FROM Token WHERE pending = 1')
   Future<List<Token>> findAllPendingTokens();
+
+  @Query('SELECT * FROM Token WHERE id = (:id)')
+  Future<List<Token>> findTokensByID(String id);
 
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertToken(Token token);
