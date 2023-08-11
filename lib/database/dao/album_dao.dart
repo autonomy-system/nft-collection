@@ -11,7 +11,6 @@ import 'dart:async';
 
 import 'package:floor/floor.dart';
 import 'package:nft_collection/models/album_model.dart';
-
 // ignore: depend_on_referenced_packages
 import 'package:sqflite/sqflite.dart' as sqflite;
 
@@ -37,14 +36,14 @@ class AlbumDao {
   final QueryAdapter _queryAdapter;
   Future<List<AlbumModel>> getAlbumsByArtist() async {
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, artistID as id, Identity.name as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID LEFT JOIN Identity ON Asset.artistID = Identity.accountNumber GROUP BY artistID ORDER BY total DESC',
+      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID GROUP BY artistID ORDER BY total DESC',
       mapper: mapper,
     );
   }
 
   Future<List<AlbumModel>> getAlbumsByMedium() async {
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, medium as id, medium as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID LEFT JOIN Identity ON Asset.artistID = Identity.accountNumber GROUP BY medium ORDER BY total DESC',
+      'SELECT count(Token.id) as total, medium as id, medium as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID GROUP BY medium ORDER BY total DESC',
       mapper: mapper,
     );
   }
