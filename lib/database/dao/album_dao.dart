@@ -34,17 +34,19 @@ class AlbumDao {
   };
 
   final QueryAdapter _queryAdapter;
-  Future<List<AlbumModel>> getAlbumsByArtist() async {
+  Future<List<AlbumModel>> getAlbumsByArtist({String name = ""}) async {
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID GROUP BY artistID ORDER BY total DESC',
+      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID WHERE name LIKE "%?1%" GROUP BY artistID ORDER BY total DESC',
       mapper: mapper,
+      arguments: [name],
     );
   }
 
-  Future<List<AlbumModel>> getAlbumsByMedium() async {
+  Future<List<AlbumModel>> getAlbumsByMedium({String title = ""}) async {
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, medium as id, medium as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID GROUP BY medium ORDER BY total DESC',
+      'SELECT count(Token.id) as total, medium as id, medium as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID WHERE Asset.title LIKE "%?1%" GROUP BY medium ORDER BY total DESC',
       mapper: mapper,
+      arguments: [title],
     );
   }
 }
