@@ -453,16 +453,6 @@ class _$TokenDao extends TokenDao {
   }
 
   @override
-  Future<void> removeAllExcludePending() async {
-    await _queryAdapter.queryNoReturn('DELETE FROM Token WHERE pending=0');
-  }
-
-  @override
-  Future<void> insertToken(Token token) async {
-    await _tokenInsertionAdapter.insert(token, OnConflictStrategy.replace);
-  }
-
-  @override
   Future<void> insertTokens(List<Token> assets) async {
     await _tokenInsertionAdapter.insertList(assets, OnConflictStrategy.replace);
   }
@@ -470,16 +460,6 @@ class _$TokenDao extends TokenDao {
   @override
   Future<void> insertTokensAbort(List<Token> assets) async {
     await _tokenInsertionAdapter.insertList(assets, OnConflictStrategy.ignore);
-  }
-
-  @override
-  Future<void> updateToken(Token asset) async {
-    await _tokenUpdateAdapter.update(asset, OnConflictStrategy.abort);
-  }
-
-  @override
-  Future<void> deleteToken(Token asset) async {
-    await _tokenDeletionAdapter.delete(asset);
   }
 }
 
@@ -706,11 +686,6 @@ class _$AssetDao extends AssetDao {
   @override
   Future<void> updateAsset(Asset asset) async {
     await _assetUpdateAdapter.update(asset, OnConflictStrategy.abort);
-  }
-
-  @override
-  Future<void> deleteAsset(Asset asset) async {
-    await _assetDeletionAdapter.delete(asset);
   }
 }
 
