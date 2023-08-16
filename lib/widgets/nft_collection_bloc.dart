@@ -216,7 +216,7 @@ class NftCollectionBloc
               "[NftCollectionBloc] Delete old pending tokens $removePendingIds");
           final List<String> artists = await database.assetTokenDao
               .findRemoveArtistIDsByID(removePendingIds);
-          add(RemoveArtistsEvent(artists: artists));
+          eventController.add(RemoveArtistsEvent(artists: artists));
           await database.tokenDao.deleteTokens(removePendingIds);
         }
 
@@ -340,9 +340,6 @@ class NftCollectionBloc
     on<RequestIndexEvent>((event, emit) async {
       tokensService.reindexAddresses(_filterAddresses(event.addresses));
     });
-
-    on<RemoveArtistsEvent>((event, emit) async {});
-    on<AddArtistsEvent>((event, emit) async {});
   }
 
   Map<int, List<String>> _mapAddressesByLastRefreshedTime(

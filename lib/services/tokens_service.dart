@@ -87,6 +87,8 @@ class TokensServiceImpl extends TokensService {
 
   TokenDao get _tokenDao => _database.tokenDao;
 
+  AssetDao get _assetDao => _database.assetDao;
+
   AssetTokenDao get _assetTokenDao => _database.assetTokenDao;
 
   Future<void> start() async {
@@ -212,7 +214,7 @@ class TokensServiceImpl extends TokensService {
     NftCollection.logger
         .info("[insertAssetsWithProvenance][tokens] $tokensLog");
 
-    await _database.assetDao.insertAssets(assets);
+    await _assetDao.insertAssets(assets);
     final List<String> artists = assets
         .where((element) => element.artistID != null)
         .map((e) => e.artistID!)
@@ -272,7 +274,7 @@ class TokensServiceImpl extends TokensService {
           .map((e) => e.asset as Asset)
           .toList();
       await _tokenDao.insertTokensAbort(tokens);
-      await _database.assetDao.insertAssetsAbort(assets);
+      await _assetDao.insertAssetsAbort(assets);
       final List<String> artists = assets
           .where((element) => element.artistID != null)
           .map((e) => e.artistID!)
