@@ -190,16 +190,9 @@ class AssetTokenDao {
   }
 
   Future<List<String>> findRemoveArtistIDsByOwner(List<String> owners) async {
+    final sqliteVariablesForOwner = owners.map((e) => '"$e"').join(", ");
     return _queryAdapter.queryList(
-        'WITH tb as (SELECT DISTINCT artistID, owner, balance from Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE artistID IS NOT NULL AND balance > 0), remainers AS (SELECT DISTINCT artistID from tb where owner IS NOT IN (?1) AND balance > 0 ) SELECT DISTINCT artistID FROM tb WHERE owner in (?1) AND artistID IS NOT IN remainers',
-        mapper: (Map<String, Object?> row) => row.values.first as String,
-        arguments: [owners]);
-  }
-
-  Future<List<String>> findRemoveArtistIDsByID(List<String> ids) async {
-    return _queryAdapter.queryList(
-        'WITH tb as (SELECT DISTINCT artistID, id, balance from Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE artistID IS NOT NULL AND balance > 0), remainers AS (SELECT DISTINCT artistID from tb where id IS NOT IN (?1) AND balance > 0) SELECT DISTINCT artistID FROM tb WHERE id in (?1) AND artistID IS NOT IN remainers',
-        mapper: (Map<String, Object?> row) => row.values.first as String,
-        arguments: [ids]);
+        'WITH tb as (SELECT DISTINCT artistID, owner, balance from Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE artistID IS NOT NULL) SELECT DISTINCT artistID FROM tb WHERE owner in ($sqliteVariablesForOwner) AND artistID NOT IN (SELECT DISTINCT artistID from tb where owner NOT IN ($sqliteVariablesForOwner) AND balance > 0)',
+        mapper: (Map<String, Object?> row) => row.values.first as String);
   }
 }

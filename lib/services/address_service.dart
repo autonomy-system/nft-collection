@@ -17,10 +17,16 @@ class AddressService {
 
   Future<void> deleteAddresses(List<String> addresses) async {
     await _database.addressCollectionDao.deleteAddresses(addresses);
-    await _database.tokenDao.deleteTokensByOwners(addresses);
     final artists =
-        await _database.assetTokenDao.findRemoveArtistIDsByOwner(addresses);
-    NftCollectionBloc.eventController.add(RemoveArtistsEvent(artists: artists));
+        (await _database.assetTokenDao.findRemoveArtistIDsByOwner(addresses))
+            .toSet()
+            .toList();
+    await _database.tokenDao.deleteTokensByOwners(addresses);
+    NftCollection.logger
+        .info("Delete address $addresses \nDelete artists $artists");
+    NftCollectionBloc.addEventFollowing(RemoveArtistsEvent(artists: artists));
+    NftCollectionBloc.eventController
+        .add(UpdateTokensEvent(state: NftLoadingState.done, tokens: []));
   }
 
   Future<List<AddressCollection>> getAllAddresses() async {
@@ -31,6 +37,13 @@ class AddressService {
       List<String> addresses, bool isHidden) async {
     await _database.addressCollectionDao
         .setAddressIsHidden(addresses, isHidden);
+    if (isHidden) {
+      NftCollectionBloc.eventController
+          .add(UpdateTokensEvent(state: NftLoadingState.done, tokens: []));
+    } else {
+      NftCollectionBloc.eventController
+          .add(GetTokensBeforeByOwnerEvent(owners: addresses));
+    }
   }
 
   Future<void> updateRefreshedTime(

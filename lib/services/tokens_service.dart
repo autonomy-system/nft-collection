@@ -212,12 +212,15 @@ class TokensServiceImpl extends TokensService {
         .info("[insertAssetsWithProvenance][tokens] $tokensLog");
 
     await _assetDao.insertAssets(assets);
-    final List<String> artists = assets
-        .where((element) => element.artistID != null)
+    final List<String> artistIdToAdd = assetTokens
+        .where((element) => element.balance != 0 && element.artistID != null)
         .map((e) => e.artistID!)
         .toSet()
         .toList();
-    NftCollectionBloc.eventController.add(AddArtistsEvent(artists: artists));
+
+    NftCollection.logger.info("insertAssets: add artists $artistIdToAdd");
+    NftCollectionBloc.addEventFollowing(
+        AddArtistsEvent(artists: artistIdToAdd));
     await _database.provenanceDao.insertProvenance(provenance);
   }
 

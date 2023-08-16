@@ -81,6 +81,12 @@ class NftCollectionBloc
     return indexerIds;
   }
 
+  static void addEventFollowing(FollowingArtistsEvent event) {
+    if (event.artists.isNotEmpty) {
+      eventController.add(event);
+    }
+  }
+
   NftCollectionBloc(
       this.tokensService, this.database, this.prefs, this.addressService,
       {required this.pendingTokenExpire, this.isSortedToken = true})
@@ -204,9 +210,6 @@ class NftCollectionBloc
         if (removePendingIds.isNotEmpty) {
           NftCollection.logger.info(
               "[NftCollectionBloc] Delete old pending tokens $removePendingIds");
-          final List<String> artists = await database.assetTokenDao
-              .findRemoveArtistIDsByID(removePendingIds);
-          eventController.add(RemoveArtistsEvent(artists: artists));
           await database.tokenDao.deleteTokens(removePendingIds);
         }
 
