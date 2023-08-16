@@ -89,8 +89,6 @@ class TokensServiceImpl extends TokensService {
 
   AssetDao get _assetDao => _database.assetDao;
 
-  AssetTokenDao get _assetTokenDao => _database.assetTokenDao;
-
   Future<void> start() async {
     if (_sendPort != null) return;
 
@@ -161,7 +159,6 @@ class TokensServiceImpl extends TokensService {
     NftCollection.logger.info("[refreshTokensInIsolate] start");
     await startIsolateOrWait();
     _currentAddresses = List.from(inputAddresses);
-    _configurationService.addPendingAddresses(addresses[0] ?? []);
     _refreshAllTokensWorker = StreamController<List<AssetToken>>();
     _sendPort?.send([
       REFRESH_ALL_TOKENS,
@@ -337,12 +334,9 @@ class TokensServiceImpl extends TokensService {
 
         if (result.done) {
           _refreshAllTokensWorker?.close();
-          _configurationService.removePendingAddresses(result.addresses);
-          final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
-          _addressService.updateRefreshedTime(result.addresses,
-              lastRefreshedTime ?? DateTime.fromMillisecondsSinceEpoch(0));
+          _addressService.updateRefreshedTime(result.addresses, DateTime.now());
           NftCollection.logger.info(
-              '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at $lastRefreshedTime');
+              '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at ${DateTime.now()}');
           NftCollection.logger.info("[REFRESH_ALL_TOKENS][end]");
         }
       }

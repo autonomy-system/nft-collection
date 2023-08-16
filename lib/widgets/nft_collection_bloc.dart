@@ -185,12 +185,7 @@ class NftCollectionBloc
           "debugTokenIds: $_debugTokenIds");
 
       try {
-        final lastRefreshedTime = addresses.last.lastRefreshedTime;
-
-        final mapAddresses = _mapAddressesByLastRefreshedTime(
-          addresses,
-          lastRefreshedTime,
-        );
+        final mapAddresses = _mapAddressesByLastRefreshedTime(addresses);
 
         final pendingTokens = await database.tokenDao.findAllPendingTokens();
         NftCollection.logger
@@ -338,27 +333,17 @@ class NftCollectionBloc
   }
 
   Map<int, List<String>> _mapAddressesByLastRefreshedTime(
-      List<AddressCollection> addresses, DateTime? lastRefreshedTime) {
+      List<AddressCollection> addresses) {
     if (addresses.isEmpty) return {};
-    final listAddresses = addresses.map((e) => e.address).toList();
-    if (lastRefreshedTime == null) {
-      return {0: listAddresses};
-    }
     final result = <int, List<String>>{};
-    final listPendingAddresses = prefs.getPendingAddresses();
-    final timestamp = lastRefreshedTime.millisecondsSinceEpoch;
 
     for (var address in addresses) {
-      int key = 0;
-      if (address.lastRefreshedTime.isBefore(lastRefreshedTime) &&
-          !(listPendingAddresses?.contains(address.address) ?? false)) {
-        key = timestamp;
-      }
-
+      int key = address.lastRefreshedTime.millisecondsSinceEpoch;
       if (result[key] == null) {
-        result[key] = [];
+        result[key] = [address.address];
+      } else {
+        result[key]?.add(address.address);
       }
-      result[key]?.add(address.address);
     }
 
     return result;
