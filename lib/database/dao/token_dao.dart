@@ -37,8 +37,8 @@ abstract class TokenDao {
   @Query('DELETE FROM Token WHERE id = (:id)')
   Future<void> deleteTokenByID(String id);
 
-  @Query('DELETE FROM Token WHERE owner NOT IN (:owners)')
-  Future<void> deleteTokensNotBelongs(List<String> owners);
+  @Query('DELETE FROM Token WHERE owner IN (:owners)')
+  Future<void> deleteTokensByOwners(List<String> owners);
 
   @Query('DELETE FROM Token')
   Future<void> removeAll();

@@ -1,5 +1,6 @@
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/address_collection.dart';
+import 'package:nft_collection/nft_collection.dart';
 
 class AddressService {
   final NftCollectionDatabase _database;
@@ -16,6 +17,10 @@ class AddressService {
 
   Future<void> deleteAddresses(List<String> addresses) async {
     await _database.addressCollectionDao.deleteAddresses(addresses);
+    await _database.tokenDao.deleteTokensByOwners(addresses);
+    final artists =
+        await _database.assetTokenDao.findRemoveArtistIDsByOwner(addresses);
+    NftCollectionBloc.eventController.add(RemoveArtistsEvent(artists: artists));
   }
 
   Future<List<AddressCollection>> getAllAddresses() async {

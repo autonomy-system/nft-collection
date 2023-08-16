@@ -191,13 +191,6 @@ class NftCollectionBloc
           addresses,
           lastRefreshedTime,
         );
-        final owners = addresses.map((e) => e.address).toList();
-        final artistIDs =
-            await database.assetTokenDao.findRemoveArtistIDsNotInOwner(owners);
-        if (artistIDs.isNotEmpty) {
-          eventController.add(RemoveArtistsEvent(artists: artistIDs));
-        }
-        await database.tokenDao.deleteTokensNotBelongs(owners);
 
         final pendingTokens = await database.tokenDao.findAllPendingTokens();
         NftCollection.logger

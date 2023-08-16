@@ -408,43 +408,11 @@ class _$TokenDao extends TokenDao {
   }
 
   @override
-  Future<void> deleteTokensNotIn(List<String> ids) async {
-    const offset = 1;
-    final _sqliteVariablesForIds =
-        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
-            .join(',');
-    await _queryAdapter.queryNoReturn(
-        'DELETE FROM Token WHERE id NOT IN (' + _sqliteVariablesForIds + ')',
-        arguments: [...ids]);
-  }
-
-  @override
-  Future<void> deleteTokensNotInByOwner(
-    List<String> ids,
-    String owner,
+  Future<void> deleteTokensByOwners(
+    List<String> owners,
   ) async {
-    const offset = 2;
-    final _sqliteVariablesForIds =
-        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
-            .join(',');
-    await _queryAdapter.queryNoReturn(
-        'DELETE FROM Token WHERE id NOT IN (' +
-            _sqliteVariablesForIds +
-            ') AND owner=?1',
-        arguments: [owner, ...ids]);
-  }
-
-  @override
-  Future<void> deleteTokensNotBelongs(List<String> owners) async {
-    const offset = 1;
-    final _sqliteVariablesForOwners =
-        Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
-            .join(',');
-    await _queryAdapter.queryNoReturn(
-        'DELETE FROM Token WHERE owner NOT IN (' +
-            _sqliteVariablesForOwners +
-            ')',
-        arguments: [...owners]);
+    await _queryAdapter.queryNoReturn('DELETE FROM Token WHERE owner IN ?1',
+        arguments: [owners]);
   }
 
   @override
