@@ -193,7 +193,7 @@ class NftCollectionBloc
         );
         final owners = addresses.map((e) => e.address).toList();
         final artistIDs =
-            await database.assetTokenDao.findRemoveArtistIDsByOwner(owners);
+            await database.assetTokenDao.findRemoveArtistIDsNotInOwner(owners);
         add(RemoveArtistsEvent(artists: artistIDs));
         await database.tokenDao.deleteTokensNotBelongs(owners);
 
