@@ -94,6 +94,7 @@ class AssetTokenDao {
       );
 
   final QueryAdapter _queryAdapter;
+
   Future<List<AssetToken>> findAllAssetTokens() async {
     return _queryAdapter.queryList(
       'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID ORDER BY lastActivityTime DESC, id DESC',
@@ -186,5 +187,18 @@ class AssetTokenDao {
         'SELECT id FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE owner=?1',
         mapper: (Map<String, Object?> row) => row.values.first as String,
         arguments: [owner]);
+  }
+
+  Future<List<String>> findRemoveArtistIDsByOwner(List<String> owners) async {
+    final sqliteVariablesForOwner = owners.map((e) => '"$e"').join(", ");
+    return _queryAdapter.queryList(
+        'WITH tb as (SELECT DISTINCT artistID, owner, balance from Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE artistID IS NOT NULL) SELECT DISTINCT artistID FROM tb WHERE owner in ($sqliteVariablesForOwner) AND artistID NOT IN (SELECT DISTINCT artistID from tb where owner NOT IN ($sqliteVariablesForOwner) AND balance > 0)',
+        mapper: (Map<String, Object?> row) => row.values.first as String);
+  }
+
+  Future<List<String>> findAllArtists() async {
+    return _queryAdapter.queryList(
+        'SELECT DISTINCT artistID FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE balance > 0',
+        mapper: (Map<String, Object?> row) => row.values.first as String);
   }
 }

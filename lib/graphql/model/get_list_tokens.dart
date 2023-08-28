@@ -1,7 +1,9 @@
 import 'package:nft_collection/models/asset_token.dart';
+import 'package:nft_collection/utils/constants.dart';
 
 class QueryListTokensResponse {
   List<AssetToken> tokens;
+
   QueryListTokensResponse({
     required this.tokens,
   });
@@ -31,7 +33,7 @@ class QueryListTokensRequest {
     this.ids = const [],
     this.lastUpdatedAt,
     this.offset = 0,
-    this.size = 50,
+    this.size = indexerTokensPageSize,
   });
 
   Map<String, dynamic> toJson() {

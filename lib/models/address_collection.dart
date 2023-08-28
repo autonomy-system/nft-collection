@@ -7,11 +7,10 @@ class AddressCollection {
   final DateTime lastRefreshedTime;
   final bool isHidden;
 
-  AddressCollection({
-    required this.address,
-    required this.lastRefreshedTime,
-    this.isHidden = false
-  });
+  AddressCollection(
+      {required this.address,
+      required this.lastRefreshedTime,
+      this.isHidden = false});
 
   // to json
   Map<String, dynamic> toJson() {

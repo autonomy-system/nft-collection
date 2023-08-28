@@ -26,19 +26,10 @@ abstract class TokenDao {
   Future<List<Token>> findTokensByID(String id);
 
   @Insert(onConflict: OnConflictStrategy.replace)
-  Future<void> insertToken(Token token);
-
-  @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertTokens(List<Token> assets);
 
   @Insert(onConflict: OnConflictStrategy.ignore)
   Future<void> insertTokensAbort(List<Token> assets);
-
-  @update
-  Future<void> updateToken(Token asset);
-
-  @delete
-  Future<void> deleteToken(Token asset);
 
   @Query('DELETE FROM Token WHERE id IN (:ids)')
   Future<void> deleteTokens(List<String> ids);
@@ -46,20 +37,11 @@ abstract class TokenDao {
   @Query('DELETE FROM Token WHERE id = (:id)')
   Future<void> deleteTokenByID(String id);
 
-  @Query('DELETE FROM Token WHERE id NOT IN (:ids)')
-  Future<void> deleteTokensNotIn(List<String> ids);
-
-  @Query('DELETE FROM Token WHERE id NOT IN (:ids) AND owner=:owner')
-  Future<void> deleteTokensNotInByOwner(List<String> ids, String owner);
-
-  @Query('DELETE FROM Token WHERE owner NOT IN (:owners)')
-  Future<void> deleteTokensNotBelongs(List<String> owners);
+  @Query('DELETE FROM Token WHERE owner IN (:owners)')
+  Future<void> deleteTokensByOwners(List<String> owners);
 
   @Query('DELETE FROM Token')
   Future<void> removeAll();
-
-  @Query('DELETE FROM Token WHERE pending=0')
-  Future<void> removeAllExcludePending();
 }
 
 /** MARK: - Important!
