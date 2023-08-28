@@ -11,7 +11,6 @@ import 'dart:async';
 
 import 'package:floor/floor.dart';
 import 'package:nft_collection/models/album_model.dart';
-// ignore: depend_on_referenced_packages
 import 'package:sqflite/sqflite.dart' as sqflite;
 
 @dao
@@ -35,18 +34,20 @@ class AlbumDao {
 
   final QueryAdapter _queryAdapter;
   Future<List<AlbumModel>> getAlbumsByArtist({String name = ""}) async {
+    final nameFilter = "%${name}%";
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE name LIKE "%?1%" AND AddressCollection.isHidden = FALSE GROUP BY artistID ORDER BY total DESC',
+      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE name LIKE ?1 AND AddressCollection.isHidden = FALSE GROUP BY artistID ORDER BY total DESC',
       mapper: mapper,
-      arguments: [name],
+      arguments: [nameFilter],
     );
   }
 
   Future<List<AlbumModel>> getAlbumsByMedium({String title = ""}) async {
+    final titleFilter = "%${title}%";
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, medium as id, medium as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE "%?1%" AND AddressCollection.isHidden = FALSE GROUP BY medium ORDER BY total DESC',
+      'SELECT count(Token.id) as total, medium as id, medium as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE ?1 AND AddressCollection.isHidden = FALSE GROUP BY medium ORDER BY total DESC',
       mapper: mapper,
-      arguments: [title],
+      arguments: [titleFilter],
     );
   }
 }
