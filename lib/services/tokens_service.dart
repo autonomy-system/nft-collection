@@ -342,8 +342,6 @@ class TokensServiceImpl extends TokensService {
           final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
           _addressService.updateRefreshedTime(result.addresses,
               lastRefreshedTime ?? DateTime.fromMillisecondsSinceEpoch(0));
-
-          _addressService.updateRefreshedTime(result.addresses, DateTime.now());
           NftCollection.logger.info(
               '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at ${DateTime.now()}');
           NftCollection.logger.info("[REFRESH_ALL_TOKENS][end]");
