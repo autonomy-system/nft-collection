@@ -19,9 +19,9 @@ import 'package:nft_collection/graphql/clients/indexer_client.dart';
 import 'package:nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/asset_token.dart';
-import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/models/pending_tx_params.dart';
 import 'package:nft_collection/models/provenance.dart';
+import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/nft_collection.dart';
 import 'package:nft_collection/services/address_service.dart';
 import 'package:nft_collection/services/configuration_service.dart';
@@ -88,6 +88,8 @@ class TokensServiceImpl extends TokensService {
   TokenDao get _tokenDao => _database.tokenDao;
 
   AssetDao get _assetDao => _database.assetDao;
+
+  AssetTokenDao get _assetTokenDao => _database.assetTokenDao;
 
   Future<void> start() async {
     if (_sendPort != null) return;
@@ -337,6 +339,10 @@ class TokensServiceImpl extends TokensService {
 
         if (result.done) {
           _refreshAllTokensWorker?.close();
+          final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
+          _addressService.updateRefreshedTime(result.addresses,
+              lastRefreshedTime ?? DateTime.fromMillisecondsSinceEpoch(0));
+
           _addressService.updateRefreshedTime(result.addresses, DateTime.now());
           NftCollection.logger.info(
               '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at ${DateTime.now()}');
