@@ -63,8 +63,9 @@ class TokensServiceImpl extends TokensService {
   static const REINDEX_ADDRESSES = 'REINDEX_ADDRESSES';
 
   TokensServiceImpl(this._indexerUrl, this._database,
-      this._configurationService, this._addressService) {
-    final dio = Dio()..interceptors.add(LoggingInterceptor());
+      this._configurationService, this._addressService,
+      [Dio? dio]) {
+    dio ??= Dio()..interceptors.add(LoggingInterceptor());
     _indexer = IndexerApi(dio, baseUrl: _indexerUrl);
     final indexerClient = IndexerClient(_indexerUrl);
     _indexerService = IndexerService(indexerClient);
