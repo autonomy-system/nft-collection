@@ -184,88 +184,6 @@ class _$TokenDao extends TokenDao {
                   'initialSaleModel': item.initialSaleModel,
                   'originTokenInfoId': item.originTokenInfoId,
                   'indexID': item.indexID
-                }),
-        _tokenUpdateAdapter = UpdateAdapter(
-            database,
-            'Token',
-            ['id', 'owner'],
-            (Token item) => <String, Object?>{
-                  'id': item.id,
-                  'tokenId': item.tokenId,
-                  'blockchain': item.blockchain,
-                  'fungible':
-                      item.fungible == null ? null : (item.fungible! ? 1 : 0),
-                  'contractType': item.contractType,
-                  'contractAddress': item.contractAddress,
-                  'edition': item.edition,
-                  'editionName': item.editionName,
-                  'mintedAt': _nullableDateTimeConverter.encode(item.mintedAt),
-                  'balance': item.balance,
-                  'owner': item.owner,
-                  'owners': _tokenOwnersConverter.encode(item.owners),
-                  'source': item.source,
-                  'swapped':
-                      item.swapped == null ? null : (item.swapped! ? 1 : 0),
-                  'burned': item.burned == null ? null : (item.burned! ? 1 : 0),
-                  'lastActivityTime':
-                      _dateTimeConverter.encode(item.lastActivityTime),
-                  'lastRefreshedTime':
-                      _dateTimeConverter.encode(item.lastRefreshedTime),
-                  'ipfsPinned': item.ipfsPinned == null
-                      ? null
-                      : (item.ipfsPinned! ? 1 : 0),
-                  'scrollable': item.scrollable == null
-                      ? null
-                      : (item.scrollable! ? 1 : 0),
-                  'pending':
-                      item.pending == null ? null : (item.pending! ? 1 : 0),
-                  'isDebugged': item.isDebugged == null
-                      ? null
-                      : (item.isDebugged! ? 1 : 0),
-                  'initialSaleModel': item.initialSaleModel,
-                  'originTokenInfoId': item.originTokenInfoId,
-                  'indexID': item.indexID
-                }),
-        _tokenDeletionAdapter = DeletionAdapter(
-            database,
-            'Token',
-            ['id', 'owner'],
-            (Token item) => <String, Object?>{
-                  'id': item.id,
-                  'tokenId': item.tokenId,
-                  'blockchain': item.blockchain,
-                  'fungible':
-                      item.fungible == null ? null : (item.fungible! ? 1 : 0),
-                  'contractType': item.contractType,
-                  'contractAddress': item.contractAddress,
-                  'edition': item.edition,
-                  'editionName': item.editionName,
-                  'mintedAt': _nullableDateTimeConverter.encode(item.mintedAt),
-                  'balance': item.balance,
-                  'owner': item.owner,
-                  'owners': _tokenOwnersConverter.encode(item.owners),
-                  'source': item.source,
-                  'swapped':
-                      item.swapped == null ? null : (item.swapped! ? 1 : 0),
-                  'burned': item.burned == null ? null : (item.burned! ? 1 : 0),
-                  'lastActivityTime':
-                      _dateTimeConverter.encode(item.lastActivityTime),
-                  'lastRefreshedTime':
-                      _dateTimeConverter.encode(item.lastRefreshedTime),
-                  'ipfsPinned': item.ipfsPinned == null
-                      ? null
-                      : (item.ipfsPinned! ? 1 : 0),
-                  'scrollable': item.scrollable == null
-                      ? null
-                      : (item.scrollable! ? 1 : 0),
-                  'pending':
-                      item.pending == null ? null : (item.pending! ? 1 : 0),
-                  'isDebugged': item.isDebugged == null
-                      ? null
-                      : (item.isDebugged! ? 1 : 0),
-                  'initialSaleModel': item.initialSaleModel,
-                  'originTokenInfoId': item.originTokenInfoId,
-                  'indexID': item.indexID
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -275,10 +193,6 @@ class _$TokenDao extends TokenDao {
   final QueryAdapter _queryAdapter;
 
   final InsertionAdapter<Token> _tokenInsertionAdapter;
-
-  final UpdateAdapter<Token> _tokenUpdateAdapter;
-
-  final DeletionAdapter<Token> _tokenDeletionAdapter;
 
   @override
   Future<List<String>> findAllTokenIDs() async {
@@ -417,58 +331,19 @@ class _$TokenDao extends TokenDao {
   }
 
   @override
-  Future<void> deleteTokensNotIn(List<String> ids) async {
-    const offset = 1;
-    final _sqliteVariablesForIds =
-        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
-            .join(',');
-    await _queryAdapter.queryNoReturn(
-        'DELETE FROM Token WHERE id NOT IN (' + _sqliteVariablesForIds + ')',
-        arguments: [...ids]);
-  }
-
-  @override
-  Future<void> deleteTokensNotInByOwner(
-    List<String> ids,
-    String owner,
-  ) async {
-    const offset = 2;
-    final _sqliteVariablesForIds =
-        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
-            .join(',');
-    await _queryAdapter.queryNoReturn(
-        'DELETE FROM Token WHERE id NOT IN (' +
-            _sqliteVariablesForIds +
-            ') AND owner=?1',
-        arguments: [owner, ...ids]);
-  }
-
-  @override
-  Future<void> deleteTokensNotBelongs(List<String> owners) async {
+  Future<void> deleteTokensByOwners(List<String> owners) async {
     const offset = 1;
     final _sqliteVariablesForOwners =
         Iterable<String>.generate(owners.length, (i) => '?${i + offset}')
             .join(',');
     await _queryAdapter.queryNoReturn(
-        'DELETE FROM Token WHERE owner NOT IN (' +
-            _sqliteVariablesForOwners +
-            ')',
+        'DELETE FROM Token WHERE owner IN (' + _sqliteVariablesForOwners + ')',
         arguments: [...owners]);
   }
 
   @override
   Future<void> removeAll() async {
     await _queryAdapter.queryNoReturn('DELETE FROM Token');
-  }
-
-  @override
-  Future<void> removeAllExcludePending() async {
-    await _queryAdapter.queryNoReturn('DELETE FROM Token WHERE pending=0');
-  }
-
-  @override
-  Future<void> insertToken(Token token) async {
-    await _tokenInsertionAdapter.insert(token, OnConflictStrategy.replace);
   }
 
   @override
@@ -479,16 +354,6 @@ class _$TokenDao extends TokenDao {
   @override
   Future<void> insertTokensAbort(List<Token> assets) async {
     await _tokenInsertionAdapter.insertList(assets, OnConflictStrategy.ignore);
-  }
-
-  @override
-  Future<void> updateToken(Token asset) async {
-    await _tokenUpdateAdapter.update(asset, OnConflictStrategy.abort);
-  }
-
-  @override
-  Future<void> deleteToken(Token asset) async {
-    await _tokenDeletionAdapter.delete(asset);
   }
 }
 
@@ -561,39 +426,6 @@ class _$AssetDao extends AssetDao {
                   'initialSaleModel': item.initialSaleModel,
                   'originalFileURL': item.originalFileURL,
                   'artworkMetadata': item.artworkMetadata
-                }),
-        _assetDeletionAdapter = DeletionAdapter(
-            database,
-            'Asset',
-            ['indexID'],
-            (Asset item) => <String, Object?>{
-                  'indexID': item.indexID,
-                  'thumbnailID': item.thumbnailID,
-                  'lastRefreshedTime':
-                      _nullableDateTimeConverter.encode(item.lastRefreshedTime),
-                  'artistID': item.artistID,
-                  'artistName': item.artistName,
-                  'artistURL': item.artistURL,
-                  'artists': item.artists,
-                  'assetID': item.assetID,
-                  'title': item.title,
-                  'description': item.description,
-                  'mimeType': item.mimeType,
-                  'medium': item.medium,
-                  'maxEdition': item.maxEdition,
-                  'source': item.source,
-                  'sourceURL': item.sourceURL,
-                  'previewURL': item.previewURL,
-                  'thumbnailURL': item.thumbnailURL,
-                  'galleryThumbnailURL': item.galleryThumbnailURL,
-                  'assetData': item.assetData,
-                  'assetURL': item.assetURL,
-                  'isFeralfileFrame': item.isFeralfileFrame == null
-                      ? null
-                      : (item.isFeralfileFrame! ? 1 : 0),
-                  'initialSaleModel': item.initialSaleModel,
-                  'originalFileURL': item.originalFileURL,
-                  'artworkMetadata': item.artworkMetadata
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -605,8 +437,6 @@ class _$AssetDao extends AssetDao {
   final InsertionAdapter<Asset> _assetInsertionAdapter;
 
   final UpdateAdapter<Asset> _assetUpdateAdapter;
-
-  final DeletionAdapter<Asset> _assetDeletionAdapter;
 
   @override
   Future<List<Asset>> findAllAssets() async {
@@ -715,11 +545,6 @@ class _$AssetDao extends AssetDao {
   @override
   Future<void> updateAsset(Asset asset) async {
     await _assetUpdateAdapter.update(asset, OnConflictStrategy.abort);
-  }
-
-  @override
-  Future<void> deleteAsset(Asset asset) async {
-    await _assetDeletionAdapter.delete(asset);
   }
 }
 

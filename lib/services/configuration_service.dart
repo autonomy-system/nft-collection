@@ -2,7 +2,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class NftCollectionPrefs {
   static const _keyLastRefreshTokenTime = "last_refresh_at";
-  static const _keyPendingAddresses = "pending_addresses";
   static const _keyDidSyncAddress = "did_sync_address";
 
   final SharedPreferences _prefs;
@@ -25,31 +24,6 @@ class NftCollectionPrefs {
     } else {
       return null;
     }
-  }
-
-  Future<bool> setPendingAddresses(List<String>? addresses) async {
-    if (addresses != null) {
-      addresses = addresses.toSet().toList();
-      return _prefs.setStringList(_keyPendingAddresses, addresses);
-    } else {
-      return _prefs.remove(_keyPendingAddresses);
-    }
-  }
-
-  List<String>? getPendingAddresses() {
-    return _prefs.getStringList(_keyPendingAddresses);
-  }
-
-  Future<bool> removePendingAddresses(List<String> list) async {
-    List<String> addresses = _prefs.getStringList(_keyPendingAddresses) ?? [];
-    addresses = addresses.toSet().difference(list.toSet()).toList();
-    return setPendingAddresses(addresses);
-  }
-
-  Future<bool> addPendingAddresses(List<String> list) async {
-    final addresses = _prefs.getStringList(_keyPendingAddresses) ?? [];
-    addresses.addAll(list);
-    return setPendingAddresses(addresses);
   }
 
   Future<bool> setDidSyncAddress(bool value) async {

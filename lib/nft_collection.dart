@@ -1,5 +1,6 @@
 library nft_collection;
 
+import 'package:dio/dio.dart';
 import 'package:logging/logging.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/services/address_service.dart';
@@ -24,6 +25,7 @@ class NftCollection {
     String databaseFileName = "nft_collection_v2.db",
     Logger? logger,
     Logger? apiLogger,
+    Dio? dio,
   }) async {
     if (logger != null) {
       NftCollection.logger = logger;
@@ -34,7 +36,8 @@ class NftCollection {
         .build();
     prefs = NftCollectionPrefs(await SharedPreferences.getInstance());
     addressService = AddressService(database);
+
     tokenService =
-        TokensServiceImpl(indexerUrl, database, prefs, addressService);
+        TokensServiceImpl(indexerUrl, database, prefs, addressService, dio);
   }
 }

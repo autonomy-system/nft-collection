@@ -13,20 +13,19 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/data/api/tzkt_api.dart';
-import 'package:nft_collection/database/dao/asset_token_dao.dart';
+import 'package:nft_collection/database/dao/dao.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/graphql/clients/indexer_client.dart';
 import 'package:nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/asset_token.dart';
-import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/models/pending_tx_params.dart';
 import 'package:nft_collection/models/provenance.dart';
+import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/nft_collection.dart';
 import 'package:nft_collection/services/address_service.dart';
 import 'package:nft_collection/services/configuration_service.dart';
 import 'package:nft_collection/services/indexer_service.dart';
-import 'package:nft_collection/utils/constants.dart';
 import 'package:nft_collection/utils/logging_interceptor.dart';
 import 'package:uuid/uuid.dart';
 
@@ -63,13 +62,10 @@ class TokensServiceImpl extends TokensService {
   static const FETCH_TOKENS = 'FETCH_TOKENS';
   static const REINDEX_ADDRESSES = 'REINDEX_ADDRESSES';
 
-  TokensServiceImpl(
-    this._indexerUrl,
-    this._database,
-    this._configurationService,
-    this._addressService,
-  ) {
-    final dio = Dio()..interceptors.add(LoggingInterceptor());
+  TokensServiceImpl(this._indexerUrl, this._database,
+      this._configurationService, this._addressService,
+      [Dio? dio]) {
+    dio ??= Dio()..interceptors.add(LoggingInterceptor());
     _indexer = IndexerApi(dio, baseUrl: _indexerUrl);
     final indexerClient = IndexerClient(_indexerUrl);
     _indexerService = IndexerService(indexerClient);
@@ -89,6 +85,10 @@ class TokensServiceImpl extends TokensService {
   final Map<String, Completer<void>> _reindexAddressesCompleters = {};
 
   Future<void> get isolateReady => _isolateReady.future;
+
+  TokenDao get _tokenDao => _database.tokenDao;
+
+  AssetDao get _assetDao => _database.assetDao;
 
   AssetTokenDao get _assetTokenDao => _database.assetTokenDao;
 
@@ -137,9 +137,7 @@ class TokensServiceImpl extends TokensService {
   }
 
   Future<List<String>> _getPendingTokenIds() async {
-    return (await _database.tokenDao.findAllPendingTokens())
-        .map((e) => e.id)
-        .toList();
+    return (await _tokenDao.findAllPendingTokens()).map((e) => e.id).toList();
   }
 
   @override
@@ -164,7 +162,6 @@ class TokensServiceImpl extends TokensService {
     NftCollection.logger.info("[refreshTokensInIsolate] start");
     await startIsolateOrWait();
     _currentAddresses = List.from(inputAddresses);
-    _configurationService.addPendingAddresses(addresses[0] ?? []);
     _refreshAllTokensWorker = StreamController<List<AssetToken>>();
     _sendPort?.send([
       REFRESH_ALL_TOKENS,
@@ -213,11 +210,20 @@ class TokensServiceImpl extends TokensService {
 
     final tokensLog =
         tokens.map((e) => "id: ${e.id} balance: ${e.balance} ").toList();
-    await _database.tokenDao.insertTokens(tokens);
+    await _tokenDao.insertTokens(tokens);
     NftCollection.logger
         .info("[insertAssetsWithProvenance][tokens] $tokensLog");
 
-    await _database.assetDao.insertAssets(assets);
+    await _assetDao.insertAssets(assets);
+    final List<String> artistIdToAdd = assetTokens
+        .where((element) => element.balance != 0 && element.artistID != null)
+        .map((e) => e.artistID!)
+        .toSet()
+        .toList();
+
+    NftCollection.logger.info("insertAssets: add artists $artistIdToAdd");
+    NftCollectionBloc.addEventFollowing(
+        AddArtistsEvent(artists: artistIdToAdd));
     await _database.provenanceDao.insertProvenance(provenance);
   }
 
@@ -243,7 +249,6 @@ class TokensServiceImpl extends TokensService {
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds) async {
     final request = QueryListTokensRequest(
       ids: indexerIds,
-      size: indexerTokensPageSize,
     );
 
     final manuallyAssets = await _indexerService.getNftTokens(request);
@@ -271,8 +276,14 @@ class TokensServiceImpl extends TokensService {
           .where((element) => element.asset != null)
           .map((e) => e.asset as Asset)
           .toList();
-      await _database.tokenDao.insertTokensAbort(tokens);
-      await _database.assetDao.insertAssetsAbort(assets);
+      await _tokenDao.insertTokensAbort(tokens);
+      await _assetDao.insertAssetsAbort(assets);
+      final List<String> artists = assets
+          .where((element) => element.artistID != null)
+          .map((e) => e.artistID!)
+          .toSet()
+          .toList();
+      NftCollectionBloc.eventController.add(AddArtistsEvent(artists: artists));
     } catch (e) {
       NftCollection.logger.info("[TokensService] "
           "setCustomTokens "
@@ -329,12 +340,11 @@ class TokensServiceImpl extends TokensService {
 
         if (result.done) {
           _refreshAllTokensWorker?.close();
-          _configurationService.removePendingAddresses(result.addresses);
           final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
           _addressService.updateRefreshedTime(result.addresses,
               lastRefreshedTime ?? DateTime.fromMillisecondsSinceEpoch(0));
           NftCollection.logger.info(
-              '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at $lastRefreshedTime');
+              '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at ${DateTime.now()}');
           NftCollection.logger.info("[REFRESH_ALL_TOKENS][end]");
         }
       }
@@ -415,7 +425,6 @@ class TokensServiceImpl extends TokensService {
           final request = QueryListTokensRequest(
             owners: addresses[lastRefreshedTime] ?? [],
             offset: offsetMap[lastRefreshedTime] ?? 0,
-            size: indexerTokensPageSize,
             lastUpdatedAt: lastRefreshedTime != 0
                 ? DateTime.fromMillisecondsSinceEpoch(lastRefreshedTime)
                 : null,
