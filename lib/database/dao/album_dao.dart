@@ -103,7 +103,13 @@ class MediumCategory {
       case MediumCategory.model:
         return ['model/gltf-binary'];
       case MediumCategory.webView:
-        return ['text/html'];
+        return [
+          'text/html',
+          'text/plain',
+          'application/pdf',
+          'application/x-directory',
+          'application/x-mpegURL'
+        ];
       case MediumCategory.other:
         return [];
     }
