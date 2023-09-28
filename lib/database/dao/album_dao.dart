@@ -36,7 +36,7 @@ class AlbumDao {
   Future<List<AlbumModel>> getAlbumsByArtist({String name = ""}) async {
     final nameFilter = "%$name%";
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE name LIKE ?1 AND AddressCollection.isHidden = FALSE GROUP BY artistID ORDER BY total DESC',
+      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE name LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 GROUP BY artistID ORDER BY total DESC',
       mapper: mapper,
       arguments: [nameFilter],
     );
@@ -54,7 +54,7 @@ class AlbumDao {
     final String inOrNotIn = isInMimeTypes ? 'IN' : 'NOT IN';
     final albumId = mimeTypes.join(',');
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, ?2 as id, ?2 as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE ?1 AND AddressCollection.isHidden = FALSE AND mimeType $inOrNotIn ($sqliteVariables)',
+      'SELECT count(Token.id) as total, ?2 as id, ?2 as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 AND mimeType $inOrNotIn ($sqliteVariables)',
       mapper: mapper,
       arguments: [
         titleFilter,
@@ -110,8 +110,6 @@ class MediumCategory {
           'application/x-directory',
           'application/x-mpegURL'
         ];
-      case MediumCategory.other:
-        return [];
     }
     return [];
   }
