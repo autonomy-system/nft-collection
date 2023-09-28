@@ -49,7 +49,7 @@ class AlbumDao {
     final mimeTypeFilter = mineTypes.map((e) => '"$e"').join(",");
     final albumId = mediumCategory;
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, ?3 as id, ?3 as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE ?1 AND AddressCollection.isHidden = FALSE AND mimeType IN (?2)',
+      'SELECT count(Token.id) as total, ?3 as id, ?3 as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE ?1 AND AddressCollection.isHidden = FALSE AND mimeType IN ("video/mp4")',
       mapper: mapper,
       arguments: [titleFilter, mimeTypeFilter, albumId],
     );
