@@ -69,7 +69,7 @@ class MediumCategory {
   static const image = "image";
   static const video = "video";
   static const model = "model";
-  static const webView = "webView";
+  static const webView = "webview";
   static const other = "other";
 
   static List<String> mineTypes(String category) {

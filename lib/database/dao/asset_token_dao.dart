@@ -170,12 +170,21 @@ class AssetTokenDao {
     );
   }
 
-  Future<List<AssetToken>> findAllAssetTokensByMedium(
-    String medium,
-  ) {
+  Future<List<AssetToken>> findAllAssetTokensByMimeTypes({
+    required List<String> mimeTypes,
+    bool isInMimeTypes = true,
+  }) {
+    const offset = 1;
+    final sqliteVariables =
+        Iterable<String>.generate(mimeTypes.length, (i) => '?${i + offset}')
+            .join(',');
+    final String inOrNotIn = isInMimeTypes ? 'IN' : 'NOT IN';
     return _queryAdapter.queryList(
-      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE medium = "$medium" ORDER BY lastActivityTime DESC, id DESC',
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE mimeType $inOrNotIn ($sqliteVariables)  ORDER BY lastActivityTime DESC, id DESC',
       mapper: mapper,
+      arguments: [
+        ...mimeTypes,
+      ],
     );
   }
 
