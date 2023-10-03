@@ -102,6 +102,20 @@ class AssetTokenDao {
     );
   }
 
+  Future<List<AssetToken>> findAllAssetTokensByFilter({
+    required String filter,
+    bool withHidden = false,
+  }) async {
+    final titleFilter = "%$filter%";
+    final artistFilter = "%$filter%";
+    final withHiddenSql =
+        withHidden ? 'TRUE' : 'AddressCollection.isHidden = FALSE';
+    return _queryAdapter.queryList(
+        "SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE (Asset.title LIKE ?1 OR Asset.artistName LIKE ?2)  AND $withHiddenSql ORDER BY lastActivityTime DESC, id DESC",
+        mapper: mapper,
+        arguments: [titleFilter, artistFilter]);
+  }
+
   Future<List<AssetToken>> findAllAssetTokensWithoutOffset(
     List<String> owners,
   ) async {
