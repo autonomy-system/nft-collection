@@ -184,7 +184,7 @@ class AssetTokenDao {
         withHidden ? 'TRUE' : 'AddressCollection.isHidden = FALSE';
     final titleFilter = "%$filter%";
     return _queryAdapter.queryList(
-      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE artistID = "$artistID" AND $withHiddenSql AND Asset.title LIKE ?1 ORDER BY lastActivityTime DESC, id DESC',
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE artistID = "$artistID" AND $withHiddenSql AND balance > 0 AND Asset.title LIKE ?1 ORDER BY lastActivityTime DESC, id DESC',
       mapper: mapper,
       arguments: [titleFilter],
     );
@@ -205,7 +205,7 @@ class AssetTokenDao {
         withHidden ? 'TRUE' : 'AddressCollection.isHidden = FALSE';
     final titleFilter = "%$filter%";
     return _queryAdapter.queryList(
-      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE mimeType $inOrNotIn ($sqliteVariables) AND $withHiddenSql AND Asset.title LIKE ?1 ORDER BY lastActivityTime DESC, id DESC',
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE mimeType $inOrNotIn ($sqliteVariables) AND $withHiddenSql AND Asset.title LIKE ?1 AND balance > 0 ORDER BY lastActivityTime DESC, id DESC',
       mapper: mapper,
       arguments: [
         titleFilter,
