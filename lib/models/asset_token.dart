@@ -190,6 +190,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
     this.pending,
     this.isDebugged,
     this.artistID,
+    this.artistTitle,
     this.blockchain,
     this.tokenId,
     this.title,
@@ -213,6 +214,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
   String? thumbnailID;
   String? galleryThumbnailURL;
   String? artistID;
+  String? artistTitle;
   String? blockchain;
   String? tokenId;
   String? title;
@@ -233,6 +235,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
       pending: assetToken.pending,
       isDebugged: assetToken.isDebugged,
       artistID: assetToken.artistID,
+      artistTitle: assetToken.artistName,
       blockchain: assetToken.blockchain,
       tokenId: assetToken.tokenId,
       title: assetToken.title,
