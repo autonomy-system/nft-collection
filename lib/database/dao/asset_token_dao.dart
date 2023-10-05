@@ -190,26 +190,31 @@ class AssetTokenDao {
     );
   }
 
-  Future<List<AssetToken>> findAllAssetTokensByMimeTypes({
+  Future<List<AssetToken>> findAllAssetTokensByMimeTypesOrMediums({
     required List<String> mimeTypes,
+    required List<String> mediums,
     bool isInMimeTypes = true,
     bool withHidden = false,
     String filter = "",
   }) {
-    const offset = 2;
-    final sqliteVariables =
-        Iterable<String>.generate(mimeTypes.length, (i) => '?${i + offset}')
+    const mimeTypeOffset = 2;
+    final sqliteVariables = Iterable<String>.generate(
+        mimeTypes.length, (i) => '?${i + mimeTypeOffset}').join(',');
+    final mediumOffset = mimeTypes.length + mimeTypeOffset;
+    final sqliteVariablesForMedium =
+        Iterable<String>.generate(mediums.length, (i) => '?${i + mediumOffset}')
             .join(',');
-    final String inOrNotIn = isInMimeTypes ? 'IN' : 'NOT IN';
+    final String inOrNotIn = isInMimeTypes ? '' : 'NOT';
     final withHiddenSql =
         withHidden ? 'TRUE' : 'AddressCollection.isHidden = FALSE';
     final titleFilter = "%$filter%";
     return _queryAdapter.queryList(
-      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE mimeType $inOrNotIn ($sqliteVariables) AND $withHiddenSql AND Asset.title LIKE ?1 AND balance > 0 ORDER BY lastActivityTime DESC, id DESC',
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE $inOrNotIn (mimeType IN ($sqliteVariables) OR medium IN ($sqliteVariablesForMedium)) AND $withHiddenSql AND Asset.title LIKE ?1 AND balance > 0 ORDER BY lastActivityTime DESC, id DESC',
       mapper: mapper,
       arguments: [
         titleFilter,
         ...mimeTypes,
+        ...mediums,
       ],
     );
   }

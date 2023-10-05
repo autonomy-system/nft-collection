@@ -45,21 +45,27 @@ class AlbumDao {
   Future<List<AlbumModel>> getAlbumsByMedium(
       {String title = "",
       required List<String> mimeTypes,
+      required List<String> mediums,
       bool isInMimeTypes = true}) async {
     final titleFilter = "%$title%";
     const offset = 3;
     final sqliteVariables =
         Iterable<String>.generate(mimeTypes.length, (i) => '?${i + offset}')
             .join(',');
-    final String inOrNotIn = isInMimeTypes ? 'IN' : 'NOT IN';
+    final mediumOffset = mimeTypes.length + offset;
+    final sqliteVariablesForMedium =
+        Iterable<String>.generate(mediums.length, (i) => '?${i + mediumOffset}')
+            .join(',');
+    final String inOrNotIn = isInMimeTypes ? '' : 'NOT';
     final albumId = mimeTypes.join(',');
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, ?2 as id, ?2 as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 AND mimeType $inOrNotIn ($sqliteVariables)',
+      'SELECT count(Token.id) as total, ?2 as id, ?2 as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 AND $inOrNotIn (mimeType IN ($sqliteVariables) OR medium IN ($sqliteVariablesForMedium))',
       mapper: mapper,
       arguments: [
         titleFilter,
         albumId,
         ...mimeTypes,
+        ...mediums,
       ],
     );
   }
