@@ -67,8 +67,6 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
 
   ProvenanceDao? _provenanceDaoInstance;
 
-  IdentityDao? _identityDaoInstance;
-
   AddressCollectionDao? _addressCollectionDaoInstance;
 
   Future<sqflite.Database> open(
@@ -77,7 +75,7 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
     Callback? callback,
   ]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 6,
+      version: 5,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -100,8 +98,6 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
             'CREATE TABLE IF NOT EXISTS `Provenance` (`id` TEXT NOT NULL, `txID` TEXT NOT NULL, `type` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `owner` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `txURL` TEXT NOT NULL, `tokenID` TEXT NOT NULL, `blockNumber` INTEGER, PRIMARY KEY (`id`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `AddressCollection` (`address` TEXT NOT NULL, `lastRefreshedTime` INTEGER NOT NULL, `isHidden` INTEGER NOT NULL, PRIMARY KEY (`address`))');
-        await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Identity` (`accountNumber` TEXT NOT NULL, `blockchain` TEXT NOT NULL, `name` TEXT NOT NULL, `queriedAt` INTEGER NOT NULL, PRIMARY KEY (`accountNumber`))');
         await database.execute(
             'CREATE INDEX `index_Token_lastActivityTime_id` ON `Token` (`lastActivityTime`, `id`)');
         await database.execute(
@@ -126,11 +122,6 @@ class _$NftCollectionDatabase extends NftCollectionDatabase {
   @override
   ProvenanceDao get provenanceDao {
     return _provenanceDaoInstance ??= _$ProvenanceDao(database, changeListener);
-  }
-
-  @override
-  IdentityDao get identityDao {
-    return _identityDaoInstance ??= _$IdentityDao(database, changeListener);
   }
 
   @override
@@ -615,95 +606,6 @@ class _$ProvenanceDao extends ProvenanceDao {
   Future<void> insertProvenance(List<Provenance> provenance) async {
     await _provenanceInsertionAdapter.insertList(
         provenance, OnConflictStrategy.replace);
-  }
-}
-
-class _$IdentityDao extends IdentityDao {
-  _$IdentityDao(
-    this.database,
-    this.changeListener,
-  )   : _queryAdapter = QueryAdapter(database),
-        _identityInsertionAdapter = InsertionAdapter(
-            database,
-            'Identity',
-            (Identity item) => <String, Object?>{
-                  'accountNumber': item.accountNumber,
-                  'blockchain': item.blockchain,
-                  'name': item.name,
-                  'queriedAt': _dateTimeConverter.encode(item.queriedAt)
-                }),
-        _identityUpdateAdapter = UpdateAdapter(
-            database,
-            'Identity',
-            ['accountNumber'],
-            (Identity item) => <String, Object?>{
-                  'accountNumber': item.accountNumber,
-                  'blockchain': item.blockchain,
-                  'name': item.name,
-                  'queriedAt': _dateTimeConverter.encode(item.queriedAt)
-                }),
-        _identityDeletionAdapter = DeletionAdapter(
-            database,
-            'Identity',
-            ['accountNumber'],
-            (Identity item) => <String, Object?>{
-                  'accountNumber': item.accountNumber,
-                  'blockchain': item.blockchain,
-                  'name': item.name,
-                  'queriedAt': _dateTimeConverter.encode(item.queriedAt)
-                });
-
-  final sqflite.DatabaseExecutor database;
-
-  final StreamController<String> changeListener;
-
-  final QueryAdapter _queryAdapter;
-
-  final InsertionAdapter<Identity> _identityInsertionAdapter;
-
-  final UpdateAdapter<Identity> _identityUpdateAdapter;
-
-  final DeletionAdapter<Identity> _identityDeletionAdapter;
-
-  @override
-  Future<List<Identity>> getIdentities() async {
-    return _queryAdapter.queryList('SELECT * FROM Identity',
-        mapper: (Map<String, Object?> row) => Identity(
-            row['accountNumber'] as String,
-            row['blockchain'] as String,
-            row['name'] as String));
-  }
-
-  @override
-  Future<Identity?> findByAccountNumber(String accountNumber) async {
-    return _queryAdapter.query(
-        'SELECT * FROM Identity WHERE accountNumber = ?1',
-        mapper: (Map<String, Object?> row) => Identity(
-            row['accountNumber'] as String,
-            row['blockchain'] as String,
-            row['name'] as String),
-        arguments: [accountNumber]);
-  }
-
-  @override
-  Future<void> removeAll() async {
-    await _queryAdapter.queryNoReturn('DELETE FROM Identity');
-  }
-
-  @override
-  Future<void> insertIdentity(Identity identity) async {
-    await _identityInsertionAdapter.insert(
-        identity, OnConflictStrategy.replace);
-  }
-
-  @override
-  Future<void> updateIdentity(Identity identity) async {
-    await _identityUpdateAdapter.update(identity, OnConflictStrategy.abort);
-  }
-
-  @override
-  Future<void> deleteIdentity(Identity identity) async {
-    await _identityDeletionAdapter.delete(identity);
   }
 }
 
