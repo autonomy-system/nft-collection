@@ -188,7 +188,7 @@ class NftCollectionBloc
           "Addresses: ${addresses.map((e) => e.address).toList()}");
       final debugTokens = event.debugTokens.unique((e) => e) ?? [];
       final debugTokensChanged =
-          setEquals(debugTokens.toSet(), _debugTokenIds.toSet());
+          !setEquals(debugTokens.toSet(), _debugTokenIds.toSet());
       if (debugTokensChanged) {
         _debugTokenIds = debugTokens;
         NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
