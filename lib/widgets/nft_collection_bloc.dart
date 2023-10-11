@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:nft_collection/database/nft_collection_database.dart';
 import 'package:nft_collection/models/address_collection.dart';
 import 'package:nft_collection/models/asset_token.dart';
@@ -185,10 +186,14 @@ class NftCollectionBloc
       final addresses = await _fetchAddresses();
       NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
           "Addresses: ${addresses.map((e) => e.address).toList()}");
-
-      _debugTokenIds = event.debugTokens.unique((e) => e) ?? [];
-      NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
-          "debugTokenIds: $_debugTokenIds");
+      final debugTokens = event.debugTokens.unique((e) => e) ?? [];
+      final debugTokensChanged =
+          setEquals(debugTokens.toSet(), _debugTokenIds.toSet());
+      if (debugTokensChanged) {
+        _debugTokenIds = debugTokens;
+        NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
+            "debugTokenIds: $_debugTokenIds");
+      }
 
       try {
         final mapAddresses = _mapAddressesByLastRefreshedTime(addresses);
@@ -229,10 +234,10 @@ class NftCollectionBloc
         stream.listen((event) async {
           NftCollection.logger.info("[Stream.refreshTokensInIsolate] getEvent");
 
+          List<AssetToken> addingTokens = [];
           if (event.isNotEmpty) {
             NftCollection.logger.info(
                 "[Stream.refreshTokensInIsolate] UpdateTokensEvent ${event.length} tokens");
-            List<AssetToken> addingTokens = [];
             if (state.nextKey?.offset != null) {
               addingTokens = event
                   .where(
@@ -244,12 +249,12 @@ class NftCollectionBloc
             } else {
               addingTokens = event;
             }
-            if (addingTokens.isNotEmpty) {
-              add(UpdateTokensEvent(
-                state: NftLoadingState.loading,
-                tokens: addingTokens,
-              ));
-            }
+          }
+          if (addingTokens.isNotEmpty || debugTokensChanged) {
+            add(UpdateTokensEvent(
+              state: NftLoadingState.loading,
+              tokens: addingTokens,
+            ));
           }
         }, onDone: () async {
           NftCollection.logger
