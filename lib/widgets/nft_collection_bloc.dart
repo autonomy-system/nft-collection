@@ -320,7 +320,9 @@ class NftCollectionBloc
       final activeAddress = await addressService.getActiveAddresses();
 
       tokens.removeWhere((element) =>
-          !activeAddress.contains(element.owner) && element.isDebugged != true);
+          !activeAddress.contains(element.owner) &&
+              element.isDebugged != true ||
+          (element.isDebugged == true && _debugTokenIds.contains(element.id)));
 
       emit(
         state.copyWith(
