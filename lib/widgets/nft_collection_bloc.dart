@@ -322,7 +322,7 @@ class NftCollectionBloc
       tokens.removeWhere((element) =>
           !activeAddress.contains(element.owner) &&
               element.isDebugged != true ||
-          (element.isDebugged == true && _debugTokenIds.contains(element.id)));
+          (element.isDebugged == true && !_debugTokenIds.contains(element.id)));
 
       emit(
         state.copyWith(
