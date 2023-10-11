@@ -35,7 +35,7 @@ abstract class NftCollectionDatabase extends FloorDatabase {
 
   AssetTokenDao get assetTokenDao => AssetTokenDao(database, changeListener);
 
-  PredefinedCollectionDao get albumDao =>
+  PredefinedCollectionDao get predefinedCollectionDao =>
       PredefinedCollectionDao(database, changeListener);
   AssetDao get assetDao;
 

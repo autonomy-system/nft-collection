@@ -1,9 +1,9 @@
-class AlbumModel {
+class PredefinedCollectionModel {
   String id;
   String? name;
   int total;
   String? thumbnailURL;
-  AlbumModel({
+  PredefinedCollectionModel({
     required this.id,
     this.name,
     this.total = 0,

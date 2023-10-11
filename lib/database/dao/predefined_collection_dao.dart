@@ -10,7 +10,7 @@
 import 'dart:async';
 
 import 'package:floor/floor.dart';
-import 'package:nft_collection/models/album_model.dart';
+import 'package:nft_collection/models/predefined_collection_model.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 
 @dao
@@ -22,9 +22,9 @@ class PredefinedCollectionDao {
 
   final StreamController<String> changeListener;
 
-  static AlbumModel Function(Map<String, Object?>) mapper =
+  static PredefinedCollectionModel Function(Map<String, Object?>) mapper =
       (Map<String, Object?> row) {
-    return AlbumModel(
+    return PredefinedCollectionModel(
       id: row['id'] as String? ?? '',
       name: row['name'] as String?,
       total: row['total'] as int? ?? 0,
@@ -33,7 +33,8 @@ class PredefinedCollectionDao {
   };
 
   final QueryAdapter _queryAdapter;
-  Future<List<AlbumModel>> getAlbumsByArtist({String name = ""}) async {
+  Future<List<PredefinedCollectionModel>> getPredefinedCollectionsByArtist(
+      {String name = ""}) async {
     final nameFilter = "%$name%";
     return _queryAdapter.queryList(
       'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE name LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 GROUP BY artistID ORDER BY total DESC',
@@ -42,7 +43,7 @@ class PredefinedCollectionDao {
     );
   }
 
-  Future<List<AlbumModel>> getAlbumsByMedium(
+  Future<List<PredefinedCollectionModel>> getPredefinedCollectionsByMedium(
       {String title = "",
       required List<String> mimeTypes,
       required List<String> mediums,
@@ -57,13 +58,13 @@ class PredefinedCollectionDao {
         Iterable<String>.generate(mediums.length, (i) => '?${i + mediumOffset}')
             .join(',');
     final String inOrNotIn = isInMimeTypes ? '' : 'NOT';
-    final albumId = mimeTypes.join(',');
+    final id = mimeTypes.join(',');
     return _queryAdapter.queryList(
       'SELECT count(Token.id) as total, ?2 as id, ?2 as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 AND $inOrNotIn (mimeType IN ($sqliteVariables) OR medium IN ($sqliteVariablesForMedium))',
       mapper: mapper,
       arguments: [
         titleFilter,
-        albumId,
+        id,
         ...mimeTypes,
         ...mediums,
       ],
