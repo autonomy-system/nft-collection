@@ -14,8 +14,8 @@ import 'package:nft_collection/models/album_model.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 
 @dao
-class AlbumDao {
-  AlbumDao(this.database, this.changeListener)
+class PredefinedCollectionDao {
+  PredefinedCollectionDao(this.database, this.changeListener)
       : _queryAdapter = QueryAdapter(database);
 
   final sqflite.DatabaseExecutor database;

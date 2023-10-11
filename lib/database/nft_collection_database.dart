@@ -9,9 +9,9 @@ import 'dart:async';
 
 import 'package:floor/floor.dart';
 import 'package:nft_collection/database/dao/address_collection_dao.dart';
-import 'package:nft_collection/database/dao/album_dao.dart';
 import 'package:nft_collection/database/dao/asset_dao.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
+import 'package:nft_collection/database/dao/predefined_collection_dao.dart';
 import 'package:nft_collection/database/dao/provenance_dao.dart';
 import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/models/address_collection.dart';
@@ -35,7 +35,8 @@ abstract class NftCollectionDatabase extends FloorDatabase {
 
   AssetTokenDao get assetTokenDao => AssetTokenDao(database, changeListener);
 
-  AlbumDao get albumDao => AlbumDao(database, changeListener);
+  PredefinedCollectionDao get albumDao =>
+      PredefinedCollectionDao(database, changeListener);
   AssetDao get assetDao;
 
   ProvenanceDao get provenanceDao;
