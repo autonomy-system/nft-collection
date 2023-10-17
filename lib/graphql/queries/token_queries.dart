@@ -99,6 +99,10 @@ const String getTokens = r'''
     mintedAt
     balance
     owner
+    owners {
+      address
+      balance
+    }
     indexID
     source
     swapped
