@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:dio/dio.dart';
+import 'package:floor_annotation/floor_annotation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nft_collection/data/api/indexer_api.dart';
@@ -34,7 +35,8 @@ abstract class TokensService {
 
   Future<List<AssetToken>> fetchManualTokens(List<String> indexerIds);
 
-  Future setCustomTokens(List<AssetToken> assetTokens);
+  Future setCustomTokens(List<AssetToken> assetTokens,
+      {OnConflictStrategy onConflict = OnConflictStrategy.abort});
 
   Future<Stream<List<AssetToken>>> refreshTokensInIsolate(
       Map<int, List<String>> addresses);
@@ -269,15 +271,21 @@ class TokensServiceImpl extends TokensService {
   }
 
   @override
-  Future setCustomTokens(List<AssetToken> assetTokens) async {
+  Future setCustomTokens(List<AssetToken> assetTokens,
+      {OnConflictStrategy onConflict = OnConflictStrategy.abort}) async {
     try {
       final tokens = assetTokens.map((e) => Token.fromAssetToken(e)).toList();
       final assets = assetTokens
           .where((element) => element.asset != null)
           .map((e) => e.asset as Asset)
           .toList();
-      await _tokenDao.insertTokensAbort(tokens);
-      await _assetDao.insertAssetsAbort(assets);
+      if (onConflict == OnConflictStrategy.replace) {
+        await _tokenDao.insertTokens(tokens);
+        await _assetDao.insertAssets(assets);
+      } else {
+        await _tokenDao.insertTokensAbort(tokens);
+        await _assetDao.insertAssetsAbort(assets);
+      }
       final List<String> artists = assets
           .where((element) => element.artistID != null)
           .map((e) => e.artistID!)
