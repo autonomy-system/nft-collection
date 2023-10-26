@@ -167,6 +167,60 @@ class AssetToken {
     );
   }
 
+  factory AssetToken.fromJsonGraphQl(Map<String, dynamic> json) {
+    final rawOwnerList = (json["owners"] ?? []) as List<dynamic>;
+    Map<String, int> owners = {};
+    for (final rawOwner in rawOwnerList) {
+      final owner = rawOwner as Map<String, dynamic>;
+      owners[owner['address'] as String] = owner['balance'] as int;
+    }
+    final projectMetadata = ProjectMetadata.fromJson(json["asset"]);
+
+    return AssetToken(
+      id: json["indexID"],
+      edition: json["edition"],
+      editionName: json["editionName"],
+      blockchain: json["blockchain"],
+      fungible: json["fungible"] == true,
+      mintedAt:
+          json["mintedAt"] != null ? DateTime.parse(json["mintedAt"]) : null,
+      contractType: json["contractType"],
+      tokenId: json["id"],
+      contractAddress: json["contractAddress"],
+      balance: json["balance"],
+      owner: json["owner"],
+      owners: owners,
+      projectMetadata: projectMetadata,
+      lastActivityTime: json['lastActivityTime'] != null
+          ? DateTime.parse(json['lastActivityTime'])
+          : DateTime(1970),
+      lastRefreshedTime: json['lastRefreshedTime'] != null
+          ? DateTime.parse(json['lastRefreshedTime'])
+          : DateTime(1970),
+      provenance: json["provenance"] != null
+          ? (json["provenance"] as List<dynamic>)
+              .asMap()
+              .map<int, Provenance>((key, value) => MapEntry(
+                  key, Provenance.fromJson(value, json['indexID'], key)))
+              .values
+              .toList()
+          : [],
+      originTokenInfo: json["originTokenInfo"] != null
+          ? (json["originTokenInfo"] as List<dynamic>)
+              .map((e) => OriginTokenInfo.fromJson(e))
+              .toList()
+          : null,
+      swapped: json["swapped"] as bool?,
+      ipfsPinned: json["ipfsPinned"] as bool?,
+      burned: json["burned"] as bool?,
+      pending: json["pending"] as bool?,
+      attributes: json["asset"]['attributes'] != null
+          ? Attributes.fromJson(json["asset"]['attributes'])
+          : null,
+      asset: projectMetadata.toAsset,
+    );
+  }
+
   String? get saleModel {
     String? latestSaleModel = projectMetadata?.latest.initialSaleModel?.trim();
     return latestSaleModel?.isNotEmpty == true
