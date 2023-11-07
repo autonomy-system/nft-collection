@@ -191,9 +191,7 @@ class AssetToken {
       owner: json["owner"],
       owners: owners,
       projectMetadata: projectMetadata,
-      lastActivityTime: json['lastActivityTime'] != null
-          ? DateTime.parse(json['lastActivityTime'])
-          : DateTime(1970),
+      lastActivityTime: DateTime.now(),
       lastRefreshedTime: json['lastRefreshedTime'] != null
           ? DateTime.parse(json['lastRefreshedTime'])
           : DateTime(1970),
