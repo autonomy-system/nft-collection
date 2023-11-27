@@ -13,7 +13,7 @@ class QueryListTokensResponse {
       tokens: map['tokens'] != null
           ? List<AssetToken>.from(
               (map['tokens'] as List<dynamic>).map<AssetToken>(
-                (x) => AssetToken.fromJson(x as Map<String, dynamic>),
+                (x) => AssetToken.fromJsonGraphQl(x as Map<String, dynamic>),
               ),
             )
           : [],
