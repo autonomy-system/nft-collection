@@ -1,12 +1,14 @@
+import 'package:http/http.dart' as http;
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 class IndexerClient {
-  IndexerClient(this._baseUrl);
+  IndexerClient(this._baseUrl, [this._client]);
 
   final String _baseUrl;
+  final http.Client? _client;
 
   GraphQLClient get client {
-    final httpLink = HttpLink("$_baseUrl/v2/graphql");
+    final httpLink = HttpLink("$_baseUrl/v2/graphql", httpClient: _client);
     final authLink = AuthLink(getToken: _getToken);
     final link = authLink.concat(httpLink);
 
