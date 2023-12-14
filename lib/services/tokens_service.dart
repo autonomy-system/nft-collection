@@ -336,7 +336,10 @@ class TokensServiceImpl extends TokensService {
           .info("[${result.key}] receive ${result.assets.length} tokens");
 
       if (result.key == REFRESH_ALL_TOKENS) {
-        _refreshAllTokensWorker!.sink.add(result.assets);
+        if (_refreshAllTokensWorker != null ||
+            _refreshAllTokensWorker!.isClosed) {
+          _refreshAllTokensWorker!.sink.add(result.assets);
+        }
 
         if (result.done) {
           _refreshAllTokensWorker?.close();
