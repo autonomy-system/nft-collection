@@ -23,7 +23,7 @@ class _IndexerApi implements IndexerApi {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{r'offset': offset};
     final _headers = <String, dynamic>{};
-    final _data = <String, dynamic>{};
+    final Map<String, dynamic>? _data = null;
     final _result = await _dio
         .fetch<List<dynamic>>(_setStreamType<List<AssetToken>>(Options(
       method: 'POST',
@@ -57,7 +57,7 @@ class _IndexerApi implements IndexerApi {
     )
         .compose(
           _dio.options,
-          '/nft/index',
+          '/V2/nft/index',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -94,7 +94,7 @@ class _IndexerApi implements IndexerApi {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{r'owner': owner};
     final _headers = <String, dynamic>{};
-    final _data = <String, dynamic>{};
+    final Map<String, dynamic>? _data = null;
     final _result =
         await _dio.fetch<List<dynamic>>(_setStreamType<List<String>>(Options(
       method: 'GET',

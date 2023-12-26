@@ -455,17 +455,14 @@ class TokensServiceImpl extends TokensService {
     }
   }
 
-  static void _reindexAddressesInIndexer(
-      String uuid, List<String> addresses) async {
+  static void _reindexAddressesInIndexer(String uuid, List<String> addresses,
+      {bool history = true}) async {
     final indexerAPI = _isolateScopeInjector<IndexerApi>();
     for (final address in addresses) {
-      if (address.startsWith("tz")) {
-        indexerAPI.requestIndex({"owner": address, "blockchain": "tezos"});
-      } else if (address.startsWith("0x")) {
-        indexerAPI.requestIndex({"owner": address});
+      if (address.startsWith("tz") || address.startsWith("0x")) {
+        indexerAPI.requestIndex({"owner": address, "history": history});
       }
     }
-
     _isolateSendPort?.send(ReindexAddressesDone(uuid));
   }
 }
