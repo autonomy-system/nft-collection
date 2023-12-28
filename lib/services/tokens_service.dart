@@ -336,7 +336,10 @@ class TokensServiceImpl extends TokensService {
           .info("[${result.key}] receive ${result.assets.length} tokens");
 
       if (result.key == REFRESH_ALL_TOKENS) {
-        _refreshAllTokensWorker!.sink.add(result.assets);
+        if (_refreshAllTokensWorker != null ||
+            _refreshAllTokensWorker!.isClosed) {
+          _refreshAllTokensWorker!.sink.add(result.assets);
+        }
 
         if (result.done) {
           _refreshAllTokensWorker?.close();
@@ -452,17 +455,14 @@ class TokensServiceImpl extends TokensService {
     }
   }
 
-  static void _reindexAddressesInIndexer(
-      String uuid, List<String> addresses) async {
+  static void _reindexAddressesInIndexer(String uuid, List<String> addresses,
+      {bool history = true}) async {
     final indexerAPI = _isolateScopeInjector<IndexerApi>();
     for (final address in addresses) {
-      if (address.startsWith("tz")) {
-        indexerAPI.requestIndex({"owner": address, "blockchain": "tezos"});
-      } else if (address.startsWith("0x")) {
-        indexerAPI.requestIndex({"owner": address});
+      if (address.startsWith("tz") || address.startsWith("0x")) {
+        indexerAPI.requestIndex({"owner": address, "history": history});
       }
     }
-
     _isolateSendPort?.send(ReindexAddressesDone(uuid));
   }
 }

@@ -133,16 +133,15 @@ class NftCollectionBloc
         );
       }
 
-      final tokens = state.tokens.toList();
-      tokens.addAll(compactedAssetToken);
-      tokens.unique((element) => element.id + element.owner);
+      currentTokens.addAll(compactedAssetToken);
+      currentTokens.unique((element) => element.id + element.owner);
 
       NftCollection.logger.info(
           "[NftCollectionBloc] GetTokensByOwnerEvent ${compactedAssetToken.length}");
 
       if (isLastPage) {
         emit(state.copyWith(
-          tokens: tokens,
+          tokens: currentTokens,
           nextKey: null,
           isLoading: false,
           state: NftLoadingState.done,
@@ -150,7 +149,7 @@ class NftCollectionBloc
       } else {
         emit(
           state.copyWith(
-            tokens: tokens,
+            tokens: currentTokens,
             nextKey: nextKey,
             isLoading: false,
             state: NftLoadingState.loading,
