@@ -57,7 +57,7 @@ class _IndexerApi implements IndexerApi {
     )
         .compose(
           _dio.options,
-          '/V2/nft/index',
+          '/v2/nft/index',
           queryParameters: queryParameters,
           data: _data,
         )
