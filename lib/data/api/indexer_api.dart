@@ -20,7 +20,7 @@ abstract class IndexerApi {
     @Query("offset") int offset,
   );
 
-  @POST("/V2/nft/index")
+  @POST("/v2/nft/index")
   Future requestIndex(@Body() Map<String, dynamic> payload);
 
   @POST("/nft/index_one")
