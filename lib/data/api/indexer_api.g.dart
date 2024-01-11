@@ -149,7 +149,7 @@ class _IndexerApi implements IndexerApi {
     )
         .compose(
           _dio.options,
-          '/v1/nft/index_history',
+          '/v2/nft/index_history',
           queryParameters: queryParameters,
           data: _data,
         )
