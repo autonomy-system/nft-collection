@@ -35,4 +35,9 @@ abstract class IndexerApi {
   Future postNftPendingToken(
     @Body() Map<String, dynamic> payload,
   );
+
+  @POST("/v1/nft/index_history")
+  Future indexTokenHistory(
+    @Body() Map<String, dynamic> payload,
+  );
 }
