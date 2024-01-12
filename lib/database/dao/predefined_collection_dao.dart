@@ -35,9 +35,9 @@ class PredefinedCollectionDao {
   final QueryAdapter _queryAdapter;
   Future<List<PredefinedCollectionModel>> getPredefinedCollectionsByArtist(
       {String name = ""}) async {
-    final nameFilter = "%$name%";
+    final nameFilter = "%${name.toLowerCase()}%";
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE name LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 GROUP BY artistID ORDER BY total DESC',
+      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE LOWER(name) LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 GROUP BY artistID ORDER BY total DESC',
       mapper: mapper,
       arguments: [nameFilter],
     );
@@ -48,7 +48,7 @@ class PredefinedCollectionDao {
       required List<String> mimeTypes,
       required List<String> mediums,
       bool isInMimeTypes = true}) async {
-    final titleFilter = "%$title%";
+    final titleFilter = "%${title.toLowerCase()}%";
     const offset = 3;
     final sqliteVariables =
         Iterable<String>.generate(mimeTypes.length, (i) => '?${i + offset}')
@@ -60,7 +60,7 @@ class PredefinedCollectionDao {
     final String inOrNotIn = isInMimeTypes ? '' : 'NOT';
     final id = mimeTypes.join(',');
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, ?2 as id, ?2 as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE Asset.title LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 AND $inOrNotIn (mimeType IN ($sqliteVariables) OR medium IN ($sqliteVariablesForMedium))',
+      'SELECT count(Token.id) as total, ?2 as id, ?2 as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE LOWER(Asset.title) LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 AND $inOrNotIn (mimeType IN ($sqliteVariables) OR medium IN ($sqliteVariablesForMedium))',
       mapper: mapper,
       arguments: [
         titleFilter,
