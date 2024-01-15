@@ -37,7 +37,7 @@ class PredefinedCollectionDao {
       {String name = ""}) async {
     final nameFilter = "%${name.toLowerCase()}%";
     return _queryAdapter.queryList(
-      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE LOWER(name) LIKE ?1 AND AddressCollection.isHidden = FALSE AND balance > 0 GROUP BY artistID ORDER BY total DESC',
+      'SELECT count(Token.id) as total, artistID as id, artistName as name, Asset.galleryThumbnailURL as  thumbnailURL FROM Token LEFT JOIN Asset  ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE LOWER(name) LIKE ?1 AND AddressCollection.isHidden = 0 AND balance > 0 GROUP BY artistID ORDER BY total DESC',
       mapper: mapper,
       arguments: [nameFilter],
     );
