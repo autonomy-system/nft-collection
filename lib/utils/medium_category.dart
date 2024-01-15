@@ -40,8 +40,7 @@ class MediumCategory {
           'text/html',
           'text/plain',
           'application/pdf',
-          'application/x-directory',
-          'application/x-mpegURL'
+          'application/x-directory'
         ];
     }
     return [];
