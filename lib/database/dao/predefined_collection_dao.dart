@@ -33,6 +33,7 @@ class PredefinedCollectionDao {
   };
 
   final QueryAdapter _queryAdapter;
+
   Future<List<PredefinedCollectionModel>> getPredefinedCollectionsByArtist(
       {String name = ""}) async {
     final nameFilter = "%${name.toLowerCase()}%";
