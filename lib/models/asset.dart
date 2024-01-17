@@ -104,7 +104,7 @@ class Asset {
       map['title'] != null ? map['title'] as String : null,
       map['description'] != null ? map['description'] as String : null,
       map['mimeType'] != null ? map['mimeType'] as String : null,
-      map['medium'] != null ? map['medium'] as String : null,
+      mediumFromMimeType(map['mimeType']),
       map['maxEdition'] != null ? map['maxEdition'] as int : null,
       map['source'] != null ? map['source'] as String : null,
       map['sourceURL'] != null ? map['sourceURL'] as String : null,
@@ -122,5 +122,58 @@ class Asset {
       map['isFeralfileFrame'] != null ? map['isFeralfileFrame'] as bool : null,
       map['artworkMetadata'] != null ? map['artworkMetadata'] as String : null,
     );
+  }
+}
+
+String mediumFromMimeType(String? mimeType) {
+  switch (mimeType) {
+    case "image/avif":
+    case "image/bmp":
+    case "image/jpeg":
+    case "image/jpg":
+    case "image/png":
+    case "image/tiff":
+      return "image";
+
+    case "image/svg+xml":
+      return "svg";
+
+    case "image/gif":
+      return "gif";
+
+    case "audio/aac":
+    case "audio/midi":
+    case "audio/x-midi":
+    case "audio/mpeg":
+    case "audio/ogg":
+    case "audio/opus":
+    case "audio/wav":
+    case "audio/webm":
+    case "audio/3gpp":
+    case "audio/vnd.wave":
+      return "audio";
+
+    case "video/x-msvideo":
+    case "video/3gpp":
+    case "video/mp4":
+    case "video/mpeg":
+    case "video/ogg":
+    case "video/3gpp2":
+    case "video/quicktime":
+    case "application/x-mpegURL":
+    case "video/x-flv":
+    case "video/MP2T":
+    case "video/webm":
+    case "application/octet-stream":
+      return "video";
+
+    case "application/pdf":
+      return "pdf";
+
+    case "model/gltf-binary":
+      return "model";
+
+    default:
+      return "software";
   }
 }

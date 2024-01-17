@@ -102,6 +102,19 @@ class AssetTokenDao {
     );
   }
 
+  Future<List<AssetToken>> findAllAssetTokensByFilter({
+    required String filter,
+    bool withHidden = false,
+  }) async {
+    final titleFilter = "%$filter%";
+    final artistFilter = "%$filter%";
+    final withHiddenSql = withHidden ? '1' : 'AddressCollection.isHidden = 0';
+    return _queryAdapter.queryList(
+        "SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE (Asset.title LIKE ?1 OR Asset.artistName LIKE ?2)  AND $withHiddenSql ORDER BY lastActivityTime DESC, id DESC",
+        mapper: mapper,
+        arguments: [titleFilter, artistFilter]);
+  }
+
   Future<List<AssetToken>> findAllAssetTokensWithoutOffset(
     List<String> owners,
   ) async {
@@ -141,7 +154,7 @@ class AssetTokenDao {
         Iterable<String>.generate(owners.length, (i) => '?${i + offsetOwner}')
             .join(',');
     return _queryAdapter.queryList(
-        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND (lastActivityTime < ?2 OR (lastActivityTime = ?2 AND id < ?3)) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
+        'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner)) AND balance > 0 AND (lastActivityTime < ?2 OR (lastActivityTime = ?2 AND id < ?3)) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
         mapper: mapper,
         arguments: [limit, lastTime, id, ...owners]);
   }
@@ -159,6 +172,48 @@ class AssetTokenDao {
         'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE (owner IN ($sqliteVariablesForOwner))  AND  (lastActivityTime >= ?1 AND id >= ?2) ORDER BY lastActivityTime DESC, id DESC LIMIT ?1',
         mapper: mapper,
         arguments: [lastTime, id, ...owners]);
+  }
+
+  Future<List<AssetToken>> findAllAssetTokensByArtistID({
+    required String artistID,
+    bool withHidden = false,
+    String filter = "",
+  }) {
+    final withHiddenSql = withHidden ? '1' : 'AddressCollection.isHidden = 0';
+    final titleFilter = "%$filter%";
+    return _queryAdapter.queryList(
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE artistID = "$artistID" AND $withHiddenSql AND balance > 0 AND Asset.title LIKE ?1 ORDER BY lastActivityTime DESC, id DESC',
+      mapper: mapper,
+      arguments: [titleFilter],
+    );
+  }
+
+  Future<List<AssetToken>> findAllAssetTokensByMimeTypesOrMediums({
+    required List<String> mimeTypes,
+    required List<String> mediums,
+    bool isInMimeTypes = true,
+    bool withHidden = false,
+    String filter = "",
+  }) {
+    const mimeTypeOffset = 2;
+    final sqliteVariables = Iterable<String>.generate(
+        mimeTypes.length, (i) => '?${i + mimeTypeOffset}').join(',');
+    final mediumOffset = mimeTypes.length + mimeTypeOffset;
+    final sqliteVariablesForMedium =
+        Iterable<String>.generate(mediums.length, (i) => '?${i + mediumOffset}')
+            .join(',');
+    final String inOrNotIn = isInMimeTypes ? '' : 'NOT';
+    final withHiddenSql = withHidden ? '1' : 'AddressCollection.isHidden = 0';
+    final titleFilter = "%$filter%";
+    return _queryAdapter.queryList(
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE $inOrNotIn (mimeType IN ($sqliteVariables) OR medium IN ($sqliteVariablesForMedium)) AND $withHiddenSql AND Asset.title LIKE ?1 AND balance > 0 ORDER BY lastActivityTime DESC, id DESC',
+      mapper: mapper,
+      arguments: [
+        titleFilter,
+        ...mimeTypes,
+        ...mediums,
+      ],
+    );
   }
 
   Future<List<AssetToken>> findAllAssetTokensByTokenIDs(

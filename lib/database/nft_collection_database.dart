@@ -11,6 +11,7 @@ import 'package:floor/floor.dart';
 import 'package:nft_collection/database/dao/address_collection_dao.dart';
 import 'package:nft_collection/database/dao/asset_dao.dart';
 import 'package:nft_collection/database/dao/asset_token_dao.dart';
+import 'package:nft_collection/database/dao/predefined_collection_dao.dart';
 import 'package:nft_collection/database/dao/provenance_dao.dart';
 import 'package:nft_collection/database/dao/token_dao.dart';
 import 'package:nft_collection/models/address_collection.dart';
@@ -18,7 +19,6 @@ import 'package:nft_collection/models/asset.dart';
 import 'package:nft_collection/models/provenance.dart';
 import 'package:nft_collection/models/token.dart';
 import 'package:nft_collection/utils/date_time_converter.dart';
-
 // ignore: depend_on_referenced_packages
 import 'package:sqflite/sqflite.dart' as sqflite;
 
@@ -29,12 +29,14 @@ part 'nft_collection_database.g.dart'; // the generated code will be there
   NullableDateTimeConverter,
   TokenOwnersConverter,
 ])
-@Database(version: 5, entities: [Token, Asset, Provenance, AddressCollection])
+@Database(version: 6, entities: [Token, Asset, Provenance, AddressCollection])
 abstract class NftCollectionDatabase extends FloorDatabase {
   TokenDao get tokenDao;
 
   AssetTokenDao get assetTokenDao => AssetTokenDao(database, changeListener);
 
+  PredefinedCollectionDao get predefinedCollectionDao =>
+      PredefinedCollectionDao(database, changeListener);
   AssetDao get assetDao;
 
   ProvenanceDao get provenanceDao;
@@ -53,7 +55,7 @@ final migrations = <Migration>[
   migrateV1ToV2,
   migrateV2ToV3,
   migrateV3ToV4,
-  migrateV4ToV5
+  migrateV4ToV5,
 ];
 
 final migrateV1ToV2 = Migration(1, 2, (database) async {

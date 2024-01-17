@@ -5,14 +5,19 @@
 //  that can be found in the LICENSE file.
 //
 
-class BlockchainIdentity {
+import 'package:floor/floor.dart';
+
+@entity
+class Identity {
+  @primaryKey
   String accountNumber;
   String blockchain;
   String name;
+  DateTime queriedAt = DateTime.now();
 
-  BlockchainIdentity(this.accountNumber, this.blockchain, this.name);
+  Identity(this.accountNumber, this.blockchain, this.name);
 
-  BlockchainIdentity.fromJson(Map<String, dynamic> json)
+  Identity.fromJson(Map<String, dynamic> json)
       : accountNumber = json['accountNumber'],
         blockchain = json['blockchain'],
         name = json['name'];
