@@ -55,4 +55,8 @@ class AddressService {
   Future<List<String>> getActiveAddresses() async {
     return await _database.addressCollectionDao.findAddressesIsHidden(false);
   }
+
+  Future<List<String>> getHiddenAddresses() async {
+    return await _database.addressCollectionDao.findAddressesIsHidden(true);
+  }
 }

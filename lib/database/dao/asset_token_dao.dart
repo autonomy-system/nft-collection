@@ -180,9 +180,9 @@ class AssetTokenDao {
     String filter = "",
   }) {
     final withHiddenSql = withHidden ? '1' : 'AddressCollection.isHidden = 0';
-    final titleFilter = "%$filter%";
+    final titleFilter = "%${filter.toLowerCase()}%";
     return _queryAdapter.queryList(
-      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE artistID = "$artistID" AND $withHiddenSql AND balance > 0 AND Asset.title LIKE ?1 ORDER BY lastActivityTime DESC, id DESC',
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE artistID = "$artistID" AND $withHiddenSql AND balance > 0 AND LOWER(Asset.title) LIKE ?1 ORDER BY lastActivityTime DESC, id DESC',
       mapper: mapper,
       arguments: [titleFilter],
     );
@@ -204,9 +204,9 @@ class AssetTokenDao {
             .join(',');
     final String inOrNotIn = isInMimeTypes ? '' : 'NOT';
     final withHiddenSql = withHidden ? '1' : 'AddressCollection.isHidden = 0';
-    final titleFilter = "%$filter%";
+    final titleFilter = "%${filter.toLowerCase()}%";
     return _queryAdapter.queryList(
-      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE $inOrNotIn (mimeType IN ($sqliteVariables) OR medium IN ($sqliteVariablesForMedium)) AND $withHiddenSql AND Asset.title LIKE ?1 AND balance > 0 ORDER BY lastActivityTime DESC, id DESC',
+      'SELECT * , Asset.lastRefreshedTime as assetLastRefresh, Token.lastRefreshedTime as tokenLastRefresh FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID JOIN AddressCollection ON Token.owner = AddressCollection.address WHERE $inOrNotIn (mimeType IN ($sqliteVariables) OR medium IN ($sqliteVariablesForMedium)) AND $withHiddenSql AND LOWER(Asset.title) LIKE ?1 AND balance > 0 ORDER BY lastActivityTime DESC, id DESC',
       mapper: mapper,
       arguments: [
         titleFilter,
