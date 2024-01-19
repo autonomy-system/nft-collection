@@ -24,7 +24,6 @@ class AddressService {
     await _database.tokenDao.deleteTokensByOwners(addresses);
     NftCollection.logger
         .info("Delete address $addresses \nDelete artists $artists");
-    NftCollectionBloc.addEventFollowing(RemoveArtistsEvent(artists: artists));
     NftCollectionBloc.eventController
         .add(UpdateTokensEvent(state: NftLoadingState.done, tokens: []));
   }

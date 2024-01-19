@@ -222,8 +222,6 @@ class TokensServiceImpl extends TokensService {
         .toList();
 
     NftCollection.logger.info("insertAssets: add artists $artistIdToAdd");
-    NftCollectionBloc.addEventFollowing(
-        AddArtistsEvent(artists: artistIdToAdd));
     await _database.provenanceDao.insertProvenance(provenance);
   }
 
@@ -283,7 +281,6 @@ class TokensServiceImpl extends TokensService {
           .map((e) => e.artistID!)
           .toSet()
           .toList();
-      NftCollectionBloc.eventController.add(AddArtistsEvent(artists: artists));
     } catch (e) {
       NftCollection.logger.info("[TokensService] "
           "setCustomTokens "

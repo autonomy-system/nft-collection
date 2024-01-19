@@ -82,12 +82,6 @@ class NftCollectionBloc
     return indexerIds;
   }
 
-  static void addEventFollowing(FollowingArtistsEvent event) {
-    if (event.artists.isNotEmpty) {
-      eventController.add(event);
-    }
-  }
-
   NftCollectionBloc(
       this.tokensService, this.database, this.prefs, this.addressService,
       {required this.pendingTokenExpire, this.isSortedToken = true})
