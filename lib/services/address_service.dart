@@ -1,6 +1,8 @@
 import 'package:nft_collection/database/nft_collection_database.dart';
+import 'package:nft_collection/di/injector.dart';
 import 'package:nft_collection/models/address_collection.dart';
 import 'package:nft_collection/nft_collection.dart';
+import 'package:nft_collection/services/tokens_service.dart';
 
 class AddressService {
   final NftCollectionDatabase _database;
@@ -13,6 +15,7 @@ class AddressService {
             address: e,
             lastRefreshedTime: DateTime.fromMillisecondsSinceEpoch(0)))
         .toList());
+    await ncInjector<TokensService>().reindexAddresses(addresses);
   }
 
   Future<void> deleteAddresses(List<String> addresses) async {
