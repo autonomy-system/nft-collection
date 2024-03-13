@@ -5,7 +5,6 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nft_collection/models/asset_token.dart';
@@ -121,17 +120,14 @@ Widget buildDefaultItemView(BuildContext context, CompactedAssetToken token) {
         ? SvgPicture.network(token.galleryThumbnailURL!,
             placeholderBuilder: (context) =>
                 Container(color: const Color.fromRGBO(227, 227, 227, 1)))
-        : CachedNetworkImage(
-            imageUrl: token.galleryThumbnailURL!,
+        : Image.network(
+            token.galleryThumbnailURL!,
             fit: BoxFit.cover,
-            memCacheHeight: cachedImageSize,
-            memCacheWidth: cachedImageSize,
-            maxWidthDiskCache: cachedImageSize,
-            maxHeightDiskCache: cachedImageSize,
-            placeholder: (context, index) =>
+            cacheHeight: cachedImageSize,
+            cacheWidth: cachedImageSize,
+            loadingBuilder: (context, widget, event) =>
                 Container(color: const Color.fromRGBO(227, 227, 227, 1)),
-            placeholderFadeInDuration: const Duration(milliseconds: 300),
-            errorWidget: (context, url, error) => Container(
+            errorBuilder: (context, url, error) => Container(
                 color: const Color.fromRGBO(227, 227, 227, 1),
                 child: Center(
                   child: SvgPicture.asset(
