@@ -183,7 +183,7 @@ class NftCollectionBloc
       NftCollection.logger
           .info("[NftCollectionBloc] RefreshNftCollectionByOwners");
       final addresses = await _fetchAddresses();
-      NftCollection.logger.info("[NftCollectionBloc] UpdateAddresses. "
+      NftCollection.logger.fine("[NftCollectionBloc] UpdateAddresses. "
           "Addresses: ${addresses.map((e) => e.address).toList()}");
       final debugTokens = event.debugTokens.unique((e) => e) ?? [];
       final debugTokensChanged =
