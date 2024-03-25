@@ -189,7 +189,7 @@ class TokensServiceImpl extends TokensService {
 
     _sendPort?.send([REINDEX_ADDRESSES, uuid, addresses]);
 
-    NftCollection.logger.info("[reindexAddresses][start] $addresses");
+    NftCollection.logger.fine("[reindexAddresses][start] $addresses");
     return completer.future;
   }
 
@@ -240,7 +240,7 @@ class TokensServiceImpl extends TokensService {
       uuid,
       {0: addresses}
     ]);
-    NftCollection.logger.info("[FETCH_TOKENS][start] $addresses");
+    NftCollection.logger.fine("[FETCH_TOKENS][start] $addresses");
 
     return completer.future;
   }
@@ -346,7 +346,7 @@ class TokensServiceImpl extends TokensService {
           final lastRefreshedTime = await _assetTokenDao.getLastRefreshedTime();
           _addressService.updateRefreshedTime(result.addresses,
               lastRefreshedTime ?? DateTime.fromMillisecondsSinceEpoch(0));
-          NftCollection.logger.info(
+          NftCollection.logger.fine(
               '[REFRESH_ALL_TOKENS] ${result.addresses.join(',')} at ${DateTime.now()}');
           NftCollection.logger.info("[REFRESH_ALL_TOKENS][end]");
         }
