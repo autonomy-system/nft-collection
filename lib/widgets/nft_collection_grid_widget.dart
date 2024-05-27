@@ -5,7 +5,6 @@
 //  that can be found in the LICENSE file.
 //
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nft_collection/models/asset_token.dart';
@@ -114,25 +113,27 @@ Widget _buildLoadingIndicator(BuildContext context) {
 Widget buildDefaultItemView(BuildContext context, CompactedAssetToken token) {
   final ext = p.extension(token.thumbnailURL!);
   const cachedImageSize = 1024;
+  const greyColor = Color.fromRGBO(227, 227, 227, 1);
 
   return Hero(
     tag: token.id,
     child: ext == ".svg"
         ? SvgPicture.network(token.galleryThumbnailURL!,
             placeholderBuilder: (context) =>
-                Container(color: const Color.fromRGBO(227, 227, 227, 1)))
-        : CachedNetworkImage(
-            imageUrl: token.galleryThumbnailURL!,
+                Container(color: greyColor))
+        : Image.network(
+            token.galleryThumbnailURL!,
             fit: BoxFit.cover,
-            memCacheHeight: cachedImageSize,
-            memCacheWidth: cachedImageSize,
-            maxWidthDiskCache: cachedImageSize,
-            maxHeightDiskCache: cachedImageSize,
-            placeholder: (context, index) =>
-                Container(color: const Color.fromRGBO(227, 227, 227, 1)),
-            placeholderFadeInDuration: const Duration(milliseconds: 300),
-            errorWidget: (context, url, error) => Container(
-                color: const Color.fromRGBO(227, 227, 227, 1),
+            cacheHeight: cachedImageSize,
+            cacheWidth: cachedImageSize,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) {
+                return child;
+              }
+              return Container(color: greyColor);
+            },
+            errorBuilder: (context, error, stacktrace) => Container(
+                color: greyColor,
                 child: Center(
                   child: SvgPicture.asset(
                     'assets/images/image_error.svg',
