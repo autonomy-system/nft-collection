@@ -250,6 +250,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
     this.title,
     this.source,
     this.mintedAt,
+    this.assetID,
   });
 
   final String id;
@@ -275,6 +276,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
   String? title;
   String? source;
   DateTime? mintedAt;
+  String? assetID;
 
   factory CompactedAssetToken.fromAssetToken(AssetToken assetToken) {
     return CompactedAssetToken(
@@ -297,6 +299,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
       title: assetToken.title,
       source: assetToken.source,
       mintedAt: assetToken.mintedAt,
+      assetID: assetToken.asset?.assetID
     );
   }
 
