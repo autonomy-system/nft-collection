@@ -40,4 +40,9 @@ abstract class IndexerApi {
   Future indexTokenHistory(
     @Body() Map<String, dynamic> payload,
   );
+
+  @GET("/v2/nft/count")
+  Future numberNft(
+      @Query("owner") String owner,
+      );
 }
