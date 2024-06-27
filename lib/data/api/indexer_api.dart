@@ -42,7 +42,7 @@ abstract class IndexerApi {
   );
 
   @GET("/v2/nft/count")
-  Future numberNft(
-      @Query("owner") String owner,
-      );
+  Future<int> numberNft(
+    @Query("owner") String owner,
+  );
 }
