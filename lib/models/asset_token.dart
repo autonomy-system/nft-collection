@@ -236,6 +236,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
     required this.owner,
     required this.lastActivityTime,
     required this.lastRefreshedTime,
+    required this.edition,
     this.mimeType,
     this.previewURL,
     this.thumbnailURL,
@@ -277,6 +278,8 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
   String? source;
   DateTime? mintedAt;
   String? assetID;
+  int edition;
+
 
   factory CompactedAssetToken.fromAssetToken(AssetToken assetToken) {
     return CompactedAssetToken(
@@ -299,7 +302,8 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
       title: assetToken.title,
       source: assetToken.source,
       mintedAt: assetToken.mintedAt,
-      assetID: assetToken.asset?.assetID
+      assetID: assetToken.asset?.assetID,
+      edition: assetToken.edition,
     );
   }
 
