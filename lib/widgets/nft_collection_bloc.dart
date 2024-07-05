@@ -115,8 +115,13 @@ class NftCollectionBloc
       NftCollection.logger
           .info("[NftCollectionBloc] GetTokensByOwnerEvent ${event.pageKey}");
       final activeAddress = await addressService.getActiveAddresses();
-      final assetTokens = await database.assetTokenDao
-          .findAllAssetTokensByOwners(activeAddress, limit, lastTime, id);
+
+      final assetTokens = event.contractAddress != null
+          ? await database.assetTokenDao
+              .findAllAssetTokensByOwnersAndContractAddress(
+                  activeAddress, event.contractAddress!, limit, lastTime, id)
+          : await database.assetTokenDao
+              .findAllAssetTokensByOwners(activeAddress, limit, lastTime, id);
 
       final compactedAssetToken = assetTokens
           .map((e) => CompactedAssetToken.fromAssetToken(e))

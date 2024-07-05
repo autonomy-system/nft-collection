@@ -42,8 +42,9 @@ class ReloadEvent extends NftCollectionBlocEvent {
 
 class GetTokensByOwnerEvent extends NftCollectionBlocEvent {
   final PageKey pageKey;
+  final String? contractAddress;
 
-  GetTokensByOwnerEvent({required this.pageKey});
+  GetTokensByOwnerEvent({required this.pageKey, this.contractAddress});
 }
 
 class GetTokensBeforeByOwnerEvent extends NftCollectionBlocEvent {
