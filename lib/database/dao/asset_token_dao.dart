@@ -279,6 +279,11 @@ class AssetTokenDao {
       return {};
     }
 
+    // Initialize the map with all owners set to zero
+    final Map<String, int> tokenCountByOwner = {
+      for (var owner in owners) owner: 0
+    };
+
     // Prepare the list of owners for the SQL IN clause
     final sqliteVariablesForOwner = owners.map((e) => '"$e"').join(", ");
 
@@ -291,7 +296,7 @@ class AssetTokenDao {
     GROUP BY owner
   ''';
 
-    // Execute the query and map the results to a map
+    // Execute the query and update the counts in the map
     final List<Map<String, Object?>> result = await _queryAdapter.queryList(
       sql,
       mapper: (Map<String, Object?> row) => {
@@ -300,11 +305,9 @@ class AssetTokenDao {
       },
     );
 
-    // Convert the list of maps to a single map
-    final Map<String, int> tokenCountByOwner = {
-      for (var entry in result)
-        entry['owner'] as String: entry['tokenCount'] as int
-    };
+    for (var entry in result) {
+      tokenCountByOwner[entry['owner'] as String] = entry['tokenCount'] as int;
+    }
 
     return tokenCountByOwner;
   }
