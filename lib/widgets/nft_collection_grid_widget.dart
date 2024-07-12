@@ -119,8 +119,7 @@ Widget buildDefaultItemView(BuildContext context, CompactedAssetToken token) {
     tag: token.id,
     child: ext == ".svg"
         ? SvgPicture.network(token.galleryThumbnailURL!,
-            placeholderBuilder: (context) =>
-                Container(color: greyColor))
+            placeholderBuilder: (context) => Container(color: greyColor))
         : Image.network(
             token.galleryThumbnailURL!,
             fit: BoxFit.cover,
