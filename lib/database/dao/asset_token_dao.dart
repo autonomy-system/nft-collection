@@ -273,4 +273,42 @@ class AssetTokenDao {
         'SELECT DISTINCT artistID FROM Token LEFT JOIN Asset ON Token.indexID = Asset.indexID WHERE balance > 0',
         mapper: (Map<String, Object?> row) => row.values.first as String);
   }
+
+  Future<Map<String, int>> countAssetTokensByOwner(List<String> owners) async {
+    if (owners.isEmpty) {
+      return {};
+    }
+
+    // Initialize the map with all owners set to zero
+    final Map<String, int> tokenCountByOwner = {
+      for (var owner in owners) owner: 0
+    };
+
+    // Prepare the list of owners for the SQL IN clause
+    final sqliteVariablesForOwner = owners.map((e) => '"$e"').join(", ");
+
+    // SQL query to count the asset tokens per owner with balance > 0
+    final sql = '''
+    SELECT owner, COUNT(*) as tokenCount 
+    FROM Token 
+    LEFT JOIN Asset ON Token.indexID = Asset.indexID 
+    WHERE owner IN ($sqliteVariablesForOwner) AND balance > 0 
+    GROUP BY owner
+  ''';
+
+    // Execute the query and update the counts in the map
+    final List<Map<String, Object?>> result = await _queryAdapter.queryList(
+      sql,
+      mapper: (Map<String, Object?> row) => {
+        'owner': row['owner'] as String,
+        'tokenCount': row['tokenCount'] as int
+      },
+    );
+
+    for (var entry in result) {
+      tokenCountByOwner[entry['owner'] as String] = entry['tokenCount'] as int;
+    }
+
+    return tokenCountByOwner;
+  }
 }

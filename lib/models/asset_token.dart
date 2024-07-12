@@ -280,7 +280,6 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
   String? assetID;
   int edition;
 
-
   factory CompactedAssetToken.fromAssetToken(AssetToken assetToken) {
     return CompactedAssetToken(
       id: assetToken.id,
