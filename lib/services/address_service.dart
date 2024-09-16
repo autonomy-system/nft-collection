@@ -20,14 +20,8 @@ class AddressService {
 
   Future<void> deleteAddresses(List<String> addresses) async {
     await _database.addressCollectionDao.deleteAddresses(addresses);
-    final artists =
-        (await _database.assetTokenDao.findRemoveArtistIDsByOwner(addresses))
-            .toSet()
-            .toList();
     await _database.tokenDao.deleteTokensByOwners(addresses);
-    NftCollection.logger
-        .info("Delete address $addresses \nDelete artists $artists");
-    NftCollectionBloc.addEventFollowing(RemoveArtistsEvent(artists: artists));
+    NftCollection.logger.info("Delete address $addresses");
     NftCollectionBloc.eventController
         .add(UpdateTokensEvent(state: NftLoadingState.done, tokens: []));
   }

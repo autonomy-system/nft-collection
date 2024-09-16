@@ -215,15 +215,6 @@ class TokensServiceImpl extends TokensService {
         .info("[insertAssetsWithProvenance][tokens] $tokensLog");
 
     await _assetDao.insertAssets(assets);
-    final List<String> artistIdToAdd = assetTokens
-        .where((element) => element.balance != 0 && element.artistID != null)
-        .map((e) => e.artistID!)
-        .toSet()
-        .toList();
-
-    NftCollection.logger.info("insertAssets: add artists $artistIdToAdd");
-    NftCollectionBloc.addEventFollowing(
-        AddArtistsEvent(artists: artistIdToAdd));
     await _database.provenanceDao.insertProvenance(provenance);
   }
 
@@ -278,12 +269,6 @@ class TokensServiceImpl extends TokensService {
           .toList();
       await _tokenDao.insertTokensAbort(tokens);
       await _assetDao.insertAssetsAbort(assets);
-      final List<String> artists = assets
-          .where((element) => element.artistID != null)
-          .map((e) => e.artistID!)
-          .toSet()
-          .toList();
-      NftCollectionBloc.eventController.add(AddArtistsEvent(artists: artists));
     } catch (e) {
       NftCollection.logger.info("[TokensService] "
           "setCustomTokens "
@@ -322,7 +307,7 @@ class TokensServiceImpl extends TokensService {
   void _handleMessageInMain(dynamic message) async {
     if (message is SendPort) {
       _sendPort = message;
-      _isolateReady.complete();
+      if (!_isolateReady.isCompleted) _isolateReady.complete();
 
       return;
     }
