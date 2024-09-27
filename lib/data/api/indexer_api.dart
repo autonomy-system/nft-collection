@@ -23,19 +23,6 @@ abstract class IndexerApi {
   @POST("/v2/nft/index")
   Future requestIndex(@Body() Map<String, dynamic> payload);
 
-  @POST("/nft/index_one")
-  Future requestIndexOne(@Body() Map<String, dynamic> payload);
-
-  @GET("/nft/owned")
-  Future<List<String>> getNftIDsByOwner(
-    @Query("owner") String owner,
-  );
-
-  @POST("/v1/nft/pending")
-  Future postNftPendingToken(
-    @Body() Map<String, dynamic> payload,
-  );
-
   @POST("/v2/nft/index_history")
   Future indexTokenHistory(
     @Body() Map<String, dynamic> payload,
