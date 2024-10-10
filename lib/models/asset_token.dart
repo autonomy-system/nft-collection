@@ -37,7 +37,7 @@ class AssetToken {
     this.ipfsPinned,
     this.asset,
     this.pending,
-    this.isDebugged,
+    this.isManual,
     this.scrollable,
     this.originTokenInfoId,
   });
@@ -65,7 +65,7 @@ class AssetToken {
 
   bool? burned;
   bool? pending;
-  bool? isDebugged;
+  bool? isManual;
   bool? scrollable;
   String? originTokenInfoId;
   bool? ipfsPinned;
@@ -293,7 +293,7 @@ class CompactedAssetToken extends Comparable<CompactedAssetToken> {
       thumbnailID: assetToken.thumbnailID,
       galleryThumbnailURL: assetToken.galleryThumbnailURL,
       pending: assetToken.pending,
-      isDebugged: assetToken.isDebugged,
+      isDebugged: assetToken.isManual,
       artistID: assetToken.artistID,
       artistTitle: assetToken.artistName,
       blockchain: assetToken.blockchain,

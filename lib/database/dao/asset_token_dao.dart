@@ -58,7 +58,7 @@ class AssetTokenDao {
             _dateTimeConverter.decode(row['tokenLastRefresh'] as int),
         ipfsPinned:
             row['ipfsPinned'] == null ? null : (row['ipfsPinned'] as int) != 0,
-        isDebugged:
+        isManual:
             row['isDebugged'] == null ? null : (row['isDebugged'] as int) != 0,
         originTokenInfo: [],
         provenance: [],

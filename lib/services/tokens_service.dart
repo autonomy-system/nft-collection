@@ -247,7 +247,7 @@ class TokensServiceImpl extends TokensService {
     //stripe owner for manual asset
     for (var i = 0; i < manuallyAssets.length; i++) {
       manuallyAssets[i].owner = "";
-      manuallyAssets[i].isDebugged = true;
+      manuallyAssets[i].isManual = true;
     }
 
     NftCollection.logger.info("[TokensService] "
@@ -277,9 +277,7 @@ class TokensServiceImpl extends TokensService {
   }
 
   @override
-  Future postPendingToken(PendingTxParams params) async {
-    await _indexer.postNftPendingToken(params.toJson());
-  }
+  Future postPendingToken(PendingTxParams params) async {}
 
   static void _isolateEntry(List<dynamic> arguments) {
     SendPort sendPort = arguments[0];
