@@ -194,4 +194,117 @@ const String getTokens = r'''
 }
 ''';
 
+const String getColectionTokenQuery = r'''
+query getCollectionToken($collectionID: String!,
+$offset: Int64! = 0,
+    $size: Int64! = 50) {
+  tokens(
+    collectionID: $collectionID,
+    offset: $offset,
+    size: $size,
+  ) {
+    id
+    blockchain
+    fungible
+    contractType
+    contractAddress
+    edition
+    editionName
+    mintedAt
+    balance
+    owner
+    owners {
+      address
+      balance
+    }
+    indexID
+    source
+    swapped
+    burned
+    lastActivityTime
+    originTokenInfo {
+      id
+      blockchain
+      fungible
+      contractType
+      contractAddress
+    }
+    provenance {
+      type
+      owner
+      blockchain
+      blockNumber
+      timestamp
+      txID
+      txURL
+    }
+    lastRefreshedTime
+    asset{
+      indexID
+      thumbnailID
+      lastRefreshedTime
+      attributes {
+        scrollable
+      }
+      metadata{
+        project{
+          origin{
+            artistID
+            artistName
+            artistURL
+            artists{
+            name
+            id
+            url
+            }
+            assetID
+            title
+            description
+            mimeType
+            medium
+            maxEdition
+            baseCurrency
+            basePrice
+            source
+            sourceURL
+            previewURL
+            thumbnailURL
+            galleryThumbnailURL
+            assetData
+            assetURL
+            artworkMetadata
+          }
+          latest{
+            artistID
+            artistName
+            artistURL
+            artists{
+            name
+            id
+            url
+            }
+            assetID
+            title
+            description
+            mimeType
+            medium
+            maxEdition
+            baseCurrency
+            basePrice
+            source
+            sourceURL
+            previewURL
+            thumbnailURL
+            galleryThumbnailURL
+            assetData
+            assetURL
+            artworkMetadata
+          }
+        }
+      }
+    }
+  }
+}
+''';
+
 // query documents to query tokens by owners
