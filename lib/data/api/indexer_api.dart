@@ -39,10 +39,4 @@ abstract class IndexerApi {
     @Query("creators") String creator,
     @Query("size") int size,
   );
-
-  // get /v2/collections/{{collection_id}}
-  @GET("/v2/collections/{collection_id}")
-  Future<List<AssetToken>> getCollectionListToken(
-    @Path("collection_id") String collectionId,
-  );
 }

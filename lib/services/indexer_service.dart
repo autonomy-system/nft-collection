@@ -1,7 +1,9 @@
 import 'package:nft_collection/data/api/indexer_api.dart';
 import 'package:nft_collection/graphql/clients/indexer_client.dart';
+import 'package:nft_collection/graphql/model/get_list_collection.dart';
 import 'package:nft_collection/graphql/model/get_list_tokens.dart';
 import 'package:nft_collection/graphql/model/identity.dart';
+import 'package:nft_collection/graphql/queries/collection_queries.dart';
 import 'package:nft_collection/graphql/queries/queries.dart';
 import 'package:nft_collection/models/asset_token.dart';
 import 'package:nft_collection/models/identity.dart';
@@ -41,6 +43,14 @@ class IndexerService {
 
   Future<List<UserCollection>> getUserCollections(String address) async {
     return _indexerApi.getCollection(address, 100);
+  }
+
+  Future<List<UserCollection>> getCollectionsByAddresses(
+      List<String> addresses) async {
+    final vars = {'creators': addresses, 'size': 100, 'offset': 0};
+    final res = await _client.query(doc: collectionQuery, vars: vars);
+    final data = QueryListCollectionResponse.fromJson(res);
+    return data.collections;
   }
 
   Future<List<AssetToken>> getCollectionListToken(String collectionId) async {
