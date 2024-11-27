@@ -25,8 +25,12 @@ class RefreshNftCollectionByOwners extends NftCollectionBlocEvent {
 class RefreshNftCollectionByIDs extends NftCollectionBlocEvent {
   final List<String>? ids;
   final List<String>? debugTokenIds;
+  final bool shouldFetchIfNotExistsInCache;
 
-  RefreshNftCollectionByIDs({this.ids, this.debugTokenIds});
+  RefreshNftCollectionByIDs(
+      {this.ids,
+      this.debugTokenIds,
+      this.shouldFetchIfNotExistsInCache = true});
 }
 
 class UpdateTokensEvent extends NftCollectionBlocEvent {

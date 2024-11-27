@@ -283,11 +283,19 @@ class NftCollectionBloc
         return;
       }
 
-      final assetTokens =
+      List<AssetToken> assetTokens =
           await database.assetTokenDao.findAllAssetTokensByTokenIDs(event.ids!);
+      if (event.shouldFetchIfNotExistsInCache) {
+        final assetTokensNotInDb = event.ids!
+            .where((element) => !assetTokens.any((e) => e.id == element))
+            .toList();
+        final assetTokensNotInDbList =
+            await tokensService.fetchManualTokens(assetTokensNotInDb);
+        assetTokens.addAll(assetTokensNotInDbList);
+      }
       final activeAddress = await addressService.getActiveAddresses();
       assetTokens.removeWhere((element) =>
-          !activeAddress.contains(element.owner) && element.isDebugged != true);
+          !activeAddress.contains(element.owner) && element.isManual != true);
       final compactedAssetToken = assetTokens
           .map((e) => CompactedAssetToken.fromAssetToken(e))
           .toList();

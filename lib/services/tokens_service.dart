@@ -68,7 +68,7 @@ class TokensServiceImpl extends TokensService {
     dio ??= Dio()..interceptors.add(LoggingInterceptor());
     _indexer = IndexerApi(dio, baseUrl: _indexerUrl);
     final indexerClient = IndexerClient(_indexerUrl);
-    _indexerService = IndexerService(indexerClient);
+    _indexerService = IndexerService(indexerClient, _indexer);
   }
 
   SendPort? _sendPort;
@@ -247,7 +247,7 @@ class TokensServiceImpl extends TokensService {
     //stripe owner for manual asset
     for (var i = 0; i < manuallyAssets.length; i++) {
       manuallyAssets[i].owner = "";
-      manuallyAssets[i].isDebugged = true;
+      manuallyAssets[i].isManual = true;
     }
 
     NftCollection.logger.info("[TokensService] "
@@ -277,9 +277,7 @@ class TokensServiceImpl extends TokensService {
   }
 
   @override
-  Future postPendingToken(PendingTxParams params) async {
-    await _indexer.postNftPendingToken(params.toJson());
-  }
+  Future postPendingToken(PendingTxParams params) async {}
 
   static void _isolateEntry(List<dynamic> arguments) {
     SendPort sendPort = arguments[0];
@@ -299,8 +297,8 @@ class TokensServiceImpl extends TokensService {
         .registerLazySingleton(() => IndexerApi(dio, baseUrl: indexerUrl));
     final indexerClient = IndexerClient(indexerUrl);
     _isolateScopeInjector.registerLazySingleton(() => indexerClient);
-    _isolateScopeInjector
-        .registerLazySingleton(() => IndexerService(indexerClient));
+    _isolateScopeInjector.registerLazySingleton(() =>
+        IndexerService(indexerClient, _isolateScopeInjector<IndexerApi>()));
     _isolateScopeInjector.registerLazySingleton(() => TZKTApi(dio));
   }
 
