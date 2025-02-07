@@ -24,7 +24,6 @@ class IndexerClient {
     String? subKey,
   }) async {
     try {
-      NftCollection.logger.info("Querying: $doc");
       final options = QueryOptions(
         document: gql(doc),
         variables: vars,
