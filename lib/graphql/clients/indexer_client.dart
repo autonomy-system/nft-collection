@@ -1,4 +1,5 @@
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:nft_collection/nft_collection.dart';
 
 class IndexerClient {
   IndexerClient(this._baseUrl);
@@ -23,6 +24,7 @@ class IndexerClient {
     String? subKey,
   }) async {
     try {
+      NftCollection.logger.info("Querying: $doc");
       final options = QueryOptions(
         document: gql(doc),
         variables: vars,
@@ -34,6 +36,7 @@ class IndexerClient {
       }
       return result.data;
     } catch (e) {
+      NftCollection.logger.info("Error querying: $e");
       return null;
     }
   }

@@ -27,6 +27,7 @@ class QueryListTokensRequest {
   final DateTime? lastUpdatedAt;
   final int offset;
   final int size;
+  final bool burnedIncluded;
 
   QueryListTokensRequest({
     this.owners = const [],
@@ -34,6 +35,7 @@ class QueryListTokensRequest {
     this.lastUpdatedAt,
     this.offset = 0,
     this.size = indexerTokensPageSize,
+    this.burnedIncluded = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -43,6 +45,7 @@ class QueryListTokensRequest {
       'lastUpdatedAt': lastUpdatedAt?.toUtc().toIso8601String(),
       'offset': offset,
       'size': size,
+      'burnedIncluded': burnedIncluded,
     };
   }
 }

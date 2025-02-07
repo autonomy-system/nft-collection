@@ -261,6 +261,8 @@ class NftCollectionBloc
           add(UpdateTokensEvent(state: NftLoadingState.done));
         });
       } catch (exception) {
+        NftCollection.logger.info(
+            "[NftCollectionBloc] RefreshNftCollectionByOwners Error: ${exception.toString()}");
         add(UpdateTokensEvent(state: NftLoadingState.error));
 
         NftCollection.logger.warning("Error: $exception");
