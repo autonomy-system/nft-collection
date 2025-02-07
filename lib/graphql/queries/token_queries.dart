@@ -87,7 +87,7 @@ type Query {
  */
 
 const String getTokens = r'''
-  query getTokens($owners: [String!]! = [],$ids: [String!]! = [], $size: Int64! = 50, $lastUpdatedAt: Time, $offset: Int64! = 0) {
+  query getTokens($owners: [String!]! = [],$ids: [String!]! = [], $size: Int64! = 50, $lastUpdatedAt: Time, $offset: Int64! = 0, $burnedIncluded: Boolean! = false) {
   tokens(owners: $owners,ids: $ids, size: $size, lastUpdatedAt: $lastUpdatedAt, offset: $offset) {
     id
     blockchain
